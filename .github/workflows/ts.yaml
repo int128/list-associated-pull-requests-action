@@ -50,4 +50,5 @@ jobs:
           cache: yarn
       - run: yarn
       - run: yarn format
+      - run: yarn graphql-codegen
       - uses: int128/update-generated-files-action@v2
