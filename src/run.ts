@@ -50,8 +50,8 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
       continue
     }
     if (node.oid === baseCommit.repository.object.oid) {
-      core.info(`${node.oid} skip`)
-      continue
+      core.info(`${node.oid} base`)
+      break
     }
     for (const pull of node?.associatedPullRequests?.nodes ?? []) {
       if (pull?.number) {
