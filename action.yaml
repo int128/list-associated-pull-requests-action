@@ -16,6 +16,13 @@ inputs:
     description: Path to get commit history of subtree
     required: true
     default: '.'
+  pull-request:
+    description: Set true to create a pull request
+    required: true
+    default: 'false'
+  pull-request-title:
+    description: Title of a pull request
+    required: false
 
 outputs:
   pull-request-list:

@@ -1,13 +1,18 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
+import { GitHub } from '@actions/github/lib/utils'
 import { getCommit } from './queries/commit'
 import { getAssociatedPullRequestsInCommitHistoryOfSubTreeQuery } from './queries/history'
+
+type Octokit = InstanceType<typeof GitHub>
 
 type Inputs = {
   token: string
   base: string
   head: string
   path: string
+  pullRequest: boolean
+  pullRequestTitle: string
 }
 
 type Outputs = {
@@ -60,9 +65,41 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
       }
     }
   }
+  const pullRequestList = [...pulls].join('\n')
+  const pullRequestListMarkdown = [...pulls].map((n) => `- #${n}`).join('\n')
+
+  if (inputs.pullRequest) {
+    await createPullRequest(octokit, inputs, pullRequestListMarkdown)
+  }
 
   return {
-    pullRequestList: [...pulls].join('\n'),
-    pullRequestListMarkdown: [...pulls].map((n) => `- #${n}`).join('\n'),
+    pullRequestList,
+    pullRequestListMarkdown,
   }
+}
+
+const createPullRequest = async (octokit: Octokit, inputs: Inputs, pullRequestListMarkdown: string) => {
+  const base = inputs.base.replace('refs/heads/', '')
+  const head = inputs.head.replace('refs/heads/', '')
+
+  core.info(`Creating a pull request from ${head} into ${base}`)
+  const { data: pull } = await octokit.rest.pulls.create({
+    owner: github.context.repo.owner,
+    repo: github.context.repo.repo,
+    base,
+    head,
+    title: inputs.pullRequestTitle ?? undefined,
+    body: pullRequestListMarkdown,
+  })
+  core.info(`Created ${pull.html_url}`)
+
+  core.info(`Adding ${github.context.actor} to assignees`)
+  await octokit.rest.issues.addAssignees({
+    owner: github.context.repo.owner,
+    repo: github.context.repo.repo,
+    issue_number: pull.number,
+    assignees: [github.context.actor],
+  })
+
+  return pull.number
 }

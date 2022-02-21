@@ -27,6 +27,8 @@ jobs:
 | `base` | (required) | Base branch
 | `head` | (required) | Head branch
 | `path` | `.` | Path to get the commit history of subtree
+| `pull-request` | `false` | Set `true` to create a pull request
+| `pull-request-title` | - | Title of a pull request
 | `token` | `github.token` | GitHub token
 
 

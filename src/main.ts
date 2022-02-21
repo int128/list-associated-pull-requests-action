@@ -7,6 +7,8 @@ const main = async (): Promise<void> => {
     base: core.getInput('base', { required: true }),
     head: core.getInput('head', { required: true }),
     path: core.getInput('path', { required: true }),
+    pullRequest: core.getBooleanInput('pull-request', { required: true }),
+    pullRequestTitle: core.getInput('pull-request-title'),
   })
   core.setOutput('pull-request-list', outputs.pullRequestList)
   core.setOutput('pull-request-list-markdown', outputs.pullRequestListMarkdown)
