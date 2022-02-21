@@ -1,10 +1,27 @@
-name: typescript-action
-description: Template of TypeScript Action
+name: release-note-action
+description: Action to generate release note from commit history
 
 inputs:
-  name:
-    description: example input
+  token:
+    description: GitHub token
     required: true
+    default: ${{ github.token }}
+  base:
+    description: Base branch or commit
+    required: true
+  head:
+    description: Head branch or commit
+    required: true
+  path:
+    description: Path to get commit history of subtree
+    required: true
+    default: '.'
+
+outputs:
+  pull-request-number-list:
+    description: List of pull requests in multiline
+  pull-request-number-list-markdown:
+    description: List of pull requests in markdown
 
 runs:
   using: 'node16'
