@@ -15,6 +15,7 @@ const query = /* GraphQL */ `
       object(expression: $expression) {
         __typename
         ... on Commit {
+          oid
           committedDate
         }
       }

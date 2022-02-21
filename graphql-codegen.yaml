@@ -16,3 +16,4 @@ config:
   scalars:
     # https://docs.github.com/en/graphql/reference/scalars
     DateTime: string
+    GitObjectID: string
