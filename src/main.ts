@@ -8,8 +8,8 @@ const main = async (): Promise<void> => {
     head: core.getInput('head', { required: true }),
     path: core.getInput('path', { required: true }),
   })
-  core.setOutput('pull-request-number-list', outputs.pullRequestNumberList)
-  core.setOutput('pull-request-number-list-markdown', outputs.pullRequestNumberListMarkdown)
+  core.setOutput('pull-request-list', outputs.pullRequestList)
+  core.setOutput('pull-request-list-markdown', outputs.pullRequestListMarkdown)
 }
 
 main().catch((e) => core.setFailed(e instanceof Error ? e.message : JSON.stringify(e)))

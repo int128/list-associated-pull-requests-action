@@ -34,5 +34,5 @@ jobs:
 
 | Name | Description
 |------|------------
-| `pull-request-number-list` | List of pull requests in multiline
-| `pull-request-number-list-markdown` | List of pull requests in markdown
+| `pull-request-list` | List of pull requests in multiline
+| `pull-request-list-markdown` | List of pull requests in markdown

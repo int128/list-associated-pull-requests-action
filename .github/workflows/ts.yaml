@@ -39,9 +39,10 @@ jobs:
         with:
           base: ${{ github.base_ref }}
           head: ${{ github.head_ref }}
-      - uses: int128/comment-action@v1
+      - if: github.event_name == 'pull_request'
+        uses: int128/comment-action@v1
         with:
-          post: ${{ steps.release-note.outputs.pull-request-number-list-markdown }}
+          post: ${{ steps.release-note.outputs.pull-request-list-markdown }}
 
   generate:
     runs-on: ubuntu-latest

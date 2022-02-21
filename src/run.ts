@@ -11,8 +11,8 @@ type Inputs = {
 }
 
 type Outputs = {
-  pullRequestNumberList: string
-  pullRequestNumberListMarkdown: string
+  pullRequestList: string
+  pullRequestListMarkdown: string
 }
 
 export const run = async (inputs: Inputs): Promise<Outputs> => {
@@ -62,7 +62,7 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
   }
 
   return {
-    pullRequestNumberList: [...pulls].join('\n'),
-    pullRequestNumberListMarkdown: [...pulls].map((n) => `- #${n}`).join('\n'),
+    pullRequestList: [...pulls].join('\n'),
+    pullRequestListMarkdown: [...pulls].map((n) => `- #${n}`).join('\n'),
   }
 }

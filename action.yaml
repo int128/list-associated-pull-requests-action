@@ -18,9 +18,9 @@ inputs:
     default: '.'
 
 outputs:
-  pull-request-number-list:
+  pull-request-list:
     description: List of pull requests in multiline
-  pull-request-number-list-markdown:
+  pull-request-list-markdown:
     description: List of pull requests in markdown
 
 runs:
