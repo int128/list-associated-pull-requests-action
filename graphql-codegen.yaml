@@ -1,7 +1,7 @@
 overwrite: true
 schema: src/generated/octokit-graphql-schema.js
-#documents:
-#  - src/queries/*.ts
+documents:
+  - src/queries/*.ts
 generates:
   src/generated/graphql-types.ts:
     plugins:
@@ -12,3 +12,8 @@ generates:
     preset: import-types
     presetConfig:
       typesPath: ./graphql-types
+config:
+  scalars:
+    # https://docs.github.com/en/graphql/reference/scalars
+    DateTime: string
+    GitObjectID: string
