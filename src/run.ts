@@ -11,8 +11,9 @@ type Inputs = {
 }
 
 type Outputs = {
-  pullRequestList: string
-  pullRequestListMarkdown: string
+  body: string
+  associatedPullRequests: number[]
+  pullRequestListMarkdown: string // deprecated
 }
 
 export const run = async (inputs: Inputs): Promise<Outputs> => {
@@ -45,6 +46,7 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
   }
 
   const pulls = new Set<number>()
+  const body: string[] = []
   for (const node of history.repository.object.history.nodes ?? []) {
     if (node == null) {
       continue
@@ -53,16 +55,26 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
       core.info(`${node.oid} base`)
       break
     }
-    for (const pull of node?.associatedPullRequests?.nodes ?? []) {
-      if (pull?.number) {
-        core.info(`${node.oid} -> #${pull.number}`)
+    if (!node.associatedPullRequests?.nodes?.length) {
+      core.info(`${node.oid} -> none`)
+      body.push(`- ${node.oid}`)
+      continue
+    }
+    for (const pull of node.associatedPullRequests.nodes) {
+      if (pull?.number === undefined) {
+        continue
+      }
+      core.info(`${node.oid} -> #${pull.number}`)
+      if (!pulls.has(pull.number)) {
         pulls.add(pull.number)
+        body.push(`- #${pull.number}`)
       }
     }
   }
 
   return {
-    pullRequestList: [...pulls].join('\n'),
+    body: body.join('\n'),
+    associatedPullRequests: [...pulls],
     pullRequestListMarkdown: [...pulls].map((n) => `- #${n}`).join('\n'),
   }
 }

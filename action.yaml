@@ -18,10 +18,14 @@ inputs:
     default: '.'
 
 outputs:
+  body:
+    description: List of commits with associated pull requests (Markdown)
+  associated-pull-requests:
+    description: List of pull requests associated to commits (Multiline)
   pull-request-list:
-    description: List of pull requests in multiline
+    description: List of pull requests in multiline (deprecated)
   pull-request-list-markdown:
-    description: List of pull requests in markdown
+    description: List of pull requests in markdown (deprecated)
 
 runs:
   using: 'node16'

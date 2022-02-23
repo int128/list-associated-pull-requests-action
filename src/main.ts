@@ -8,7 +8,12 @@ const main = async (): Promise<void> => {
     head: core.getInput('head', { required: true }),
     path: core.getInput('path', { required: true }),
   })
-  core.setOutput('pull-request-list', outputs.pullRequestList)
+
+  core.setOutput('body', outputs.body)
+  core.setOutput('associated-pull-requests', outputs.associatedPullRequests.join('\n'))
+
+  // deprecated
+  core.setOutput('pull-request-list', outputs.associatedPullRequests.join('\n'))
   core.setOutput('pull-request-list-markdown', outputs.pullRequestListMarkdown)
 }
 

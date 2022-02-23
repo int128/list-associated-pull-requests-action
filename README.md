@@ -5,17 +5,40 @@ This is an action to generate a release note from the commit history.
 
 ## Getting Started
 
-To run this action, create a workflow as follows:
+This example workflow creates a pull request from `main` branch into `production` branch with the release note.
 
 ```yaml
+on:
+  workflow_dispatch:
+
 jobs:
-  build:
+  create:
     runs-on: ubuntu-latest
     steps:
-      - uses: int128/release-note-action@v1
+      - uses: int128/release-note-action@v0
         with:
           base: refs/heads/main
           head: refs/heads/production
+
+      - uses: actions/github-script@v6
+        env:
+          base: main
+          head: production
+          body: ${{ steps.release-note.outputs.body }}
+        with:
+          script: |
+            const { data: pull } = await github.rest.pulls.create({
+              ...context.repo,
+              base: process.env.base,
+              head: process.env.head,
+              title: `Deploy to ${process.env.head}`,
+              body: process.env.body,
+            })
+            await github.rest.pulls.requestReviewers({
+              ...context.repo,
+              pull_number: pull.number,
+              reviewers: [context.actor],
+            })
 ```
 
 ## Specification
@@ -34,5 +57,5 @@ jobs:
 
 | Name | Description
 |------|------------
-| `pull-request-list` | List of pull requests in multiline
-| `pull-request-list-markdown` | List of pull requests in markdown
+| `body` | List of commits with associated pull requests (Markdown)
+| `associated-pull-requests` | List of pull requests associated to commits (Multiline)
