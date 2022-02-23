@@ -33,16 +33,19 @@ jobs:
       - run: yarn build
       - run: yarn package
 
+      # generate a release note since the major tag
       - if: github.event_name == 'pull_request'
         id: release-note
         uses: ./
         with:
-          base: ${{ github.base_ref }}
+          base: refs/tags/v0
           head: ${{ github.head_ref }}
       - if: github.event_name == 'pull_request'
         uses: int128/comment-action@v1
         with:
-          post: ${{ steps.release-note.outputs.pull-request-list-markdown }}
+          post: |
+            ## Release note
+            ${{ steps.release-note.outputs.pull-request-list-markdown }}
 
   generate:
     runs-on: ubuntu-latest
