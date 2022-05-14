@@ -41,6 +41,29 @@ jobs:
             })
 ```
 
+### Group by sub-paths (experimental)
+
+This action can group the pull requests by paths.
+For example, let us think the following layout of monorepo.
+
+```
+.github/
+backend/
+frontend/
+```
+
+You can set `group-by-sub-paths` option.
+
+```yaml
+        with:
+          group-by-sub-paths: |
+            backend
+            frontend
+```
+
+This action generates a list of pull request for each path.
+
+
 ## Specification
 
 ### Inputs
@@ -51,6 +74,7 @@ jobs:
 | `head` | (required) | Head branch
 | `path` | `.` | Path to get the commit history of subtree
 | `token` | `github.token` | GitHub token
+| `group-by-sub-paths` | (optional) | Group pull requests by sub-paths (Multiline)
 
 
 ### Outputs
