@@ -78,9 +78,11 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
       others.delete(pullOrCommit)
     }
   }
-  body.push(`### Others`)
-  for (const pullOrCommit of others) {
-    body.push(`- ${pullOrCommit}`)
+  if (others.size > 0) {
+    body.push(`### Others`)
+    for (const pullOrCommit of others) {
+      body.push(`- ${pullOrCommit}`)
+    }
   }
 
   return {
