@@ -5,9 +5,20 @@ This is an action to generate a release note from the commit history.
 
 ## Getting Started
 
+This action fetch the commits and associated pull requests between base and head, using the query of GitHub GraghQL.
+It generates a markdown string of release note.
+
+Here is an example of release note.
+
+<img width="920" alt="image" src="https://user-images.githubusercontent.com/321266/168426345-c5cfc07f-d7f3-4e86-bae8-61b62b52410f.png">
+
+### Create a pull request for release
+
 This example workflow creates a pull request from `main` branch into `production` branch with the release note.
 
 ```yaml
+name: create-release-pr
+
 on:
   workflow_dispatch:
 
