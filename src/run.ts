@@ -40,7 +40,7 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
       path: inputs.path,
       since: baseCommit.repository.object.committedDate,
     },
-    [baseCommit.repository.object.oid]
+    baseCommit.repository.object.oid
   )
 
   const pulls = []

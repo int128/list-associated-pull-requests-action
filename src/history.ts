@@ -8,7 +8,7 @@ type Octokit = InstanceType<typeof GitHub>
 export const getPullRequestHistoryOfSubTree = async (
   octokit: Octokit,
   v: AssociatedPullRequestsInCommitHistoryOfSubTreeQueryVariables,
-  excludeCommits: string[]
+  endCommit: string
 ): Promise<Set<string>> => {
   const history = await getAssociatedPullRequestsInCommitHistoryOfSubTreeQuery(octokit, v)
   core.startGroup(`Commit history on ${v.expression} since ${String(v.since)}`)
@@ -23,8 +23,8 @@ export const getPullRequestHistoryOfSubTree = async (
     if (node == null) {
       continue
     }
-    if (excludeCommits.indexOf(node.oid) != -1) {
-      core.info(`${node.oid} excluded`)
+    if (node.oid === endCommit) {
+      core.info(`${node.oid} end`)
       break
     }
     if (!node.associatedPullRequests?.nodes?.length) {
