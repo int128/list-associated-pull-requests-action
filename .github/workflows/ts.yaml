@@ -45,7 +45,24 @@ jobs:
         with:
           post: |
             ## Release note
-            ${{ steps.release-note.outputs.pull-request-list-markdown }}
+            ${{ steps.release-note.outputs.body }}
+
+      # generate a release note with group
+      - if: github.event_name == 'pull_request'
+        id: release-note-grouped
+        uses: ./
+        with:
+          base: refs/tags/v0
+          head: ${{ github.head_ref }}
+          group-by-sub-paths: |
+            src
+            .github
+      - if: github.event_name == 'pull_request'
+        uses: int128/comment-action@v1
+        with:
+          post: |
+            ## Release note (grouped)
+            ${{ steps.release-note-grouped.outputs.body }}
 
   generate:
     runs-on: ubuntu-latest

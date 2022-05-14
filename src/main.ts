@@ -7,6 +7,7 @@ const main = async (): Promise<void> => {
     base: core.getInput('base', { required: true }),
     head: core.getInput('head', { required: true }),
     path: core.getInput('path', { required: true }),
+    groupBySubPaths: core.getMultilineInput('group-by-sub-paths'),
   })
 
   core.setOutput('body', outputs.body)

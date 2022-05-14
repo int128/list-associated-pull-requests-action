@@ -1,7 +1,7 @@
 import * as core from '@actions/core'
 import { AssociatedPullRequestsInCommitHistoryOfSubTreeQuery } from './generated/graphql'
 
-type Association = {
+export type Association = {
   pullOrCommits: Set<string>
   pulls: Set<number>
 }
