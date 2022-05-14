@@ -1,5 +1,6 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
+import { parseHistory } from './history'
 import { getCommit } from './queries/commit'
 import { getAssociatedPullRequestsInCommitHistoryOfSubTreeQuery } from './queries/history'
 
@@ -12,7 +13,7 @@ type Inputs = {
 
 type Outputs = {
   body: string
-  associatedPullRequests: number[]
+  associatedPullRequests: string[]
   pullRequestListMarkdown: string // deprecated
 }
 
@@ -41,35 +42,16 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
   core.startGroup(`Commit history on ${inputs.head} since ${baseCommit.repository.object.committedDate}`)
   core.info(JSON.stringify(history, undefined, 2))
   core.endGroup()
-  if (history.repository?.object?.__typename !== 'Commit') {
-    throw new Error(`unexpected typename ${String(history.repository?.object?.__typename)} !== Commit`)
-  }
 
-  const pulls = new Set<number>()
-  const body: string[] = []
-  for (const node of history.repository.object.history.nodes ?? []) {
-    if (node == null) {
-      continue
+  const pullOrCommits = parseHistory(history, baseCommit.repository.object.oid)
+
+  const pulls = []
+  const body = []
+  for (const pullOrCommit of pullOrCommits) {
+    if (pullOrCommit.startsWith('#')) {
+      pulls.push(pullOrCommit.substring(1))
     }
-    if (node.oid === baseCommit.repository.object.oid) {
-      core.info(`${node.oid} base`)
-      break
-    }
-    if (!node.associatedPullRequests?.nodes?.length) {
-      core.info(`${node.oid} -> none`)
-      body.push(`- ${node.oid}`)
-      continue
-    }
-    for (const pull of node.associatedPullRequests.nodes) {
-      if (pull?.number === undefined) {
-        continue
-      }
-      core.info(`${node.oid} -> #${pull.number}`)
-      if (!pulls.has(pull.number)) {
-        pulls.add(pull.number)
-        body.push(`- #${pull.number}`)
-      }
-    }
+    body.push(`- ${pullOrCommit}`)
   }
 
   return {
