@@ -1,6 +1,6 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
-import { parseHistory } from './history'
+import { findAssociation } from './history'
 import { getCommit } from './queries/commit'
 import { getAssociatedPullRequestsInCommitHistoryOfSubTreeQuery } from './queries/history'
 
@@ -13,7 +13,7 @@ type Inputs = {
 
 type Outputs = {
   body: string
-  associatedPullRequests: string[]
+  associatedPullRequests: number[]
   pullRequestListMarkdown: string // deprecated
 }
 
@@ -43,20 +43,10 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
   core.info(JSON.stringify(history, undefined, 2))
   core.endGroup()
 
-  const pullOrCommits = parseHistory(history, baseCommit.repository.object.oid)
-
-  const pulls = []
-  const body = []
-  for (const pullOrCommit of pullOrCommits) {
-    if (pullOrCommit.startsWith('#')) {
-      pulls.push(pullOrCommit.substring(1))
-    }
-    body.push(`- ${pullOrCommit}`)
-  }
-
+  const association = findAssociation(history, baseCommit.repository.object.oid)
   return {
-    body: body.join('\n'),
-    associatedPullRequests: [...pulls],
-    pullRequestListMarkdown: [...pulls].map((n) => `- #${n}`).join('\n'),
+    body: [...association.pullOrCommits].map((s) => `- ${s}`).join('\n'),
+    associatedPullRequests: [...association.pulls],
+    pullRequestListMarkdown: [...association.pulls].map((s) => `- #${s}`).join('\n'),
   }
 }
