@@ -1,7 +1,8 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
-import { getPullRequestHistoryOfSubTree } from './history'
+import { parseHistory } from './history'
 import { getCommit } from './queries/commit'
+import { getAssociatedPullRequestsInCommitHistoryOfSubTreeQuery } from './queries/history'
 
 type Inputs = {
   token: string
@@ -31,17 +32,18 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
     throw new Error(`unexpected typename ${String(baseCommit.repository?.object?.__typename)} !== Commit`)
   }
 
-  const pullOrCommits = await getPullRequestHistoryOfSubTree(
-    octokit,
-    {
-      owner: github.context.repo.owner,
-      name: github.context.repo.repo,
-      expression: inputs.head,
-      path: inputs.path,
-      since: baseCommit.repository.object.committedDate,
-    },
-    baseCommit.repository.object.oid
-  )
+  const history = await getAssociatedPullRequestsInCommitHistoryOfSubTreeQuery(octokit, {
+    owner: github.context.repo.owner,
+    name: github.context.repo.repo,
+    expression: inputs.head,
+    path: inputs.path,
+    since: baseCommit.repository.object.committedDate,
+  })
+  core.startGroup(`Commit history on ${inputs.head} since ${baseCommit.repository.object.committedDate}`)
+  core.info(JSON.stringify(history, undefined, 2))
+  core.endGroup()
+
+  const pullOrCommits = parseHistory(history, baseCommit.repository.object.oid)
 
   const pulls = []
   const body = []

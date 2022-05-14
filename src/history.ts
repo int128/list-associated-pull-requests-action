@@ -1,25 +1,16 @@
 import * as core from '@actions/core'
-import { GitHub } from '@actions/github/lib/utils'
-import { AssociatedPullRequestsInCommitHistoryOfSubTreeQueryVariables } from './generated/graphql'
-import { getAssociatedPullRequestsInCommitHistoryOfSubTreeQuery } from './queries/history'
+import { AssociatedPullRequestsInCommitHistoryOfSubTreeQuery } from './generated/graphql'
 
-type Octokit = InstanceType<typeof GitHub>
-
-export const getPullRequestHistoryOfSubTree = async (
-  octokit: Octokit,
-  v: AssociatedPullRequestsInCommitHistoryOfSubTreeQueryVariables,
+export const parseHistory = (
+  q: AssociatedPullRequestsInCommitHistoryOfSubTreeQuery,
   endCommit: string
-): Promise<Set<string>> => {
-  const history = await getAssociatedPullRequestsInCommitHistoryOfSubTreeQuery(octokit, v)
-  core.startGroup(`Commit history on ${v.expression} since ${String(v.since)}`)
-  core.info(JSON.stringify(history, undefined, 2))
-  core.endGroup()
-  if (history.repository?.object?.__typename !== 'Commit') {
-    throw new Error(`unexpected typename ${String(history.repository?.object?.__typename)} !== Commit`)
+): Set<string> => {
+  if (q.repository?.object?.__typename !== 'Commit') {
+    throw new Error(`unexpected typename ${String(q.repository?.object?.__typename)} !== Commit`)
   }
 
   const pullOrCommits = new Set<string>()
-  for (const node of history.repository.object.history.nodes ?? []) {
+  for (const node of q.repository.object.history.nodes ?? []) {
     if (node == null) {
       continue
     }
