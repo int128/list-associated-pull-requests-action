@@ -14,7 +14,7 @@ Here is an example of release note.
 
 ### Create a pull request for release
 
-This example workflow creates a pull request from `main` branch into `production` branch with the release note.
+This workflow creates a pull request from `main` branch into `production` branch with the release note.
 
 ```yaml
 name: create-release-pr
@@ -73,6 +73,9 @@ You can set `group-by-sub-paths` option.
 ```
 
 This action generates a list of pull request for each path.
+Here is an example.
+
+<img width="920" alt="image" src="https://user-images.githubusercontent.com/321266/168426515-621a5f68-697f-4284-aa33-a27045287684.png">
 
 
 ## Specification
