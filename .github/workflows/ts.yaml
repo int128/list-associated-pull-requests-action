@@ -38,7 +38,7 @@ jobs:
         id: release-note
         uses: ./
         with:
-          base: refs/tags/v0
+          base: refs/tags/v0.1.0
           head: ${{ github.head_ref }}
       - if: github.event_name == 'pull_request'
         uses: int128/comment-action@v1
