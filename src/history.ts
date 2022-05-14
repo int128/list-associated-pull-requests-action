@@ -1,15 +1,21 @@
 import * as core from '@actions/core'
 import { AssociatedPullRequestsInCommitHistoryOfSubTreeQuery } from './generated/graphql'
 
-export const parseHistory = (
+type Association = {
+  pullOrCommits: Set<string>
+  pulls: Set<number>
+}
+
+export const findAssociation = (
   q: AssociatedPullRequestsInCommitHistoryOfSubTreeQuery,
   endCommit: string
-): Set<string> => {
+): Association => {
   if (q.repository?.object?.__typename !== 'Commit') {
     throw new Error(`unexpected typename ${String(q.repository?.object?.__typename)} !== Commit`)
   }
 
   const pullOrCommits = new Set<string>()
+  const pulls = new Set<number>()
   for (const node of q.repository.object.history.nodes ?? []) {
     if (node == null) {
       continue
@@ -29,7 +35,8 @@ export const parseHistory = (
       }
       core.info(`${node.oid} -> #${pull.number}`)
       pullOrCommits.add(`#${pull.number}`)
+      pulls.add(pull.number)
     }
   }
-  return pullOrCommits
+  return { pullOrCommits, pulls }
 }
