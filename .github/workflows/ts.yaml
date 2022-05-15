@@ -56,6 +56,7 @@ jobs:
           head: ${{ github.head_ref }}
           group-by-sub-paths: |
             src
+            # comment
             .github
       - if: github.event_name == 'pull_request'
         uses: int128/comment-action@v1
