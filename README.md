@@ -6,7 +6,16 @@ This is an action to generate a release note from the commit history.
 ## Getting Started
 
 This action fetch the commits and associated pull requests between base and head, using the query of GitHub GraghQL.
-It generates a markdown string of release note.
+It generates a markdown string for release note.
+
+To generate a release note from commits between `main` branch and `production` branch:
+
+```yaml
+      - uses: int128/release-note-action@v0
+        with:
+          base: refs/heads/main
+          head: refs/heads/production
+```
 
 Here is an example of release note.
 
@@ -66,6 +75,7 @@ frontend/
 You can set `group-by-sub-paths` option.
 
 ```yaml
+      - uses: int128/release-note-action@v0
         with:
           group-by-sub-paths: |
             backend
@@ -84,10 +94,10 @@ Here is an example.
 
 | Name | Default | Description
 |------|----------|------------
+| `token` | `github.token` | GitHub token
 | `base` | (required) | Base branch
 | `head` | (required) | Head branch
 | `path` | `.` | Path to get the commit history of subtree
-| `token` | `github.token` | GitHub token
 | `group-by-sub-paths` | (optional) | Group pull requests by sub-paths (Multiline)
 
 
@@ -95,5 +105,5 @@ Here is an example.
 
 | Name | Description
 |------|------------
-| `body` | List of commits with associated pull requests (Markdown)
-| `associated-pull-requests` | List of pull requests associated to commits (Multiline)
+| `body` | List of associated pull requests or commits (Markdown)
+| `associated-pull-requests` | List of associated pull request numbers (Multiline)
