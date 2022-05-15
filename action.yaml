@@ -22,9 +22,9 @@ inputs:
 
 outputs:
   body:
-    description: List of commits with associated pull requests (Markdown)
+    description: List of associated pull requests or commits (Markdown)
   associated-pull-requests:
-    description: List of pull requests associated to commits (Multiline)
+    description: List of associated pull request numbers (Multiline)
   pull-request-list:
     description: List of pull requests in multiline (deprecated)
   pull-request-list-markdown:
