@@ -43,9 +43,10 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
   core.startGroup(`Commit history on ${inputs.head} since ${baseCommit.repository.object.committedDate}`)
   core.info(JSON.stringify(history, undefined, 2))
   core.endGroup()
-
   const changeSet = findChangeSet(history, baseCommit.repository.object.oid)
-  if (inputs.groupBySubPaths.length === 0) {
+
+  const groupBySubPaths = sanitizeSubPaths(inputs.groupBySubPaths)
+  if (groupBySubPaths.length === 0) {
     return {
       body: [...changeSet.pullOrCommits].map((s) => `- ${s}`).join('\n'),
       associatedPullRequests: [...changeSet.pulls],
@@ -54,7 +55,7 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
   }
 
   const subPathChangeSets = new Map<string, ChangeSet>()
-  for (const subPath of inputs.groupBySubPaths) {
+  for (const subPath of groupBySubPaths) {
     const history = await getAssociatedPullRequestsInCommitHistoryOfSubTreeQuery(octokit, {
       owner: github.context.repo.owner,
       name: github.context.repo.repo,
@@ -93,3 +94,6 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
     pullRequestListMarkdown: [...changeSet.pulls].map((s) => `- #${s}`).join('\n'),
   }
 }
+
+const sanitizeSubPaths = (groupBySubPaths: string[]) =>
+  groupBySubPaths.filter((p) => p.length > 0 && !p.startsWith('#'))

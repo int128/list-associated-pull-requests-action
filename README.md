@@ -72,7 +72,7 @@ backend/
 frontend/
 ```
 
-You can set `group-by-sub-paths` option.
+To group the pull requests by the components:
 
 ```yaml
       - uses: int128/release-note-action@v0
@@ -86,6 +86,9 @@ This action generates a list of pull request for each path.
 Here is an example.
 
 <img width="920" alt="image" src="https://user-images.githubusercontent.com/321266/168426515-621a5f68-697f-4284-aa33-a27045287684.png">
+
+You can put a comment into `group-by-sub-paths`.
+This action ignores a line which starts with `#`.
 
 
 ## Specification
