@@ -1,6 +1,6 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
-import { Association, findAssociation } from './history'
+import { ChangeSet, findChangeSet } from './history'
 import { getCommit } from './queries/commit'
 import { getAssociatedPullRequestsInCommitHistoryOfSubTreeQuery } from './queries/history'
 
@@ -44,16 +44,16 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
   core.info(JSON.stringify(history, undefined, 2))
   core.endGroup()
 
-  const association = findAssociation(history, baseCommit.repository.object.oid)
+  const changeSet = findChangeSet(history, baseCommit.repository.object.oid)
   if (inputs.groupBySubPaths.length === 0) {
     return {
-      body: [...association.pullOrCommits].map((s) => `- ${s}`).join('\n'),
-      associatedPullRequests: [...association.pulls],
-      pullRequestListMarkdown: [...association.pulls].map((s) => `- #${s}`).join('\n'),
+      body: [...changeSet.pullOrCommits].map((s) => `- ${s}`).join('\n'),
+      associatedPullRequests: [...changeSet.pulls],
+      pullRequestListMarkdown: [...changeSet.pulls].map((s) => `- #${s}`).join('\n'),
     }
   }
 
-  const subPathAssociations = new Map<string, Association>()
+  const subPathChangeSets = new Map<string, ChangeSet>()
   for (const subPath of inputs.groupBySubPaths) {
     const history = await getAssociatedPullRequestsInCommitHistoryOfSubTreeQuery(octokit, {
       owner: github.context.repo.owner,
@@ -65,29 +65,29 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
     core.startGroup(`Commit history of subpath ${subPath}`)
     core.info(JSON.stringify(history, undefined, 2))
     core.endGroup()
-    const association = findAssociation(history, baseCommit.repository.object.oid)
-    subPathAssociations.set(subPath, association)
+    const changeSet = findChangeSet(history, baseCommit.repository.object.oid)
+    subPathChangeSets.set(subPath, changeSet)
   }
 
-  const others = new Set(association.pullOrCommits)
+  const otherChangeSet = new Set(changeSet.pullOrCommits)
   const body = []
-  for (const [subPath, association] of subPathAssociations) {
+  for (const [subPath, changeSet] of subPathChangeSets) {
     body.push(`### ${subPath}`)
-    for (const pullOrCommit of association.pullOrCommits) {
+    for (const pullOrCommit of changeSet.pullOrCommits) {
       body.push(`- ${pullOrCommit}`)
-      others.delete(pullOrCommit)
+      otherChangeSet.delete(pullOrCommit)
     }
   }
-  if (others.size > 0) {
+  if (otherChangeSet.size > 0) {
     body.push(`### Others`)
-    for (const pullOrCommit of others) {
+    for (const pullOrCommit of otherChangeSet) {
       body.push(`- ${pullOrCommit}`)
     }
   }
 
   return {
     body: body.join('\n'),
-    associatedPullRequests: [...association.pulls],
-    pullRequestListMarkdown: [...association.pulls].map((s) => `- #${s}`).join('\n'),
+    associatedPullRequests: [...changeSet.pulls],
+    pullRequestListMarkdown: [...changeSet.pulls].map((s) => `- #${s}`).join('\n'),
   }
 }

@@ -1,15 +1,12 @@
 import * as core from '@actions/core'
 import { AssociatedPullRequestsInCommitHistoryOfSubTreeQuery } from './generated/graphql'
 
-export type Association = {
+export type ChangeSet = {
   pullOrCommits: Set<string>
   pulls: Set<number>
 }
 
-export const findAssociation = (
-  q: AssociatedPullRequestsInCommitHistoryOfSubTreeQuery,
-  endCommit: string
-): Association => {
+export const findChangeSet = (q: AssociatedPullRequestsInCommitHistoryOfSubTreeQuery, endCommit: string): ChangeSet => {
   if (q.repository?.object?.__typename !== 'Commit') {
     throw new Error(`unexpected typename ${String(q.repository?.object?.__typename)} !== Commit`)
   }
