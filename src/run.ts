@@ -69,18 +69,20 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
     subPathChangeSets.set(subPath, changeSet)
   }
 
-  const otherChangeSet = new Set(changeSet.pullOrCommits)
+  const otherPullOrCommits = new Set(changeSet.pullOrCommits)
   const body = []
-  for (const [subPath, changeSet] of subPathChangeSets) {
-    body.push(`### ${subPath}`)
-    for (const pullOrCommit of changeSet.pullOrCommits) {
-      body.push(`- ${pullOrCommit}`)
-      otherChangeSet.delete(pullOrCommit)
+  for (const [subPath, { pullOrCommits }] of subPathChangeSets) {
+    if (pullOrCommits.size > 0) {
+      body.push(`### ${subPath}`)
+      for (const pullOrCommit of pullOrCommits) {
+        body.push(`- ${pullOrCommit}`)
+        otherPullOrCommits.delete(pullOrCommit)
+      }
     }
   }
-  if (otherChangeSet.size > 0) {
+  if (otherPullOrCommits.size > 0) {
     body.push(`### Others`)
-    for (const pullOrCommit of otherChangeSet) {
+    for (const pullOrCommit of otherPullOrCommits) {
       body.push(`- ${pullOrCommit}`)
     }
   }
