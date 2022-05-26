@@ -4,8 +4,9 @@ import { run } from './run'
 const main = async (): Promise<void> => {
   const outputs = await run({
     token: core.getInput('token', { required: true }),
-    base: core.getInput('base', { required: true }),
-    head: core.getInput('head', { required: true }),
+    pullRequest: parseInt(core.getInput('pull-request')),
+    base: core.getInput('base'),
+    head: core.getInput('head'),
     path: core.getInput('path', { required: true }),
     groupBySubPaths: core.getMultilineInput('group-by-sub-paths'),
   })

@@ -33,13 +33,11 @@ jobs:
       - run: yarn build
       - run: yarn package
 
-      # generate a release note since the major tag
       - if: github.event_name == 'pull_request'
         id: release-note
         uses: ./
         with:
-          base: refs/tags/v0
-          head: ${{ github.head_ref }}
+          pull-request: ${{ github.event.number }}
       - if: github.event_name == 'pull_request'
         uses: int128/comment-action@v1
         with:
@@ -47,13 +45,11 @@ jobs:
             ## Release note
             ${{ steps.release-note.outputs.body }}
 
-      # generate a release note with group
       - if: github.event_name == 'pull_request'
         id: release-note-grouped
         uses: ./
         with:
-          base: refs/tags/v0
-          head: ${{ github.head_ref }}
+          pull-request: ${{ github.event.number }}
           group-by-sub-paths: |
             src
             # comment

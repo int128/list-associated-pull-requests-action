@@ -19,3 +19,13 @@ export type AssociatedPullRequestsInCommitHistoryOfSubTreeQueryVariables = Types
 
 
 export type AssociatedPullRequestsInCommitHistoryOfSubTreeQuery = { __typename?: 'Query', rateLimit?: { __typename?: 'RateLimit', cost: number } | null, repository?: { __typename?: 'Repository', object?: { __typename: 'Blob' } | { __typename: 'Commit', history: { __typename?: 'CommitHistoryConnection', nodes?: Array<{ __typename?: 'Commit', oid: string, associatedPullRequests?: { __typename?: 'PullRequestConnection', nodes?: Array<{ __typename?: 'PullRequest', number: number } | null> | null } | null } | null> | null } } | { __typename: 'Tag' } | { __typename: 'Tree' } | null } | null };
+
+export type PullRequestCommitsQueryVariables = Types.Exact<{
+  owner: Types.Scalars['String'];
+  name: Types.Scalars['String'];
+  number: Types.Scalars['Int'];
+  commitCursor?: Types.InputMaybe<Types.Scalars['String']>;
+}>;
+
+
+export type PullRequestCommitsQuery = { __typename?: 'Query', rateLimit?: { __typename?: 'RateLimit', cost: number } | null, repository?: { __typename?: 'Repository', pullRequest?: { __typename?: 'PullRequest', commits: { __typename?: 'PullRequestCommitConnection', totalCount: number, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null }, nodes?: Array<{ __typename?: 'PullRequestCommit', commit: { __typename?: 'Commit', oid: string, associatedPullRequests?: { __typename?: 'PullRequestConnection', nodes?: Array<{ __typename?: 'PullRequest', number: number } | null> | null } | null } } | null> | null } } | null } | null };
