@@ -1,5 +1,5 @@
 import * as core from '@actions/core'
-import { AssociatedPullRequestsInCommitHistoryOfSubTreeQuery } from './generated/graphql'
+import { AssociatedPullRequestsInCommitHistoryOfSubTreeQuery, PullRequestCommitsQuery } from './generated/graphql'
 
 export type ChangeSet = {
   pullOrCommits: Set<string>
@@ -33,6 +33,32 @@ export const findChangeSet = (q: AssociatedPullRequestsInCommitHistoryOfSubTreeQ
       core.info(`${node.oid} -> #${pull.number}`)
       pullOrCommits.add(`#${pull.number}`)
       pulls.add(pull.number)
+    }
+  }
+  return { pullOrCommits, pulls }
+}
+
+export const findChangeSetFromPullRequestCommitsQueryList = (commitsList: PullRequestCommitsQuery[]): ChangeSet => {
+  const pullOrCommits = new Set<string>()
+  const pulls = new Set<number>()
+  for (const commits of commitsList) {
+    for (const node of commits.repository?.pullRequest?.commits.nodes ?? []) {
+      if (node?.commit.oid === undefined) {
+        continue
+      }
+      if (!node.commit.associatedPullRequests?.nodes?.length) {
+        core.info(`${node.commit.oid} -> no pull request`)
+        pullOrCommits.add(node.commit.oid)
+        continue
+      }
+      for (const pull of node.commit.associatedPullRequests.nodes) {
+        if (pull?.number === undefined) {
+          continue
+        }
+        core.info(`${node.commit.oid} -> #${pull.number}`)
+        pullOrCommits.add(`#${pull.number}`)
+        pulls.add(pull.number)
+      }
     }
   }
   return { pullOrCommits, pulls }

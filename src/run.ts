@@ -1,11 +1,13 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
 import { ChangeSet, findChangeSet } from './history'
+import { computeChangeSetOfPullRequest } from './pull'
 import { getCommit } from './queries/commit'
 import { getAssociatedPullRequestsInCommitHistoryOfSubTreeQuery } from './queries/history'
 
 type Inputs = {
   token: string
+  pullRequest: number
   base: string
   head: string
   path: string
@@ -19,6 +21,18 @@ type Outputs = {
 }
 
 export const run = async (inputs: Inputs): Promise<Outputs> => {
+  inputs.groupBySubPaths = sanitizeSubPaths(inputs.groupBySubPaths)
+
+  if (inputs.pullRequest) {
+    return await computeChangeSetOfPullRequest(inputs)
+  }
+  if (inputs.base && inputs.head) {
+    return await computeChangeSetBetweenBaseHead(inputs)
+  }
+  throw new Error('you need to set either pull-request or base/head')
+}
+
+const computeChangeSetBetweenBaseHead = async (inputs: Inputs): Promise<Outputs> => {
   const octokit = github.getOctokit(inputs.token)
 
   const baseCommit = await getCommit(octokit, {
@@ -45,8 +59,7 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
   core.endGroup()
   const changeSet = findChangeSet(history, baseCommit.repository.object.oid)
 
-  const groupBySubPaths = sanitizeSubPaths(inputs.groupBySubPaths)
-  if (groupBySubPaths.length === 0) {
+  if (inputs.groupBySubPaths.length === 0) {
     return {
       body: [...changeSet.pullOrCommits].map((s) => `- ${s}`).join('\n'),
       associatedPullRequests: [...changeSet.pulls],
@@ -55,7 +68,7 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
   }
 
   const subPathChangeSets = new Map<string, ChangeSet>()
-  for (const subPath of groupBySubPaths) {
+  for (const subPath of inputs.groupBySubPaths) {
     const history = await getAssociatedPullRequestsInCommitHistoryOfSubTreeQuery(octokit, {
       owner: github.context.repo.owner,
       name: github.context.repo.repo,

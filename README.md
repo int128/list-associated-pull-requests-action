@@ -98,10 +98,13 @@ This action ignores a line which starts with `#`.
 | Name | Default | Description
 |------|----------|------------
 | `token` | `github.token` | GitHub token
-| `base` | (required) | Base branch
-| `head` | (required) | Head branch
+| `pull-request` | <sup>*1</sup> | Pull request to parse (experimental)
+| `base` | <sup>*1</sup> | Base branch
+| `head` | <sup>*1</sup> | Head branch
 | `path` | `.` | Path to get the commit history of subtree
 | `group-by-sub-paths` | (optional) | Group pull requests by sub-paths (Multiline)
+
+You need to set either `base` and `head`, or `pull-request`.
 
 
 ### Outputs
