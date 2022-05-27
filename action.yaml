@@ -28,10 +28,6 @@ outputs:
     description: List of associated pull requests or commits (Markdown)
   associated-pull-requests:
     description: List of associated pull request numbers (Multiline)
-  pull-request-list:
-    description: List of pull requests in multiline (deprecated)
-  pull-request-list-markdown:
-    description: List of pull requests in markdown (deprecated)
 
 runs:
   using: 'node16'
