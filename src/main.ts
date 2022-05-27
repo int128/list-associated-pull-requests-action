@@ -13,10 +13,6 @@ const main = async (): Promise<void> => {
 
   core.setOutput('body', outputs.body)
   core.setOutput('associated-pull-requests', outputs.associatedPullRequests.join('\n'))
-
-  // deprecated
-  core.setOutput('pull-request-list', outputs.associatedPullRequests.join('\n'))
-  core.setOutput('pull-request-list-markdown', outputs.pullRequestListMarkdown)
 }
 
 main().catch((e) => core.setFailed(e instanceof Error ? e.message : JSON.stringify(e)))

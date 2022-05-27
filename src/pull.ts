@@ -13,7 +13,6 @@ type Inputs = {
 type Outputs = {
   body: string
   associatedPullRequests: number[]
-  pullRequestListMarkdown: string // deprecated
 }
 
 export const computeChangeSetOfPullRequest = async (inputs: Inputs): Promise<Outputs> => {
@@ -39,6 +38,5 @@ export const computeChangeSetOfPullRequest = async (inputs: Inputs): Promise<Out
   return {
     body: [...changeSet.pullOrCommits].map((s) => `- ${s}`).join('\n'),
     associatedPullRequests: [...changeSet.pulls],
-    pullRequestListMarkdown: [...changeSet.pulls].map((s) => `- #${s}`).join('\n'),
   }
 }
