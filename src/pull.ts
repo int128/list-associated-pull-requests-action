@@ -36,18 +36,18 @@ export const computeChangeSetOfPullRequest = async (inputs: Inputs): Promise<Out
 
   const commits = parsePullRequestCommitsQueryList(commitsList)
 
-  const commitOrPulls = new Set<string>()
+  const pullOrCommits = new Set<string>()
   const pulls = new Set<number>()
   for (const c of commits) {
     if (c.pull !== undefined) {
-      commitOrPulls.add(`#${c.pull}`)
+      pullOrCommits.add(`#${c.pull}`)
       pulls.add(c.pull)
       continue
     }
-    commitOrPulls.add(c.oid)
+    pullOrCommits.add(c.oid)
   }
   return {
-    body: [...commitOrPulls].join('\n'),
+    body: [...pullOrCommits].map((s) => `- ${s}`).join('\n'),
     associatedPullRequests: [...pulls],
   }
 }
