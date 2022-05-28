@@ -33,23 +33,23 @@ jobs:
       - run: yarn build
       - run: yarn package
 
-      - if: github.event_name == 'pull_request'
-        id: associated-pull-requests
+      - id: associated-pull-requests
         uses: ./
         with:
-          pull-request: ${{ github.event.number }}
+          # https://github.com/int128/list-associated-pull-requests-action/pull/95
+          pull-request: 95
       - if: github.event_name == 'pull_request'
         uses: int128/comment-action@v1
         with:
           post: |
-            ## Release note
+            ## Changes
             ${{ steps.associated-pull-requests.outputs.body }}
 
-      - if: github.event_name == 'pull_request'
-        id: associated-pull-requests-grouped
+      - id: associated-pull-requests-grouped
         uses: ./
         with:
-          pull-request: ${{ github.event.number }}
+          # https://github.com/int128/list-associated-pull-requests-action/pull/95
+          pull-request: 95
           group-by-sub-paths: |
             src
             # comment
@@ -58,7 +58,7 @@ jobs:
         uses: int128/comment-action@v1
         with:
           post: |
-            ## Release note (grouped)
+            ## Changes (grouped)
             ${{ steps.associated-pull-requests-grouped.outputs.body }}
 
   generate:
