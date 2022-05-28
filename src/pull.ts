@@ -69,13 +69,13 @@ export const computeChangeSetOfPullRequest = async (inputs: Inputs): Promise<Out
   for (const [subPath, metadataMap] of subPathCommitMetadatas) {
     body.push(`### ${subPath}`)
     for (const [oid, metadata] of metadataMap) {
-      body.push(metadata.pull ? `#${metadata.pull}` : oid)
+      body.push(`- ${metadata.pull ? `#${metadata.pull}` : oid}`)
     }
   }
   if (otherCommitMetadatas.size > 0) {
     body.push(`### Others`)
     for (const [oid, metadata] of otherCommitMetadatas) {
-      body.push(metadata.pull ? `#${metadata.pull}` : oid)
+      body.push(`- ${metadata.pull ? `#${metadata.pull}` : oid}`)
     }
   }
 
