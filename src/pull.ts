@@ -1,6 +1,6 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
-import { findChangeSetFromPullRequestCommitsQueryList } from './history'
+import { PullRequestCommitsQuery } from './generated/graphql'
 import { getPullRequestCommits } from './queries/pull'
 
 type Inputs = {
@@ -33,10 +33,47 @@ export const computeChangeSetOfPullRequest = async (inputs: Inputs): Promise<Out
   core.startGroup(`Commit of pull request #${inputs.pullRequest}`)
   core.info(JSON.stringify(commitsList, undefined, 2))
   core.endGroup()
-  const changeSet = findChangeSetFromPullRequestCommitsQueryList(commitsList)
+
+  const commits = parsePullRequestCommitsQueryList(commitsList)
+  const associatedPullRequests = []
+  for (const c of commits) {
+    if (c.pull !== undefined) {
+      associatedPullRequests.push(c.pull)
+    }
+  }
 
   return {
-    body: [...changeSet.pullOrCommits].map((s) => `- ${s}`).join('\n'),
-    associatedPullRequests: [...changeSet.pulls],
+    body: commits.map((c) => `- ${c.pull ?? c.oid}`).join('\n'),
+    associatedPullRequests,
   }
+}
+
+type Commit = {
+  oid: string
+  pull?: number
+}
+
+const parsePullRequestCommitsQueryList = (commitsList: PullRequestCommitsQuery[]): Commit[] => {
+  const parsedCommits = []
+  for (const commits of commitsList) {
+    for (const node of commits.repository?.pullRequest?.commits.nodes ?? []) {
+      if (node?.commit.oid === undefined) {
+        continue
+      }
+      const associatedPullRequest = node.commit.associatedPullRequests?.nodes?.find((node) => node)
+      if (associatedPullRequest) {
+        core.info(`${node.commit.oid} -> #${associatedPullRequest.number}`)
+        parsedCommits.push({
+          oid: node.commit.oid,
+          pull: associatedPullRequest.number,
+        })
+        continue
+      }
+      core.info(`${node.commit.oid} -> no pull request`)
+      parsedCommits.push({
+        oid: node.commit.oid,
+      })
+    }
+  }
+  return parsedCommits
 }
