@@ -34,7 +34,7 @@ jobs:
       - run: yarn package
 
       - if: github.event_name == 'pull_request'
-        id: release-note
+        id: associated-pull-requests
         uses: ./
         with:
           pull-request: ${{ github.event.number }}
@@ -43,10 +43,10 @@ jobs:
         with:
           post: |
             ## Release note
-            ${{ steps.release-note.outputs.body }}
+            ${{ steps.associated-pull-requests.outputs.body }}
 
       - if: github.event_name == 'pull_request'
-        id: release-note-grouped
+        id: associated-pull-requests-grouped
         uses: ./
         with:
           pull-request: ${{ github.event.number }}
@@ -59,7 +59,7 @@ jobs:
         with:
           post: |
             ## Release note (grouped)
-            ${{ steps.release-note-grouped.outputs.body }}
+            ${{ steps.associated-pull-requests-grouped.outputs.body }}
 
   generate:
     runs-on: ubuntu-latest

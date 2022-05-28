@@ -1,4 +1,4 @@
-name: release-note-action
+name: list-associated-pull-requests-action
 description: Action to generate release note from commit history
 
 inputs:

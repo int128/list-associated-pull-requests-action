@@ -1,4 +1,4 @@
-# release-note-action [![ts](https://github.com/int128/release-note-action/actions/workflows/ts.yaml/badge.svg)](https://github.com/int128/release-note-action/actions/workflows/ts.yaml)
+# list-associated-pull-requests-action [![ts](https://github.com/int128/list-associated-pull-requests-action/actions/workflows/ts.yaml/badge.svg)](https://github.com/int128/list-associated-pull-requests-action/actions/workflows/ts.yaml)
 
 This is an action to generate a release note from the commit history.
 
@@ -11,7 +11,7 @@ It generates a markdown string for release note.
 To generate a release note from commits between `main` branch and `production` branch:
 
 ```yaml
-      - uses: int128/release-note-action@v0
+      - uses: int128/list-associated-pull-requests-action@v0
         with:
           base: refs/heads/main
           head: refs/heads/production
@@ -35,7 +35,7 @@ jobs:
   create:
     runs-on: ubuntu-latest
     steps:
-      - uses: int128/release-note-action@v0
+      - uses: int128/list-associated-pull-requests-action@v0
         with:
           base: refs/heads/main
           head: refs/heads/production
@@ -44,7 +44,7 @@ jobs:
         env:
           base: main
           head: production
-          body: ${{ steps.release-note.outputs.body }}
+          body: ${{ steps.associated-pull-requests.outputs.body }}
         with:
           script: |
             const { data: pull } = await github.rest.pulls.create({
@@ -75,7 +75,7 @@ frontend/
 To group the pull requests by the components:
 
 ```yaml
-      - uses: int128/release-note-action@v0
+      - uses: int128/list-associated-pull-requests-action@v0
         with:
           group-by-sub-paths: |
             backend
