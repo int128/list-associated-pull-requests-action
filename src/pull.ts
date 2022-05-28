@@ -43,7 +43,7 @@ export const computeChangeSetOfPullRequest = async (inputs: Inputs): Promise<Out
   }
 
   return {
-    body: commits.map((c) => `- ${c.pull ?? c.oid}`).join('\n'),
+    body: commits.map((c) => `- ${c.pull !== undefined ? `#${c.pull}` : c.oid}`).join('\n'),
     associatedPullRequests,
   }
 }
