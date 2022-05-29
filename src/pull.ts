@@ -51,11 +51,9 @@ export const computeChangeSetOfPullRequest = async (inputs: Inputs): Promise<Out
   }
 
   const commitPullsOfPaths = []
-  const commitPullsOfOthers = new Map<CommitId, AssociatedPullRequestNumber>([...pullRequestCommits.commitPulls])
   for (const { path, commits } of commitsOfPaths) {
     const commitPullsOfThisPath = new Map<CommitId, AssociatedPullRequestNumber>()
     for (const oid of commits) {
-      commitPullsOfOthers.delete(oid)
       const commitPull = pullRequestCommits.commitPulls.get(oid)
       if (commitPull !== undefined) {
         commitPullsOfThisPath.set(path, commitPull)
@@ -63,6 +61,13 @@ export const computeChangeSetOfPullRequest = async (inputs: Inputs): Promise<Out
     }
     if (commitPullsOfThisPath.size > 0) {
       commitPullsOfPaths.push({ path, commitPullsOfThisPath })
+    }
+  }
+
+  const commitPullsOfOthers = new Map(pullRequestCommits.commitPulls)
+  for (const { commitPullsOfThisPath } of commitPullsOfPaths) {
+    for (const [oid] of commitPullsOfThisPath) {
+      commitPullsOfOthers.delete(oid)
     }
   }
 
