@@ -22,54 +22,46 @@ export const computeChangeSetOfPullRequest = async (inputs: Inputs): Promise<Out
 
   const octokit = github.getOctokit(inputs.token)
 
-  const commitsList = await getPullRequestCommits(octokit, {
+  const commitsQueryList = await getPullRequestCommits(octokit, {
     owner: github.context.repo.owner,
     name: github.context.repo.repo,
     number: inputs.pullRequest,
   })
   core.startGroup(`Commit of pull request #${inputs.pullRequest}`)
-  core.info(JSON.stringify(commitsList, undefined, 2))
+  core.info(JSON.stringify(commitsQueryList, undefined, 2))
   core.endGroup()
 
-  const pullRequestCommits = parsePullRequestCommitsQueryList(commitsList)
-  core.info(`earliestCommittedDate = ${pullRequestCommits.earliestCommittedDate.toISOString()}`)
+  const earliestCommittedDate = findEarliestCommittedDate(commitsQueryList)
+  if (earliestCommittedDate === undefined) {
+    throw new Error(`internal error: earliestCommittedDate === undefined`)
+  }
+  core.info(`earliestCommittedDate = ${earliestCommittedDate.toISOString()}`)
 
-  const commitsOfPaths = []
+  const headRefOid = findHeadRefOid(commitsQueryList)
+  if (headRefOid === undefined) {
+    throw new Error(`internal error: headRefOid === undefined`)
+  }
+  core.info(`headRefOid = ${headRefOid}`)
+
+  const historyQueryList = []
   for (const path of inputs.groupBySubPaths) {
     const q = await getCommitHistoryOfSubTree(octokit, {
       owner: github.context.repo.owner,
       name: github.context.repo.repo,
-      oid: pullRequestCommits.headRefOid,
+      oid: headRefOid,
       path,
-      since: pullRequestCommits.earliestCommittedDate.toISOString(),
+      since: earliestCommittedDate,
     })
     core.startGroup(`Commit history of sub tree: ${path}`)
     core.info(JSON.stringify(q, undefined, 2))
     core.endGroup()
-    const commits = parseCommitHistoryOfSubTreeQuery(q)
-    commitsOfPaths.push({ path, commits })
+    historyQueryList.push({ path, q })
   }
 
-  const commitPullsOfPaths = []
-  for (const { path, commits } of commitsOfPaths) {
-    const commitPullsOfThisPath = new Map<CommitId, AssociatedPullRequestNumber>()
-    for (const oid of commits) {
-      const commitPull = pullRequestCommits.commitPulls.get(oid)
-      if (commitPull !== undefined) {
-        commitPullsOfThisPath.set(path, commitPull)
-      }
-    }
-    if (commitPullsOfThisPath.size > 0) {
-      commitPullsOfPaths.push({ path, commitPullsOfThisPath })
-    }
-  }
-
-  const commitPullsOfOthers = new Map(pullRequestCommits.commitPulls)
-  for (const { commitPullsOfThisPath } of commitPullsOfPaths) {
-    for (const [oid] of commitPullsOfThisPath) {
-      commitPullsOfOthers.delete(oid)
-    }
-  }
+  const { commitPullsOfPaths, commitPullsOfOthers, associatedPullRequests } = calculate(
+    commitsQueryList,
+    historyQueryList
+  )
 
   const body = []
   for (const { path, commitPullsOfThisPath } of commitPullsOfPaths) {
@@ -87,9 +79,64 @@ export const computeChangeSetOfPullRequest = async (inputs: Inputs): Promise<Out
 
   return {
     body: body.join('\n'),
-    associatedPullRequests: [...pullRequestCommits.pulls],
+    associatedPullRequests,
   }
 }
+
+export const calculate = (
+  commitsQueryList: PullRequestCommitsQuery[],
+  historyQueryList: { path: string; q: CommitHistoryOfSubTreeQuery }[]
+) => {
+  const pullRequestCommits = parsePullRequestCommitsQueryList(commitsQueryList)
+  const associatedPullRequests = [...pullRequestCommits.pulls]
+
+  const commitsOfPaths = []
+  for (const { path, q } of historyQueryList) {
+    const commitIds = parseCommitHistoryOfSubTreeQuery(q)
+    commitsOfPaths.push({ path, commitIds })
+  }
+
+  const commitPullsOfPaths = []
+  for (const { path, commitIds } of commitsOfPaths) {
+    const commitPullsOfThisPath = new Map<CommitId, AssociatedPullRequestNumber>()
+    for (const commitId of commitIds) {
+      const commitPull = pullRequestCommits.commitPulls.get(commitId)
+      if (commitPull !== undefined) {
+        commitPullsOfThisPath.set(commitId, commitPull)
+      }
+    }
+    if (commitPullsOfThisPath.size > 0) {
+      commitPullsOfPaths.push({ path, commitPullsOfThisPath })
+    }
+  }
+
+  const commitPullsOfOthers = new Map(pullRequestCommits.commitPulls)
+  for (const { commitPullsOfThisPath } of commitPullsOfPaths) {
+    for (const [oid] of commitPullsOfThisPath) {
+      commitPullsOfOthers.delete(oid)
+    }
+  }
+
+  return { commitPullsOfPaths, commitPullsOfOthers, associatedPullRequests }
+}
+
+const findEarliestCommittedDate = (queryList: PullRequestCommitsQuery[]) => {
+  let earliestCommittedDate: Date | undefined
+  for (const q of queryList) {
+    for (const node of q.repository?.pullRequest?.commits?.nodes ?? []) {
+      if (node?.commit === undefined) {
+        continue
+      }
+      const committedDate = new Date(node.commit.committedDate)
+      if (earliestCommittedDate === undefined || committedDate < earliestCommittedDate) {
+        earliestCommittedDate = committedDate
+      }
+    }
+  }
+  return earliestCommittedDate
+}
+
+const findHeadRefOid = (queryList: PullRequestCommitsQuery[]) => queryList[0].repository?.pullRequest?.headRefOid
 
 type CommitId = string
 type AssociatedPullRequestNumber = number | null
@@ -97,29 +144,20 @@ type AssociatedPullRequestNumber = number | null
 type PullRequestCommits = {
   commitPulls: Map<CommitId, AssociatedPullRequestNumber>
   pulls: Set<number>
-  earliestCommittedDate: Date
-  headRefOid: string
 }
 
 const parsePullRequestCommitsQueryList = (queryList: PullRequestCommitsQuery[]): PullRequestCommits => {
-  const commits = new Map<CommitId, AssociatedPullRequestNumber>()
+  const commitPulls = new Map<CommitId, AssociatedPullRequestNumber>()
   const pulls = new Set<number>()
-  let earliestCommittedDate: Date | undefined
-
-  const headRefOid = queryList[0].repository?.pullRequest?.headRefOid
 
   for (const q of queryList) {
     for (const node of q.repository?.pullRequest?.commits?.nodes ?? []) {
       if (node?.commit.oid === undefined) {
         continue
       }
-      const committedDate = new Date(node.commit.committedDate)
-      if (earliestCommittedDate === undefined || committedDate < earliestCommittedDate) {
-        earliestCommittedDate = committedDate
-      }
       if (!node.commit.associatedPullRequests?.nodes?.length) {
         core.info(`${node.commit.oid} -> none (${node.commit.committedDate})`)
-        commits.set(node.commit.oid, null)
+        commitPulls.set(node.commit.oid, null)
         continue
       }
       for (const pull of node.commit.associatedPullRequests.nodes) {
@@ -127,31 +165,24 @@ const parsePullRequestCommitsQueryList = (queryList: PullRequestCommitsQuery[]):
           continue
         }
         core.info(`${node.commit.oid} -> #${pull.number} (${node.commit.committedDate})`)
-        commits.set(node.commit.oid, pull.number)
+        commitPulls.set(node.commit.oid, pull.number)
         pulls.add(pull.number)
       }
     }
   }
-
-  if (earliestCommittedDate === undefined) {
-    throw new Error(`internal error: earliestCommittedDate === undefined`)
-  }
-  if (headRefOid === undefined) {
-    throw new Error(`internal error: headRefOid === undefined`)
-  }
-  return { commitPulls: commits, pulls, earliestCommittedDate, headRefOid }
+  return { commitPulls, pulls }
 }
 
 const parseCommitHistoryOfSubTreeQuery = (q: CommitHistoryOfSubTreeQuery): Set<CommitId> => {
   if (q.repository?.object?.__typename !== 'Commit') {
     throw new Error(`internal error: __typename !== Commit`)
   }
-  const commits = new Set<CommitId>()
+  const commitIds = new Set<CommitId>()
   for (const node of q.repository.object.history.nodes ?? []) {
     if (node == null) {
       continue
     }
-    commits.add(node.oid)
+    commitIds.add(node.oid)
   }
-  return commits
+  return commitIds
 }
