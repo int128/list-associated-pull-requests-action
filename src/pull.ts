@@ -79,7 +79,7 @@ export const computeChangeSetOfPullRequest = async (inputs: Inputs): Promise<Out
 
   return {
     body: body.join('\n'),
-    associatedPullRequests,
+    associatedPullRequests: [...associatedPullRequests],
   }
 }
 
@@ -115,10 +115,10 @@ export const calculate = (
     }
   }
 
-  const associatedPullRequests = []
+  const associatedPullRequests = new Set<number>()
   for (const [, pull] of commitPulls) {
     if (pull !== null) {
-      associatedPullRequests.push(pull)
+      associatedPullRequests.add(pull)
     }
   }
 
