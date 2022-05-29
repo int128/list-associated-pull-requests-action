@@ -36,8 +36,8 @@ jobs:
       - id: associated-pull-requests
         uses: ./
         with:
-          # https://github.com/int128/list-associated-pull-requests-action/pull/95
-          pull-request: 95
+          # https://github.com/int128/list-associated-pull-requests-action/pull/98
+          pull-request: 98
       - if: github.event_name == 'pull_request'
         uses: int128/comment-action@v1
         with:
@@ -48,8 +48,8 @@ jobs:
       - id: associated-pull-requests-grouped
         uses: ./
         with:
-          # https://github.com/int128/list-associated-pull-requests-action/pull/95
-          pull-request: 95
+          # https://github.com/int128/list-associated-pull-requests-action/pull/98
+          pull-request: 98
           group-by-sub-paths: |
             src
             # comment
