@@ -32,50 +32,51 @@ export const computeChangeSetOfPullRequest = async (inputs: Inputs): Promise<Out
   core.endGroup()
 
   const pullRequestCommits = parsePullRequestCommitsQueryList(commitsList)
+  core.info(`earliestCommittedDate = ${pullRequestCommits.earliestCommittedDate.toISOString()}`)
 
-  const subPathCommits = new Map<string, Set<string>>()
-  for (const subPath of inputs.groupBySubPaths) {
+  const commitsOfPaths = []
+  for (const path of inputs.groupBySubPaths) {
     const q = await getCommitHistoryOfSubTree(octokit, {
       owner: github.context.repo.owner,
       name: github.context.repo.repo,
       oid: pullRequestCommits.headRefOid,
-      path: subPath,
+      path,
       since: pullRequestCommits.earliestCommittedDate.toISOString(),
     })
-    core.startGroup(`Commit history of sub tree: ${subPath}`)
+    core.startGroup(`Commit history of sub tree: ${path}`)
     core.info(JSON.stringify(q, undefined, 2))
     core.endGroup()
     const commits = parseCommitHistoryOfSubTreeQuery(q)
-    subPathCommits.set(subPath, commits)
+    commitsOfPaths.push({ path, commits })
   }
 
-  const subPathCommitMetadatas = new Map<string, Map<string, CommitMetadata>>()
-  const otherCommitMetadatas = new Map(pullRequestCommits.commitMetadatas)
-  for (const [subPath, oids] of subPathCommits) {
-    const commitMetadataInSubPath = new Map<string, CommitMetadata>()
-    for (const oid of oids) {
-      otherCommitMetadatas.delete(oid)
-      const commitMetadata = pullRequestCommits.commitMetadatas.get(oid)
-      if (commitMetadata !== undefined) {
-        commitMetadataInSubPath.set(subPath, commitMetadata)
+  const commitPullsOfPaths = []
+  const commitPullsOfOthers = new Map<CommitId, AssociatedPullRequestNumber>([...pullRequestCommits.commitPulls])
+  for (const { path, commits } of commitsOfPaths) {
+    const commitPullsOfThisPath = new Map<CommitId, AssociatedPullRequestNumber>()
+    for (const oid of commits) {
+      commitPullsOfOthers.delete(oid)
+      const commitPull = pullRequestCommits.commitPulls.get(oid)
+      if (commitPull !== undefined) {
+        commitPullsOfThisPath.set(path, commitPull)
       }
     }
-    if (commitMetadataInSubPath.size > 0) {
-      subPathCommitMetadatas.set(subPath, commitMetadataInSubPath)
+    if (commitPullsOfThisPath.size > 0) {
+      commitPullsOfPaths.push({ path, commitPullsOfThisPath })
     }
   }
 
   const body = []
-  for (const [subPath, metadataMap] of subPathCommitMetadatas) {
-    body.push(`### ${subPath}`)
-    for (const [oid, metadata] of metadataMap) {
-      body.push(`- ${metadata.pull ? `#${metadata.pull}` : oid}`)
+  for (const { path, commitPullsOfThisPath } of commitPullsOfPaths) {
+    body.push(`### ${path}`)
+    for (const [oid, pull] of commitPullsOfThisPath) {
+      body.push(`- ${pull ? `#${pull}` : oid}`)
     }
   }
-  if (otherCommitMetadatas.size > 0) {
+  if (commitPullsOfOthers.size > 0) {
     body.push(`### Others`)
-    for (const [oid, metadata] of otherCommitMetadatas) {
-      body.push(`- ${metadata.pull ? `#${metadata.pull}` : oid}`)
+    for (const [oid, pull] of commitPullsOfOthers) {
+      body.push(`- ${pull ? `#${pull}` : oid}`)
     }
   }
 
@@ -85,19 +86,18 @@ export const computeChangeSetOfPullRequest = async (inputs: Inputs): Promise<Out
   }
 }
 
-type CommitMetadata = {
-  pull?: number
-}
+type CommitId = string
+type AssociatedPullRequestNumber = number | null
 
 type PullRequestCommits = {
-  commitMetadatas: Map<string, CommitMetadata>
+  commitPulls: Map<CommitId, AssociatedPullRequestNumber>
   pulls: Set<number>
   earliestCommittedDate: Date
   headRefOid: string
 }
 
 const parsePullRequestCommitsQueryList = (queryList: PullRequestCommitsQuery[]): PullRequestCommits => {
-  const commits = new Map<string, CommitMetadata>()
+  const commits = new Map<CommitId, AssociatedPullRequestNumber>()
   const pulls = new Set<number>()
   let earliestCommittedDate: Date | undefined
 
@@ -113,16 +113,16 @@ const parsePullRequestCommitsQueryList = (queryList: PullRequestCommitsQuery[]):
         earliestCommittedDate = committedDate
       }
       if (!node.commit.associatedPullRequests?.nodes?.length) {
-        core.info(`${node.commit.oid} -> no pull request`)
-        commits.set(node.commit.oid, {})
+        core.info(`${node.commit.oid} -> none (${node.commit.committedDate})`)
+        commits.set(node.commit.oid, null)
         continue
       }
       for (const pull of node.commit.associatedPullRequests.nodes) {
         if (pull == null) {
           continue
         }
-        core.info(`${node.commit.oid} -> #${pull.number}`)
-        commits.set(node.commit.oid, { pull: pull.number })
+        core.info(`${node.commit.oid} -> #${pull.number} (${node.commit.committedDate})`)
+        commits.set(node.commit.oid, pull.number)
         pulls.add(pull.number)
       }
     }
@@ -134,14 +134,14 @@ const parsePullRequestCommitsQueryList = (queryList: PullRequestCommitsQuery[]):
   if (headRefOid === undefined) {
     throw new Error(`internal error: headRefOid === undefined`)
   }
-  return { commitMetadatas: commits, pulls, earliestCommittedDate, headRefOid }
+  return { commitPulls: commits, pulls, earliestCommittedDate, headRefOid }
 }
 
-const parseCommitHistoryOfSubTreeQuery = (q: CommitHistoryOfSubTreeQuery): Set<string> => {
+const parseCommitHistoryOfSubTreeQuery = (q: CommitHistoryOfSubTreeQuery): Set<CommitId> => {
   if (q.repository?.object?.__typename !== 'Commit') {
     throw new Error(`internal error: __typename !== Commit`)
   }
-  const commits = new Set<string>()
+  const commits = new Set<CommitId>()
   for (const node of q.repository.object.history.nodes ?? []) {
     if (node == null) {
       continue
