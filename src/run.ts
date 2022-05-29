@@ -1,80 +1,31 @@
-import * as core from '@actions/core'
-import * as github from '@actions/github'
-import { getCommit } from './queries/commit'
-import { getAssociatedPullRequestsInCommitHistoryOfSubTreeQuery } from './queries/history'
+import { computeChangeSetBetweenBaseHead } from './basehead'
+import { computeChangeSetOfPullRequest } from './pull'
 
 type Inputs = {
   token: string
+  pullRequest: number
   base: string
   head: string
   path: string
+  groupBySubPaths: string[]
 }
 
 type Outputs = {
   body: string
   associatedPullRequests: number[]
-  pullRequestListMarkdown: string // deprecated
 }
 
 export const run = async (inputs: Inputs): Promise<Outputs> => {
-  const octokit = github.getOctokit(inputs.token)
+  inputs.groupBySubPaths = sanitizeSubPaths(inputs.groupBySubPaths)
 
-  const baseCommit = await getCommit(octokit, {
-    owner: github.context.repo.owner,
-    name: github.context.repo.repo,
-    expression: inputs.base,
-  })
-  core.startGroup(`Base commit of ${inputs.base}`)
-  core.info(JSON.stringify(baseCommit, undefined, 2))
-  core.endGroup()
-  if (baseCommit.repository?.object?.__typename !== 'Commit') {
-    throw new Error(`unexpected typename ${String(baseCommit.repository?.object?.__typename)} !== Commit`)
+  if (inputs.pullRequest) {
+    return await computeChangeSetOfPullRequest(inputs)
   }
-
-  const history = await getAssociatedPullRequestsInCommitHistoryOfSubTreeQuery(octokit, {
-    owner: github.context.repo.owner,
-    name: github.context.repo.repo,
-    expression: inputs.head,
-    path: inputs.path,
-    since: baseCommit.repository.object.committedDate,
-  })
-  core.startGroup(`Commit history on ${inputs.head} since ${baseCommit.repository.object.committedDate}`)
-  core.info(JSON.stringify(history, undefined, 2))
-  core.endGroup()
-  if (history.repository?.object?.__typename !== 'Commit') {
-    throw new Error(`unexpected typename ${String(history.repository?.object?.__typename)} !== Commit`)
+  if (inputs.base && inputs.head) {
+    return await computeChangeSetBetweenBaseHead(inputs)
   }
-
-  const pulls = new Set<number>()
-  const body: string[] = []
-  for (const node of history.repository.object.history.nodes ?? []) {
-    if (node == null) {
-      continue
-    }
-    if (node.oid === baseCommit.repository.object.oid) {
-      core.info(`${node.oid} base`)
-      break
-    }
-    if (!node.associatedPullRequests?.nodes?.length) {
-      core.info(`${node.oid} -> none`)
-      body.push(`- ${node.oid}`)
-      continue
-    }
-    for (const pull of node.associatedPullRequests.nodes) {
-      if (pull?.number === undefined) {
-        continue
-      }
-      core.info(`${node.oid} -> #${pull.number}`)
-      if (!pulls.has(pull.number)) {
-        pulls.add(pull.number)
-        body.push(`- #${pull.number}`)
-      }
-    }
-  }
-
-  return {
-    body: body.join('\n'),
-    associatedPullRequests: [...pulls],
-    pullRequestListMarkdown: [...pulls].map((n) => `- #${n}`).join('\n'),
-  }
+  throw new Error('you need to set either pull-request or base/head')
 }
+
+const sanitizeSubPaths = (groupBySubPaths: string[]) =>
+  groupBySubPaths.filter((p) => p.length > 0 && !p.startsWith('#'))

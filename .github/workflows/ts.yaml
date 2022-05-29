@@ -33,19 +33,33 @@ jobs:
       - run: yarn build
       - run: yarn package
 
-      # generate a release note since the major tag
-      - if: github.event_name == 'pull_request'
-        id: release-note
+      - id: associated-pull-requests
         uses: ./
         with:
-          base: refs/tags/v0
-          head: ${{ github.head_ref }}
+          # https://github.com/int128/list-associated-pull-requests-action/pull/95
+          pull-request: 95
       - if: github.event_name == 'pull_request'
         uses: int128/comment-action@v1
         with:
           post: |
-            ## Release note
-            ${{ steps.release-note.outputs.pull-request-list-markdown }}
+            ## Changes
+            ${{ steps.associated-pull-requests.outputs.body }}
+
+      - id: associated-pull-requests-grouped
+        uses: ./
+        with:
+          # https://github.com/int128/list-associated-pull-requests-action/pull/95
+          pull-request: 95
+          group-by-sub-paths: |
+            src
+            # comment
+            .github
+      - if: github.event_name == 'pull_request'
+        uses: int128/comment-action@v1
+        with:
+          post: |
+            ## Changes (grouped)
+            ${{ steps.associated-pull-requests-grouped.outputs.body }}
 
   generate:
     runs-on: ubuntu-latest

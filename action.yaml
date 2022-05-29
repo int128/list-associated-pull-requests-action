@@ -1,4 +1,4 @@
-name: release-note-action
+name: list-associated-pull-requests-action
 description: Action to generate release note from commit history
 
 inputs:
@@ -6,26 +6,28 @@ inputs:
     description: GitHub token
     required: true
     default: ${{ github.token }}
+  pull-request:
+    description: Pull request to parse (experimental)
+    required: false
   base:
     description: Base branch or commit
-    required: true
+    required: false
   head:
     description: Head branch or commit
-    required: true
+    required: false
   path:
     description: Path to get commit history of subtree
     required: true
     default: '.'
+  group-by-sub-paths:
+    description: Group pull requests by sub-paths (Multiline)
+    required: false
 
 outputs:
   body:
-    description: List of commits with associated pull requests (Markdown)
+    description: List of associated pull requests or commits (Markdown)
   associated-pull-requests:
-    description: List of pull requests associated to commits (Multiline)
-  pull-request-list:
-    description: List of pull requests in multiline (deprecated)
-  pull-request-list-markdown:
-    description: List of pull requests in markdown (deprecated)
+    description: List of associated pull request numbers (Multiline)
 
 runs:
   using: 'node16'
