@@ -10,6 +10,7 @@ type Inputs = {
   head: string
   path: string
   groupByPaths: string[]
+  showOthersGroup: boolean
 }
 
 type Outputs = {
@@ -78,7 +79,7 @@ export const computeChangeSetBetweenBaseHead = async (inputs: Inputs): Promise<O
       }
     }
   }
-  if (otherPullOrCommits.size > 0) {
+  if (inputs.showOthersGroup && otherPullOrCommits.size > 0) {
     body.push(`### Others`)
     for (const pullOrCommit of otherPullOrCommits) {
       body.push(`- ${pullOrCommit}`)

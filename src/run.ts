@@ -8,6 +8,7 @@ type Inputs = {
   head: string
   path: string
   groupByPaths: string[]
+  showOthersGroup: boolean
 }
 
 type Outputs = {

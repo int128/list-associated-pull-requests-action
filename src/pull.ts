@@ -8,6 +8,7 @@ type Inputs = {
   token: string
   pullRequest: number
   groupByPaths: string[]
+  showOthersGroup: boolean
 }
 
 type Outputs = {
@@ -68,7 +69,7 @@ export const computeChangeSetOfPullRequest = async (inputs: Inputs): Promise<Out
     body.push(`### ${path}`)
     body.push(...formatCommits(commits))
   }
-  if (commitsOfOthers.length > 0) {
+  if (inputs.showOthersGroup && commitsOfOthers.length > 0) {
     body.push(`### Others`)
     body.push(...formatCommits(commitsOfOthers))
   }

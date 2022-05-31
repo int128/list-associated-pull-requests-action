@@ -22,6 +22,10 @@ inputs:
   group-by-paths:
     description: Group pull requests by paths (Multiline)
     required: false
+  show-others-group:
+    description: Show others group
+    required: true
+    default: 'true'
 
 outputs:
   body:
