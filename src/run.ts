@@ -27,5 +27,4 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
   throw new Error('you need to set either pull-request or base/head')
 }
 
-const sanitizePaths = (groupByPaths: string[]) =>
-  groupByPaths.filter((p) => p.length > 0 && !p.startsWith('#'))
+const sanitizePaths = (groupByPaths: string[]) => groupByPaths.filter((p) => p.length > 0 && !p.startsWith('#'))
