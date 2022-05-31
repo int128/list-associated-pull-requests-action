@@ -10,6 +10,7 @@ const query = /* GraphQL */ `
     }
     repository(owner: $owner, name: $name) {
       pullRequest(number: $number) {
+        headRefOid
         commits(first: 100, after: $commitCursor) {
           totalCount
           pageInfo {
@@ -19,6 +20,7 @@ const query = /* GraphQL */ `
           nodes {
             commit {
               oid
+              committedDate
               associatedPullRequests(first: 1) {
                 nodes {
                   number

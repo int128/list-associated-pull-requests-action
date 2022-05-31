@@ -1,0 +1,168 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`calculate 1`] = `
+Set {
+  67,
+  68,
+  69,
+  71,
+  70,
+  73,
+  74,
+  75,
+  76,
+  77,
+  78,
+  79,
+  80,
+  81,
+  82,
+  83,
+  84,
+  85,
+  86,
+  87,
+  88,
+  89,
+  91,
+  96,
+  90,
+  97,
+}
+`;
+
+exports[`calculate 2`] = `
+Array [
+  Object {
+    "commits": Array [
+      Object {
+        "commitId": "0ad635a9b2be184a6a02253bcdb090dab6e195c9",
+        "pull": 68,
+      },
+      Object {
+        "commitId": "f656f6812207d5301492cab12f399463e35fbdbb",
+        "pull": 69,
+      },
+      Object {
+        "commitId": "ead2316173fbd364d6d241b8c05df4a349c7821f",
+        "pull": 70,
+      },
+      Object {
+        "commitId": "b256f3b36b635040e4ce150eec4c4d2fdab3495c",
+        "pull": 75,
+      },
+      Object {
+        "commitId": "797d211a801b403772b703ed29e60dc148d708b8",
+        "pull": 76,
+      },
+      Object {
+        "commitId": "e1d47057c2a2eafd8ebb570c8f7a4a84dffb234e",
+        "pull": 78,
+      },
+      Object {
+        "commitId": "ebb87b274ad05f7e5d9a38c677f2e399041dae01",
+        "pull": 87,
+      },
+      Object {
+        "commitId": "ca85088adb0f411ef934833e2b4c47941794ac58",
+        "pull": 88,
+      },
+      Object {
+        "commitId": "aba1fb9e861f34176727a527a6e5af8ba74f628c",
+        "pull": 89,
+      },
+    ],
+    "path": "src",
+  },
+  Object {
+    "commits": Array [
+      Object {
+        "commitId": "ead2316173fbd364d6d241b8c05df4a349c7821f",
+        "pull": 70,
+      },
+      Object {
+        "commitId": "e1d47057c2a2eafd8ebb570c8f7a4a84dffb234e",
+        "pull": 78,
+      },
+      Object {
+        "commitId": "ebb87b274ad05f7e5d9a38c677f2e399041dae01",
+        "pull": 87,
+      },
+      Object {
+        "commitId": "4e216f67567bdbb723ad28b1d946c63b6cb09a8d",
+        "pull": 91,
+      },
+      Object {
+        "commitId": "dcff886579270638a2146cf8ba5380f2240774c7",
+        "pull": 96,
+      },
+    ],
+    "path": ".github",
+  },
+]
+`;
+
+exports[`calculate 3`] = `
+Array [
+  Object {
+    "commitId": "3d9cb2f7a130e4427676df5f6da9c06cd228d7d7",
+    "pull": 67,
+  },
+  Object {
+    "commitId": "4449d60e7f1ce5fd3d26750c66b5d708cbac1d20",
+    "pull": 71,
+  },
+  Object {
+    "commitId": "6c696b80a95830b40ae8ed882bbb9bbe1972b24c",
+    "pull": 73,
+  },
+  Object {
+    "commitId": "1a74c41db6587e71a6c97a2a64741d6152a88638",
+    "pull": 74,
+  },
+  Object {
+    "commitId": "15a4eb0b903195d92d089454ab9ffa1c7598d3ef",
+    "pull": 77,
+  },
+  Object {
+    "commitId": "d5414767c25010a8d42f44121dba0ee870c1da53",
+    "pull": 79,
+  },
+  Object {
+    "commitId": "49a339c426a28b6e5abd3203fadcc749560b2362",
+    "pull": 80,
+  },
+  Object {
+    "commitId": "6df54289158cbd5a61c8604cf97b8a0f7d1847f7",
+    "pull": 81,
+  },
+  Object {
+    "commitId": "d486e046fca314b3a42693a5ca878e47c69a89ed",
+    "pull": 82,
+  },
+  Object {
+    "commitId": "13868898d92652c27d889259bd11215f7a4551c1",
+    "pull": 83,
+  },
+  Object {
+    "commitId": "aed841c2c1550f2e2bac160837085856b6cc5120",
+    "pull": 84,
+  },
+  Object {
+    "commitId": "8e07a09848e1158d3326ec2ab9006077c087bd33",
+    "pull": 85,
+  },
+  Object {
+    "commitId": "fc7d55b8f3e86b9f2b71c30d9e8578dffc40c807",
+    "pull": 86,
+  },
+  Object {
+    "commitId": "f2ac78bee33a1a55186732a1f2fb6b7d68008a53",
+    "pull": 90,
+  },
+  Object {
+    "commitId": "0f9bbfade221f8b590163c664e27c3839fffd3c8",
+    "pull": 97,
+  },
+]
+`;
