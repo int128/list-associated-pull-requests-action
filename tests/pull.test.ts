@@ -440,10 +440,7 @@ test('calculate', () => {
       },
     },
   ]
-  const { commitsOfPathList, commitsOfOthers, associatedPullRequests } = calculate(
-    commitsQueryList,
-    historyQueryList
-  )
+  const { commitsOfPathList, commitsOfOthers, associatedPullRequests } = calculate(commitsQueryList, historyQueryList)
   expect(associatedPullRequests).toMatchSnapshot()
   expect(commitsOfPathList).toMatchSnapshot()
   expect(commitsOfOthers).toMatchSnapshot()

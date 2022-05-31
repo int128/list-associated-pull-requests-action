@@ -16,10 +16,6 @@ type Outputs = {
 }
 
 export const computeChangeSetOfPullRequest = async (inputs: Inputs): Promise<Outputs> => {
-  if (inputs.groupBySubPaths.length > 0) {
-    core.warning(`group-by-sub-paths is not yet supported for pull-request`)
-  }
-
   const octokit = github.getOctokit(inputs.token)
 
   const commitsQueryList = await getPullRequestCommits(octokit, {
@@ -60,18 +56,21 @@ export const computeChangeSetOfPullRequest = async (inputs: Inputs): Promise<Out
 
   const { commitsOfPathList, commitsOfOthers, associatedPullRequests } = calculate(commitsQueryList, historyQueryList)
 
+  if (commitsOfPathList.length === 0) {
+    return {
+      body: formatCommits(commitsOfOthers).join('\n'),
+      associatedPullRequests: [...associatedPullRequests],
+    }
+  }
+
   const body = []
   for (const { path, commits } of commitsOfPathList) {
     body.push(`### ${path}`)
-    for (const commit of commits) {
-      body.push(`- ${commit.pull ? `#${commit.pull}` : commit.commitId}`)
-    }
+    body.push(...formatCommits(commits))
   }
-  if (commitsOfOthers.size > 0) {
+  if (commitsOfOthers.length > 0) {
     body.push(`### Others`)
-    for (const commit of commitsOfOthers) {
-      body.push(`- ${commit.pull ? `#${commit.pull}` : commit.commitId}`)
-    }
+    body.push(...formatCommits(commitsOfOthers))
   }
 
   return {
@@ -79,6 +78,10 @@ export const computeChangeSetOfPullRequest = async (inputs: Inputs): Promise<Out
     associatedPullRequests: [...associatedPullRequests],
   }
 }
+
+const formatCommits = (commits: Commit[]): string[] => [
+  ...new Set(commits.map((commit) => `- ${commit.pull ? `#${commit.pull}` : commit.commitId}`)),
+]
 
 export const calculate = (
   commitsQueryList: PullRequestCommitsQuery[],
@@ -102,16 +105,13 @@ export const calculate = (
     }
   }
 
-  const commitsOfOthersMap = new Map<CommitId, Commit>()
-  for (const commit of commitsOfPull) {
-    commitsOfOthersMap.set(commit.commitId, commit)
-  }
+  const commitsOfOthersMap = new Map<CommitId, Commit>(commitsOfPull.map((commit) => [commit.commitId, commit]))
   for (const { commits } of commitsOfPathList) {
     for (const commit of commits) {
       commitsOfOthersMap.delete(commit.commitId)
     }
   }
-  const commitsOfOthers = new Set(commitsOfOthersMap.values())
+  const commitsOfOthers = [...commitsOfOthersMap.values()]
 
   const associatedPullRequests = new Set<number>()
   for (const { pull } of commitsOfPull) {

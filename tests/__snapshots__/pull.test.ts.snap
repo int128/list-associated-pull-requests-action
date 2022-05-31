@@ -103,7 +103,7 @@ Array [
 `;
 
 exports[`calculate 3`] = `
-Set {
+Array [
   Object {
     "commitId": "3d9cb2f7a130e4427676df5f6da9c06cd228d7d7",
     "pull": 67,
@@ -164,5 +164,5 @@ Set {
     "commitId": "0f9bbfade221f8b590163c664e27c3839fffd3c8",
     "pull": 97,
   },
-}
+]
 `;
