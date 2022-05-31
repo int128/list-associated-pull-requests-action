@@ -7,7 +7,7 @@ import { getCommitHistoryOfSubTree } from './queries/subtree'
 type Inputs = {
   token: string
   pullRequest: number
-  groupBySubPaths: string[]
+  groupByPaths: string[]
 }
 
 type Outputs = {
@@ -40,7 +40,7 @@ export const computeChangeSetOfPullRequest = async (inputs: Inputs): Promise<Out
   core.info(`headRefOid = ${headRefOid}`)
 
   const historyQueryList = []
-  for (const path of inputs.groupBySubPaths) {
+  for (const path of inputs.groupByPaths) {
     const q = await getCommitHistoryOfSubTree(octokit, {
       owner: github.context.repo.owner,
       name: github.context.repo.repo,

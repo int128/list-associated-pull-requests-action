@@ -61,7 +61,7 @@ jobs:
             })
 ```
 
-### Group by sub-paths (experimental)
+### Group by paths (experimental)
 
 This action can group the pull requests by paths.
 For example, let us think the following layout of monorepo.
@@ -77,7 +77,7 @@ To group the pull requests by the components:
 ```yaml
       - uses: int128/list-associated-pull-requests-action@v0
         with:
-          group-by-sub-paths: |
+          group-by-paths: |
             backend
             frontend
 ```
@@ -87,7 +87,7 @@ Here is an example.
 
 <img width="920" alt="image" src="https://user-images.githubusercontent.com/321266/168426515-621a5f68-697f-4284-aa33-a27045287684.png">
 
-You can put a comment into `group-by-sub-paths`.
+You can put a comment into `group-by-paths`.
 This action ignores a line which starts with `#`.
 
 
@@ -102,7 +102,7 @@ This action ignores a line which starts with `#`.
 | `base` | <sup>*1</sup> | Base branch
 | `head` | <sup>*1</sup> | Head branch
 | `path` | `.` | Path to get the commit history of subtree
-| `group-by-sub-paths` | (optional) | Group pull requests by sub-paths (Multiline)
+| `group-by-paths` | (optional) | Group pull requests by paths (Multiline)
 
 You need to set either `base` and `head`, or `pull-request`.
 

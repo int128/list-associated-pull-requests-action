@@ -7,7 +7,7 @@ type Inputs = {
   base: string
   head: string
   path: string
-  groupBySubPaths: string[]
+  groupByPaths: string[]
 }
 
 type Outputs = {
@@ -16,7 +16,7 @@ type Outputs = {
 }
 
 export const run = async (inputs: Inputs): Promise<Outputs> => {
-  inputs.groupBySubPaths = sanitizeSubPaths(inputs.groupBySubPaths)
+  inputs.groupByPaths = sanitizePaths(inputs.groupByPaths)
 
   if (inputs.pullRequest) {
     return await computeChangeSetOfPullRequest(inputs)
@@ -27,5 +27,4 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
   throw new Error('you need to set either pull-request or base/head')
 }
 
-const sanitizeSubPaths = (groupBySubPaths: string[]) =>
-  groupBySubPaths.filter((p) => p.length > 0 && !p.startsWith('#'))
+const sanitizePaths = (groupByPaths: string[]) => groupByPaths.filter((p) => p.length > 0 && !p.startsWith('#'))

@@ -50,7 +50,7 @@ jobs:
         with:
           # https://github.com/int128/list-associated-pull-requests-action/pull/98
           pull-request: 98
-          group-by-sub-paths: |
+          group-by-paths: |
             src
             # comment
             .github
