@@ -9,6 +9,7 @@ const main = async (): Promise<void> => {
     head: core.getInput('head'),
     path: core.getInput('path', { required: true }),
     groupByPaths: core.getMultilineInput('group-by-paths'),
+    showOthersGroup: core.getBooleanInput('show-others-group', { required: true }),
   })
 
   core.setOutput('body', outputs.body)

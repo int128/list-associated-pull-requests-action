@@ -90,6 +90,8 @@ Here is an example.
 You can put a comment into `group-by-paths`.
 This action ignores a line which starts with `#`.
 
+You can hide "Others" group by `show-others-group`.
+
 
 ## Specification
 
@@ -103,6 +105,7 @@ This action ignores a line which starts with `#`.
 | `head` | <sup>*1</sup> | Head branch
 | `path` | `.` | Path to get the commit history of subtree
 | `group-by-paths` | (optional) | Group pull requests by paths (Multiline)
+| `show-others-group` | `true` | Show others group
 
 You need to set either `base` and `head`, or `pull-request`.
 
