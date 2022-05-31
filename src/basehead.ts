@@ -9,7 +9,7 @@ type Inputs = {
   base: string
   head: string
   path: string
-  groupBySubPaths: string[]
+  groupByPaths: string[]
 }
 
 type Outputs = {
@@ -44,34 +44,34 @@ export const computeChangeSetBetweenBaseHead = async (inputs: Inputs): Promise<O
   core.endGroup()
   const changeSet = findChangeSet(history, baseCommit.repository.object.oid)
 
-  if (inputs.groupBySubPaths.length === 0) {
+  if (inputs.groupByPaths.length === 0) {
     return {
       body: [...changeSet.pullOrCommits].map((s) => `- ${s}`).join('\n'),
       associatedPullRequests: [...changeSet.pulls],
     }
   }
 
-  const subPathChangeSets = new Map<string, ChangeSet>()
-  for (const subPath of inputs.groupBySubPaths) {
+  const pathChangeSets = new Map<string, ChangeSet>()
+  for (const path of inputs.groupByPaths) {
     const history = await getAssociatedPullRequestsInCommitHistoryOfSubTreeQuery(octokit, {
       owner: github.context.repo.owner,
       name: github.context.repo.repo,
       expression: inputs.head,
-      path: subPath,
+      path,
       since: baseCommit.repository.object.committedDate,
     })
-    core.startGroup(`Commit history of subpath ${subPath}`)
+    core.startGroup(`Commit history of sub tree ${path}`)
     core.info(JSON.stringify(history, undefined, 2))
     core.endGroup()
     const changeSet = findChangeSet(history, baseCommit.repository.object.oid)
-    subPathChangeSets.set(subPath, changeSet)
+    pathChangeSets.set(path, changeSet)
   }
 
   const otherPullOrCommits = new Set(changeSet.pullOrCommits)
   const body = []
-  for (const [subPath, { pullOrCommits }] of subPathChangeSets) {
+  for (const [path, { pullOrCommits }] of pathChangeSets) {
     if (pullOrCommits.size > 0) {
-      body.push(`### ${subPath}`)
+      body.push(`### ${path}`)
       for (const pullOrCommit of pullOrCommits) {
         body.push(`- ${pullOrCommit}`)
         otherPullOrCommits.delete(pullOrCommit)

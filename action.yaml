@@ -19,8 +19,8 @@ inputs:
     description: Path to get commit history of subtree
     required: true
     default: '.'
-  group-by-sub-paths:
-    description: Group pull requests by sub-paths (Multiline)
+  group-by-paths:
+    description: Group pull requests by paths (Multiline)
     required: false
 
 outputs:
