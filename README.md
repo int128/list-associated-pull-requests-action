@@ -2,9 +2,10 @@
 
 This is an action to list pull requests associated to a pull request.
 It generates a markdown format.
+
 Here is an example.
 
-<img width="920" alt="image" src="https://user-images.githubusercontent.com/321266/168426345-c5cfc07f-d7f3-4e86-bae8-61b62b52410f.png">
+<img width="920" alt="image" src="https://user-images.githubusercontent.com/321266/171992826-2a2b915e-7833-4134-a568-9ff300c47089.png">
 
 
 ## List associated pull requests of a pull request
