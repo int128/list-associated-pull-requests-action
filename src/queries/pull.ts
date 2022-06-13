@@ -24,6 +24,9 @@ const query = /* GraphQL */ `
               associatedPullRequests(first: 1) {
                 nodes {
                   number
+                  author {
+                    login
+                  }
                 }
               }
             }
