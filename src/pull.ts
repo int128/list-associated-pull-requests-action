@@ -81,7 +81,14 @@ export const computeChangeSetOfPullRequest = async (inputs: Inputs): Promise<Out
 }
 
 const formatCommits = (commits: Commit[]): string[] => [
-  ...new Set(commits.map((commit) => `- ${commit.pull ? `#${commit.pull}` : commit.commitId}`)),
+  ...new Set(
+    commits.map((commit) => {
+      if (commit.pull) {
+        return `- #${commit.pull.number} @${commit.pull.author}`
+      }
+      return `- ${commit.commitId}`
+    })
+  ),
 ]
 
 export const calculate = (
@@ -117,7 +124,7 @@ export const calculate = (
   const associatedPullRequests = new Set<number>()
   for (const { pull } of commitsOfPull) {
     if (pull !== undefined) {
-      associatedPullRequests.add(pull)
+      associatedPullRequests.add(pull.number)
     }
   }
 
@@ -145,7 +152,10 @@ const findHeadRefOid = (queryList: PullRequestCommitsQuery[]) => queryList[0].re
 type CommitId = string
 type Commit = {
   commitId: CommitId
-  pull?: number
+  pull?: {
+    number: number
+    author: string
+  }
 }
 
 const parsePullRequestCommitsQueryList = (queryList: PullRequestCommitsQuery[]): Commit[] => {
@@ -165,7 +175,13 @@ const parsePullRequestCommitsQueryList = (queryList: PullRequestCommitsQuery[]):
           continue
         }
         core.info(`${node.commit.oid} -> #${pull.number} (${node.commit.committedDate})`)
-        commits.push({ commitId: node.commit.oid, pull: pull.number })
+        commits.push({
+          commitId: node.commit.oid,
+          pull: {
+            number: pull.number,
+            author: pull.author?.login ?? '',
+          },
+        })
       }
     }
   }
