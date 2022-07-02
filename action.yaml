@@ -26,8 +26,6 @@ inputs:
 outputs:
   body:
     description: List of associated pull requests or commits (Markdown)
-  associated-pull-requests:
-    description: List of associated pull request numbers (Multiline)
 
 runs:
   using: 'node16'
