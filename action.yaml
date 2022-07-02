@@ -15,10 +15,6 @@ inputs:
   head:
     description: Head branch or commit
     required: false
-  path:
-    description: Path to get commit history of subtree
-    required: true
-    default: '.'
   group-by-paths:
     description: Group pull requests by paths (Multiline)
     required: false
@@ -30,8 +26,6 @@ inputs:
 outputs:
   body:
     description: List of associated pull requests or commits (Markdown)
-  associated-pull-requests:
-    description: List of associated pull request numbers (Multiline)
 
 runs:
   using: 'node16'

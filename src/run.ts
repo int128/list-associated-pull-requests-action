@@ -6,14 +6,12 @@ type Inputs = {
   pullRequest: number
   base: string
   head: string
-  path: string
   groupByPaths: string[]
   showOthersGroup: boolean
 }
 
 type Outputs = {
   body: string
-  associatedPullRequests: number[]
 }
 
 export const run = async (inputs: Inputs): Promise<Outputs> => {
