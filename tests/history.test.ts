@@ -21,6 +21,7 @@ const fixtureQuery: AssociatedPullRequestsInCommitHistoryOfSubTreeQuery = {
     object: {
       __typename: 'Commit',
       history: {
+        totalCount: 27,
         nodes: [
           {
             oid: '0f9bbfade221f8b590163c664e27c3839fffd3c8',

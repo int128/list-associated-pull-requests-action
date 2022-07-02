@@ -21,7 +21,7 @@ export const computeChangeSetOfPullRequest = async (inputs: Inputs): Promise<Out
     repo: github.context.repo.repo,
     pull_number: inputs.pullRequest,
   })
-  core.info(`pull request ${pull.number}: ${pull.head.ref} -> ${pull.base.ref}`)
+  core.info(`Found #${pull.number}`)
 
   return await computeChangeSetBetweenBaseHead({
     ...inputs,

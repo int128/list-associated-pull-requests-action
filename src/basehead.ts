@@ -19,6 +19,7 @@ export const computeChangeSetBetweenBaseHead = async (inputs: Inputs): Promise<O
   const octokit = github.getOctokit(inputs.token)
 
   // https://stackoverflow.com/a/27543067
+  core.info(`Compare ${inputs.base} and ${inputs.head}`)
   const { data: compare } = await octokit.rest.repos.compareCommitsWithBasehead({
     owner: github.context.repo.owner,
     repo: github.context.repo.repo,
@@ -29,7 +30,7 @@ export const computeChangeSetBetweenBaseHead = async (inputs: Inputs): Promise<O
   if (mergeBaseCommitDate === undefined) {
     throw new Error(`could not get the timestamp of merge base commit`)
   }
-  core.info(`mergeBaseCommit is ${mergeBaseCommitOID} (${mergeBaseCommitDate})`)
+  core.info(`mergeBaseCommit = ${mergeBaseCommitOID} (${mergeBaseCommitDate})`)
 
   const subTreeCommits = []
   for (const path of inputs.groupByPaths) {
@@ -40,7 +41,7 @@ export const computeChangeSetBetweenBaseHead = async (inputs: Inputs): Promise<O
       path,
       since: mergeBaseCommitDate,
     })
-    core.startGroup(`query: ${path}, ${inputs.head}, ${mergeBaseCommitDate}`)
+    core.startGroup(`Query (${path}, ${inputs.head}, ${mergeBaseCommitDate})`)
     core.info(JSON.stringify(history, undefined, 2))
     core.endGroup()
     const commits = parseAssociatedPullRequestsInCommitHistoryOfSubTreeQuery(history, mergeBaseCommitOID)
@@ -63,7 +64,7 @@ export const computeChangeSetBetweenBaseHead = async (inputs: Inputs): Promise<O
     path: '.',
     since: mergeBaseCommitDate,
   })
-  core.startGroup(`query: ${inputs.head}, ${mergeBaseCommitDate}`)
+  core.startGroup(`Query (${inputs.head}, ${mergeBaseCommitDate})`)
   core.info(JSON.stringify(rootHistory, undefined, 2))
   core.endGroup()
   const rootCommits = parseAssociatedPullRequestsInCommitHistoryOfSubTreeQuery(rootHistory, mergeBaseCommitOID)

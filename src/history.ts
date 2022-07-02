@@ -19,6 +19,7 @@ export const parseAssociatedPullRequestsInCommitHistoryOfSubTreeQuery = (
     throw new Error(`unexpected typename ${String(q.repository?.object?.__typename)} !== Commit`)
   }
 
+  core.startGroup(`Parse ${q.repository.object.history.totalCount} commit(s)`)
   const commits: Commit[] = []
   for (const node of q.repository.object.history.nodes ?? []) {
     if (node == null) {

@@ -22,6 +22,7 @@ const query = /* GraphQL */ `
         __typename
         ... on Commit {
           history(path: $path, since: $since) {
+            totalCount
             nodes {
               oid
               associatedPullRequests(first: 1, orderBy: { field: CREATED_AT, direction: ASC }) {
