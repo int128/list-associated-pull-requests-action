@@ -129,4 +129,3 @@ You need to set either `base` and `head`, or `pull-request`.
 | Name | Description
 |------|------------
 | `body` | List of associated pull requests or commits (Markdown)
-| `associated-pull-requests` | List of associated pull request numbers (Multiline)

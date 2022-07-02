@@ -1,93 +1,97 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
-import { ChangeSet, findChangeSet } from './history'
-import { getCommit } from './queries/commit'
+import { Commit, parseAssociatedPullRequestsInCommitHistoryOfSubTreeQuery } from './history'
 import { getAssociatedPullRequestsInCommitHistoryOfSubTreeQuery } from './queries/history'
 
 type Inputs = {
   token: string
   base: string
   head: string
-  path: string
   groupByPaths: string[]
   showOthersGroup: boolean
 }
 
 type Outputs = {
   body: string
-  associatedPullRequests: number[]
 }
 
 export const computeChangeSetBetweenBaseHead = async (inputs: Inputs): Promise<Outputs> => {
   const octokit = github.getOctokit(inputs.token)
 
-  const baseCommit = await getCommit(octokit, {
+  // https://stackoverflow.com/a/27543067
+  const { data: compare } = await octokit.rest.repos.compareCommitsWithBasehead({
     owner: github.context.repo.owner,
-    name: github.context.repo.repo,
-    expression: inputs.base,
+    repo: github.context.repo.repo,
+    basehead: `${inputs.base}...${inputs.head}`,
   })
-  core.startGroup(`Base commit of ${inputs.base}`)
-  core.info(JSON.stringify(baseCommit, undefined, 2))
-  core.endGroup()
-  if (baseCommit.repository?.object?.__typename !== 'Commit') {
-    throw new Error(`unexpected typename ${String(baseCommit.repository?.object?.__typename)} !== Commit`)
+  const mergeBaseCommitOID = compare.merge_base_commit.sha
+  const mergeBaseCommitDate = compare.merge_base_commit.commit.committer?.date
+  if (mergeBaseCommitDate === undefined) {
+    throw new Error(`could not get the timestamp of merge base commit`)
   }
+  core.info(`mergeBaseCommit is ${mergeBaseCommitOID} (${mergeBaseCommitDate})`)
 
-  const history = await getAssociatedPullRequestsInCommitHistoryOfSubTreeQuery(octokit, {
-    owner: github.context.repo.owner,
-    name: github.context.repo.repo,
-    expression: inputs.head,
-    path: inputs.path,
-    since: baseCommit.repository.object.committedDate,
-  })
-  core.startGroup(`Commit history on ${inputs.head} since ${baseCommit.repository.object.committedDate}`)
-  core.info(JSON.stringify(history, undefined, 2))
-  core.endGroup()
-  const changeSet = findChangeSet(history, baseCommit.repository.object.oid)
-
-  if (inputs.groupByPaths.length === 0) {
-    return {
-      body: [...changeSet.pullOrCommits].map((s) => `- ${s}`).join('\n'),
-      associatedPullRequests: [...changeSet.pulls],
-    }
-  }
-
-  const pathChangeSets = new Map<string, ChangeSet>()
+  const subTreeCommits = []
   for (const path of inputs.groupByPaths) {
     const history = await getAssociatedPullRequestsInCommitHistoryOfSubTreeQuery(octokit, {
       owner: github.context.repo.owner,
       name: github.context.repo.repo,
       expression: inputs.head,
       path,
-      since: baseCommit.repository.object.committedDate,
+      since: mergeBaseCommitDate,
     })
-    core.startGroup(`Commit history of sub tree ${path}`)
+    core.startGroup(`query: ${path}, ${inputs.head}, ${mergeBaseCommitDate}`)
     core.info(JSON.stringify(history, undefined, 2))
     core.endGroup()
-    const changeSet = findChangeSet(history, baseCommit.repository.object.oid)
-    pathChangeSets.set(path, changeSet)
+    const commits = parseAssociatedPullRequestsInCommitHistoryOfSubTreeQuery(history, mergeBaseCommitOID)
+    subTreeCommits.push({ path, commits })
   }
 
-  const otherPullOrCommits = new Set(changeSet.pullOrCommits)
   const body = []
-  for (const [path, { pullOrCommits }] of pathChangeSets) {
-    if (pullOrCommits.size > 0) {
-      body.push(`### ${path}`)
-      for (const pullOrCommit of pullOrCommits) {
-        body.push(`- ${pullOrCommit}`)
-        otherPullOrCommits.delete(pullOrCommit)
-      }
+  for (const { path, commits } of subTreeCommits) {
+    body.push(`### ${path}`)
+    body.push(...formatCommits(commits))
+  }
+  if (!inputs.showOthersGroup) {
+    return { body: body.join('\n') }
+  }
+
+  const rootHistory = await getAssociatedPullRequestsInCommitHistoryOfSubTreeQuery(octokit, {
+    owner: github.context.repo.owner,
+    name: github.context.repo.repo,
+    expression: inputs.head,
+    path: '.',
+    since: mergeBaseCommitDate,
+  })
+  core.startGroup(`query: ${inputs.head}, ${mergeBaseCommitDate}`)
+  core.info(JSON.stringify(rootHistory, undefined, 2))
+  core.endGroup()
+  const rootCommits = parseAssociatedPullRequestsInCommitHistoryOfSubTreeQuery(rootHistory, mergeBaseCommitOID)
+
+  const otherCommits = new Map<string, Commit>()
+  for (const commit of rootCommits) {
+    otherCommits.set(commit.commitId, commit)
+  }
+  for (const { commits } of subTreeCommits) {
+    for (const commit of commits) {
+      otherCommits.delete(commit.commitId)
     }
   }
-  if (inputs.showOthersGroup && otherPullOrCommits.size > 0) {
-    body.push(`### Others`)
-    for (const pullOrCommit of otherPullOrCommits) {
-      body.push(`- ${pullOrCommit}`)
-    }
-  }
+  body.push(`### Others`)
+  body.push(...formatCommits([...otherCommits.values()]))
 
   return {
     body: body.join('\n'),
-    associatedPullRequests: [...changeSet.pulls],
   }
 }
+
+const formatCommits = (commits: Commit[]): string[] => [
+  ...new Set(
+    commits.map((commit) => {
+      if (commit.pull) {
+        return `- #${commit.pull.number} @${commit.pull.author}`
+      }
+      return `- ${commit.commitId}`
+    })
+  ),
+]

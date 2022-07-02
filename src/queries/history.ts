@@ -27,6 +27,9 @@ const query = /* GraphQL */ `
               associatedPullRequests(first: 1, orderBy: { field: CREATED_AT, direction: ASC }) {
                 nodes {
                   number
+                  author {
+                    login
+                  }
                 }
               }
             }
