@@ -34,6 +34,10 @@ export const compareCommits = async (octokit: Octokit, inputs: Inputs): Promise<
     })`
   )
 
+  core.startGroup(`compareCommitsWithBasehead`)
+  core.info(JSON.stringify(compare, undefined, 2))
+  core.endGroup()
+
   const commitIds = new Set(compare.commits.map((commit) => commit.sha))
   let earliestCommitDate = new Date()
   let earliestCommitId = ''
