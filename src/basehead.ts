@@ -1,7 +1,7 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
-import { Commit, parseAssociatedPullRequestsInCommitHistoryOfSubTreeQuery } from './history'
-import { getAssociatedPullRequestsInCommitHistoryOfSubTreeQuery } from './queries/history'
+import { compareCommits } from './compare'
+import { Commit, getCommitHistory } from './history'
 
 type Inputs = {
   token: string
@@ -18,33 +18,27 @@ type Outputs = {
 export const computeChangeSetBetweenBaseHead = async (inputs: Inputs): Promise<Outputs> => {
   const octokit = github.getOctokit(inputs.token)
 
-  // https://stackoverflow.com/a/27543067
   core.info(`Compare ${inputs.base} and ${inputs.head}`)
-  const { data: compare } = await octokit.rest.repos.compareCommitsWithBasehead({
+  const compare = await compareCommits(octokit, {
     owner: github.context.repo.owner,
     repo: github.context.repo.repo,
-    basehead: `${inputs.base}...${inputs.head}`,
+    base: inputs.base,
+    head: inputs.head,
   })
-  const mergeBaseCommitOID = compare.merge_base_commit.sha
-  const mergeBaseCommitDate = compare.merge_base_commit.commit.committer?.date
-  if (mergeBaseCommitDate === undefined) {
-    throw new Error(`could not get the timestamp of merge base commit`)
-  }
-  core.info(`mergeBaseCommit = ${mergeBaseCommitOID} (${mergeBaseCommitDate})`)
+  core.info(`commits = ${compare.commitIds.size}`)
+  core.info(`earliestCommit = ${compare.earliestCommitId} (${compare.earliestCommitDate.toISOString()})`)
 
   const subTreeCommits = []
   for (const path of inputs.groupByPaths) {
-    const history = await getAssociatedPullRequestsInCommitHistoryOfSubTreeQuery(octokit, {
+    const commitHistory = await getCommitHistory(octokit, {
       owner: github.context.repo.owner,
-      name: github.context.repo.repo,
-      expression: inputs.head,
+      repo: github.context.repo.repo,
+      ref: inputs.head,
       path,
-      since: mergeBaseCommitDate,
+      since: compare.earliestCommitDate,
+      sinceCommitId: compare.earliestCommitId,
     })
-    core.startGroup(`Query (${path}, ${inputs.head}, ${mergeBaseCommitDate})`)
-    core.info(JSON.stringify(history, undefined, 2))
-    core.endGroup()
-    const commits = parseAssociatedPullRequestsInCommitHistoryOfSubTreeQuery(history, mergeBaseCommitOID)
+    const commits = commitHistory.filter((commit) => compare.commitIds.has(commit.commitId))
     subTreeCommits.push({ path, commits })
   }
 
@@ -57,17 +51,15 @@ export const computeChangeSetBetweenBaseHead = async (inputs: Inputs): Promise<O
     return { body: body.join('\n') }
   }
 
-  const rootHistory = await getAssociatedPullRequestsInCommitHistoryOfSubTreeQuery(octokit, {
+  const rootCommitHistory = await getCommitHistory(octokit, {
     owner: github.context.repo.owner,
-    name: github.context.repo.repo,
-    expression: inputs.head,
+    repo: github.context.repo.repo,
+    ref: inputs.head,
     path: '.',
-    since: mergeBaseCommitDate,
+    since: compare.earliestCommitDate,
+    sinceCommitId: compare.earliestCommitId,
   })
-  core.startGroup(`Query (${inputs.head}, ${mergeBaseCommitDate})`)
-  core.info(JSON.stringify(rootHistory, undefined, 2))
-  core.endGroup()
-  const rootCommits = parseAssociatedPullRequestsInCommitHistoryOfSubTreeQuery(rootHistory, mergeBaseCommitOID)
+  const rootCommits = rootCommitHistory.filter((commit) => compare.commitIds.has(commit.commitId))
 
   const otherCommits = new Map<string, Commit>()
   for (const commit of rootCommits) {

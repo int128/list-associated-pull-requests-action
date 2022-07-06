@@ -1,14 +1,42 @@
 import * as core from '@actions/core'
+import { GitHub } from '@actions/github/lib/utils'
 import { AssociatedPullRequestsInCommitHistoryOfSubTreeQuery } from './generated/graphql'
+import { getAssociatedPullRequestsInCommitHistoryOfSubTreeQuery } from './queries/history'
 
-type CommitId = string
+type Octokit = InstanceType<typeof GitHub>
+
+type Inputs = {
+  owner: string
+  repo: string
+  ref: string
+  path: string
+  since: Date
+  sinceCommitId: string
+}
 
 export type Commit = {
-  commitId: CommitId
+  commitId: string
   pull?: {
     number: number
     author: string
   }
+}
+
+export const getCommitHistory = async (octokit: Octokit, inputs: Inputs): Promise<Commit[]> => {
+  const q = await getAssociatedPullRequestsInCommitHistoryOfSubTreeQuery(octokit, {
+    owner: inputs.owner,
+    name: inputs.repo,
+    expression: inputs.ref,
+    path: inputs.path,
+    since: inputs.since,
+  })
+  core.startGroup(
+    `AssociatedPullRequestsInCommitHistoryOfSubTreeQuery (${inputs.ref}, ${inputs.path}, ${inputs.since.toISOString()})`
+  )
+  core.info(JSON.stringify(q, undefined, 2))
+  core.endGroup()
+
+  return parseAssociatedPullRequestsInCommitHistoryOfSubTreeQuery(q, inputs.sinceCommitId)
 }
 
 export const parseAssociatedPullRequestsInCommitHistoryOfSubTreeQuery = (
