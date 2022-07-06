@@ -20,12 +20,28 @@ export const compareCommits = async (octokit: Octokit, inputs: Inputs): Promise<
   const { data: rateLimitBefore } = await octokit.rest.rateLimit.get()
   core.info(`Remaining core rate limit: ${rateLimitBefore.resources.core.remaining}`)
 
-  const compare = await octokit.paginate(octokit.rest.repos.compareCommitsWithBasehead, {
+  const compareIterator = octokit.paginate.iterator(octokit.rest.repos.compareCommitsWithBasehead, {
     owner: inputs.owner,
     repo: inputs.repo,
     basehead: `${inputs.base}...${inputs.head}`,
     per_page: 100,
   })
+
+  const commitIds = new Set<string>()
+  let earliestCommitDate = new Date()
+  let earliestCommitId = ''
+  for await (const compare of compareIterator) {
+    for (const commit of compare.data.commits) {
+      commitIds.add(commit.sha)
+      if (commit.commit.committer?.date) {
+        const d = new Date(commit.commit.committer.date)
+        if (d < earliestCommitDate) {
+          earliestCommitDate = d
+          earliestCommitId = commit.sha
+        }
+      }
+    }
+  }
 
   const { data: rateLimitAfter } = await octokit.rest.rateLimit.get()
   core.info(
@@ -34,21 +50,5 @@ export const compareCommits = async (octokit: Octokit, inputs: Inputs): Promise<
     })`
   )
 
-  core.startGroup(`compareCommitsWithBasehead`)
-  core.info(JSON.stringify(compare, undefined, 2))
-  core.endGroup()
-
-  const commitIds = new Set(compare.commits.map((commit) => commit.sha))
-  let earliestCommitDate = new Date()
-  let earliestCommitId = ''
-  for (const commit of compare.commits) {
-    if (commit.commit.committer?.date) {
-      const d = new Date(commit.commit.committer.date)
-      if (d < earliestCommitDate) {
-        earliestCommitDate = d
-        earliestCommitId = commit.sha
-      }
-    }
-  }
   return { commitIds, earliestCommitId, earliestCommitDate }
 }
