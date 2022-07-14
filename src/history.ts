@@ -41,22 +41,16 @@ export const getCommitHistory = async (octokit: Octokit, inputs: Inputs): Promis
 
 export const parseAssociatedPullRequestsInCommitHistoryOfSubTreeQuery = (
   q: AssociatedPullRequestsInCommitHistoryOfSubTreeQuery,
-  endCommit: string
+  sinceCommitId: string
 ): Commit[] => {
   if (q.repository?.object?.__typename !== 'Commit') {
     throw new Error(`unexpected typename ${String(q.repository?.object?.__typename)} !== Commit`)
   }
 
-  core.startGroup(`Parse ${q.repository.object.history.totalCount} commit(s)`)
+  const nodes = filterNodes(q, sinceCommitId)
+  core.startGroup(`Found ${nodes.length} commit(s)`)
   const commits: Commit[] = []
-  for (const node of q.repository.object.history.nodes ?? []) {
-    if (node == null) {
-      continue
-    }
-    if (node.oid === endCommit) {
-      core.info(`${node.oid} end`)
-      break
-    }
+  for (const node of nodes) {
     if (!node.associatedPullRequests?.nodes?.length) {
       core.info(`${node.oid} -> no pull request`)
       commits.push({ commitId: node.oid })
@@ -77,4 +71,21 @@ export const parseAssociatedPullRequestsInCommitHistoryOfSubTreeQuery = (
     }
   }
   return commits
+}
+
+const filterNodes = (q: AssociatedPullRequestsInCommitHistoryOfSubTreeQuery, sinceCommitId: string) => {
+  if (q.repository?.object?.__typename !== 'Commit') {
+    throw new Error(`unexpected typename ${String(q.repository?.object?.__typename)} !== Commit`)
+  }
+  const nodes = []
+  for (const node of q.repository.object.history.nodes ?? []) {
+    if (node == null) {
+      continue
+    }
+    nodes.push(node)
+    if (node.oid === sinceCommitId) {
+      break
+    }
+  }
+  return nodes
 }
