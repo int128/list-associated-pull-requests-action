@@ -381,7 +381,7 @@ const fixtureQuery: AssociatedPullRequestsInCommitHistoryOfSubTreeQuery = {
 }
 
 test('parseAssociatedPullRequestsInCommitHistoryOfSubTreeQuery', () => {
-  const endCommit = '639b198eeec3ff282b00e53e936929b72c004817'
-  const commits = parseAssociatedPullRequestsInCommitHistoryOfSubTreeQuery(fixtureQuery, endCommit)
+  const sinceCommitId = '3d9cb2f7a130e4427676df5f6da9c06cd228d7d7'
+  const commits = parseAssociatedPullRequestsInCommitHistoryOfSubTreeQuery(fixtureQuery, sinceCommitId)
   expect(commits).toMatchSnapshot()
 })
