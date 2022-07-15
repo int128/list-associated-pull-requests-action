@@ -1,18 +1,50 @@
 # list-associated-pull-requests-action [![ts](https://github.com/int128/list-associated-pull-requests-action/actions/workflows/ts.yaml/badge.svg)](https://github.com/int128/list-associated-pull-requests-action/actions/workflows/ts.yaml)
 
-This is an action to list pull requests associated to a pull request.
-It generates a markdown format.
-
-Here is an example.
-
-<img width="920" alt="image" src="https://user-images.githubusercontent.com/321266/171992826-2a2b915e-7833-4134-a568-9ff300c47089.png">
+This is an action to generate a list of pull requests associated to a pull request.
 
 
-## List associated pull requests of a pull request
+## Purpose
 
-This action fetches associated pull requests of a pull request by GitHub GraghQL API.
+### Problem to solve
 
-To list associated pull requests of the current pull request:
+For a mono repository (monorepo) and Git/GitLab Flow, we create a pull request to deploy changes to an environment such as production.
+
+```mermaid
+gitGraph
+  commit id: "Initial"
+  branch production
+  checkout main
+  commit id: "A"
+  commit id: "B"
+  commit id: "C"
+  checkout production
+  merge main
+  checkout main
+  commit id: "D"
+  commit id: "E"
+  commit id: "F"
+  checkout production
+  merge main
+  checkout main
+  commit id: "G"
+```
+
+A pull request often becomes too large to review, for example,
+
+<img width="700" alt="image" src="https://user-images.githubusercontent.com/321266/179123581-3821d840-3b2b-4c8a-80a5-0d119f661c6b.png">
+
+### How to solve
+
+This action inspects a pull request and extracts the associated pull requests.
+
+It brings the following benefits:
+
+- You can review what to deploy
+- If a repository consists of Microservices, each team can review changes of their service
+
+## Inspect a pull request
+
+You can generate the list of the pull requests associated to the current pull request.
 
 ```yaml
 on:
@@ -35,14 +67,19 @@ jobs:
             ${{ steps.associated-pull-requests.outputs.body }}
 ```
 
+This action resolves associated pull requests by the following steps:
+
+1. Find the commits between base and head branch using GitHub Compare API
+2. Fetch the associated pull requests using GitHub GraphQL API
+
+Here is an example.
+
+<img width="920" alt="image" src="https://user-images.githubusercontent.com/321266/171992826-2a2b915e-7833-4134-a568-9ff300c47089.png">
+
 ## Group by paths
 
 You can group associated pull requests by paths.
-Here is an example.
-
-<img width="920" alt="image" src="https://user-images.githubusercontent.com/321266/171991965-82726459-05f9-4916-8069-55b4d7322a93.png">
-
-To group associated pull requests by paths:
+This feature is useful for monorepo.
 
 ```yaml
       - uses: int128/list-associated-pull-requests-action@v0
@@ -52,7 +89,9 @@ To group associated pull requests by paths:
             frontend
 ```
 
-This feature is useful for a mono repository (monorepo).
+Here is an example.
+
+<img width="920" alt="image" src="https://user-images.githubusercontent.com/321266/171991965-82726459-05f9-4916-8069-55b4d7322a93.png">
 
 You can put a comment into `group-by-paths`.
 This action ignores a line which starts with `#`.
@@ -102,9 +141,28 @@ If a pull request does not belong to any group, it is grouped as "Others".
 You can hide the Others group by `show-others-group`.
 
 
-## List associated pull requests of commits
+## Compare base and head
 
-As well as this action supports the feature to list associated pull requests of commits between base and head.
+You can generate the list of the pull requests between base and head branch.
+
+```yaml
+jobs:
+  comment:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: int128/list-associated-pull-requests-action@v0
+        id: associated-pull-requests
+        with:
+          base: production
+          head: main
+
+      # post it to the current pull request
+      - uses: int128/comment-action@v1
+        with:
+          post: |
+            ## Associated pull requests
+            ${{ steps.associated-pull-requests.outputs.body }}
+```
 
 
 ## Specification
