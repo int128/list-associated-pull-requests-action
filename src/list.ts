@@ -1,10 +1,13 @@
 import * as core from '@actions/core'
-import * as github from '@actions/github'
+import { GitHub } from '@actions/github/lib/utils'
 import { compareCommits } from './compare'
 import { Commit, getCommitHistory } from './history'
 
+type Octokit = InstanceType<typeof GitHub>
+
 type Inputs = {
-  token: string
+  owner: string
+  repo: string
   base: string
   head: string
   groupByPaths: string[]
@@ -12,48 +15,41 @@ type Inputs = {
 }
 
 type Outputs = {
-  body: string
+  commitsByPath: Map<string, Commit[]>
+  others?: Commit[]
 }
 
-export const computeChangeSetBetweenBaseHead = async (inputs: Inputs): Promise<Outputs> => {
-  const octokit = github.getOctokit(inputs.token)
-
+export const listAssociatedPullRequests = async (octokit: Octokit, inputs: Inputs): Promise<Outputs> => {
   core.info(`Compare ${inputs.base} and ${inputs.head}`)
   const compare = await compareCommits(octokit, {
-    owner: github.context.repo.owner,
-    repo: github.context.repo.repo,
+    owner: inputs.owner,
+    repo: inputs.repo,
     base: inputs.base,
     head: inputs.head,
   })
   core.info(`commits = ${compare.commitIds.size}`)
   core.info(`earliestCommit = ${compare.earliestCommitId} (${compare.earliestCommitDate.toISOString()})`)
 
-  const subTreeCommits = []
+  const commitsByPath = new Map<string, Commit[]>()
   for (const path of inputs.groupByPaths) {
     const commitHistory = await getCommitHistory(octokit, {
-      owner: github.context.repo.owner,
-      repo: github.context.repo.repo,
+      owner: inputs.owner,
+      repo: inputs.repo,
       ref: inputs.head,
       path,
       since: compare.earliestCommitDate,
       sinceCommitId: compare.earliestCommitId,
     })
     const commits = commitHistory.filter((commit) => compare.commitIds.has(commit.commitId))
-    subTreeCommits.push({ path, commits })
-  }
-
-  const body = []
-  for (const { path, commits } of subTreeCommits) {
-    body.push(`### ${path}`)
-    body.push(...formatCommits(commits))
+    commitsByPath.set(path, commits)
   }
   if (!inputs.showOthersGroup) {
-    return { body: body.join('\n') }
+    return { commitsByPath }
   }
 
   const rootCommitHistory = await getCommitHistory(octokit, {
-    owner: github.context.repo.owner,
-    repo: github.context.repo.repo,
+    owner: inputs.owner,
+    repo: inputs.repo,
     ref: inputs.head,
     path: '.',
     since: compare.earliestCommitDate,
@@ -65,26 +61,14 @@ export const computeChangeSetBetweenBaseHead = async (inputs: Inputs): Promise<O
   for (const commit of rootCommits) {
     otherCommits.set(commit.commitId, commit)
   }
-  for (const { commits } of subTreeCommits) {
+  for (const [, commits] of commitsByPath) {
     for (const commit of commits) {
       otherCommits.delete(commit.commitId)
     }
   }
-  body.push(`### Others`)
-  body.push(...formatCommits([...otherCommits.values()]))
 
   return {
-    body: body.join('\n'),
+    commitsByPath,
+    others: [...otherCommits.values()],
   }
 }
-
-const formatCommits = (commits: Commit[]): string[] => [
-  ...new Set(
-    commits.map((commit) => {
-      if (commit.pull) {
-        return `- #${commit.pull.number} @${commit.pull.author}`
-      }
-      return `- ${commit.commitId}`
-    })
-  ),
-]
