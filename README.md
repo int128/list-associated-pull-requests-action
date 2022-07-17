@@ -54,7 +54,7 @@ jobs:
   comment:
     runs-on: ubuntu-latest
     steps:
-      - uses: int128/list-associated-pull-requests-action@v0
+      - uses: int128/list-associated-pull-requests-action@v1
         id: associated-pull-requests
         with:
           pull-request: ${{ github.event.number }}
@@ -82,7 +82,7 @@ You can group associated pull requests by paths.
 This feature is useful for monorepo.
 
 ```yaml
-      - uses: int128/list-associated-pull-requests-action@v0
+      - uses: int128/list-associated-pull-requests-action@v1
         with:
           group-by-paths: |
             backend
@@ -98,7 +98,7 @@ This action ignores a line which starts with `#`.
 For example,
 
 ```yaml
-      - uses: int128/list-associated-pull-requests-action@v0
+      - uses: int128/list-associated-pull-requests-action@v1
         with:
           group-by-paths: |
             # microservices
@@ -150,7 +150,7 @@ jobs:
   comment:
     runs-on: ubuntu-latest
     steps:
-      - uses: int128/list-associated-pull-requests-action@v0
+      - uses: int128/list-associated-pull-requests-action@v1
         id: associated-pull-requests
         with:
           base: production
