@@ -36,6 +36,8 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
   }
 
   const associatedPulls = await listAssociatedPullRequests(octokit, {
+    owner: github.context.repo.owner,
+    repo: github.context.repo.repo,
     base,
     head,
     showOthersGroup: inputs.showOthersGroup,

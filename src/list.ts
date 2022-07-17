@@ -1,5 +1,4 @@
 import * as core from '@actions/core'
-import * as github from '@actions/github'
 import { GitHub } from '@actions/github/lib/utils'
 import { compareCommits } from './compare'
 import { Commit, getCommitHistory } from './history'
@@ -7,6 +6,8 @@ import { Commit, getCommitHistory } from './history'
 type Octokit = InstanceType<typeof GitHub>
 
 type Inputs = {
+  owner: string
+  repo: string
   base: string
   head: string
   groupByPaths: string[]
@@ -21,8 +22,8 @@ type Outputs = {
 export const listAssociatedPullRequests = async (octokit: Octokit, inputs: Inputs): Promise<Outputs> => {
   core.info(`Compare ${inputs.base} and ${inputs.head}`)
   const compare = await compareCommits(octokit, {
-    owner: github.context.repo.owner,
-    repo: github.context.repo.repo,
+    owner: inputs.owner,
+    repo: inputs.repo,
     base: inputs.base,
     head: inputs.head,
   })
@@ -32,8 +33,8 @@ export const listAssociatedPullRequests = async (octokit: Octokit, inputs: Input
   const commitsByPath = new Map<string, Commit[]>()
   for (const path of inputs.groupByPaths) {
     const commitHistory = await getCommitHistory(octokit, {
-      owner: github.context.repo.owner,
-      repo: github.context.repo.repo,
+      owner: inputs.owner,
+      repo: inputs.repo,
       ref: inputs.head,
       path,
       since: compare.earliestCommitDate,
@@ -47,8 +48,8 @@ export const listAssociatedPullRequests = async (octokit: Octokit, inputs: Input
   }
 
   const rootCommitHistory = await getCommitHistory(octokit, {
-    owner: github.context.repo.owner,
-    repo: github.context.repo.repo,
+    owner: inputs.owner,
+    repo: inputs.repo,
     ref: inputs.head,
     path: '.',
     since: compare.earliestCommitDate,
