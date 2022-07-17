@@ -1,5 +1,5 @@
 name: list-associated-pull-requests-action
-description: Action to generate release note from commit history
+description: Action to generate a list of associated pull requests by paths in monorepo
 
 inputs:
   token:
@@ -30,3 +30,7 @@ outputs:
 runs:
   using: 'node16'
   main: 'dist/index.js'
+
+branding:
+  icon: git-pull-request
+  color: blue
