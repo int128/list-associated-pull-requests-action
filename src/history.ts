@@ -23,6 +23,9 @@ export type Commit = {
 }
 
 export const getCommitHistory = async (octokit: Octokit, inputs: Inputs): Promise<Commit[]> => {
+  core.startGroup(
+    `AssociatedPullRequestsInCommitHistoryOfSubTreeQuery (${inputs.ref}, ${inputs.path}, ${inputs.since.toISOString()})`
+  )
   const q = await getAssociatedPullRequestsInCommitHistoryOfSubTreeQuery(octokit, {
     owner: inputs.owner,
     name: inputs.repo,
@@ -30,9 +33,6 @@ export const getCommitHistory = async (octokit: Octokit, inputs: Inputs): Promis
     path: inputs.path,
     since: inputs.since,
   })
-  core.startGroup(
-    `AssociatedPullRequestsInCommitHistoryOfSubTreeQuery (${inputs.ref}, ${inputs.path}, ${inputs.since.toISOString()})`
-  )
   core.info(JSON.stringify(q, undefined, 2))
   core.endGroup()
 
@@ -70,6 +70,7 @@ export const parseAssociatedPullRequestsInCommitHistoryOfSubTreeQuery = (
       })
     }
   }
+  core.endGroup()
   return commits
 }
 
