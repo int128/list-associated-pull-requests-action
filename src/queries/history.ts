@@ -13,6 +13,7 @@ const query = /* GraphQL */ `
     $expression: String!
     $path: String!
     $since: GitTimestamp!
+    $after: String
   ) {
     rateLimit {
       cost
@@ -21,8 +22,11 @@ const query = /* GraphQL */ `
       object(expression: $expression) {
         __typename
         ... on Commit {
-          history(path: $path, since: $since) {
+          history(path: $path, since: $since, first: 100, after: $after) {
             totalCount
+            pageInfo {
+              endCursor
+            }
             nodes {
               oid
               associatedPullRequests(first: 1, orderBy: { field: CREATED_AT, direction: ASC }) {
