@@ -23,7 +23,7 @@ const fixtureQuery: AssociatedPullRequestsInCommitHistoryOfSubTreeQuery = {
       history: {
         totalCount: 27,
         pageInfo: {
-          endCursor: undefined
+          endCursor: undefined,
         },
         nodes: [
           {
