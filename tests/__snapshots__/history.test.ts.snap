@@ -187,5 +187,6 @@ Object {
     },
   ],
   "endCursor": undefined,
+  "hasNextPage": false,
 }
 `;

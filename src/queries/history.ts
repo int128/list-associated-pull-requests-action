@@ -25,6 +25,7 @@ const query = /* GraphQL */ `
           history(path: $path, since: $since, first: 100, after: $after) {
             totalCount
             pageInfo {
+              hasNextPage
               endCursor
             }
             nodes {

@@ -27,7 +27,7 @@ export const getCommitHistory = async (octokit: Octokit, inputs: Inputs): Promis
   for (let afterCursor: string | undefined; ; ) {
     const page = await getCommitHistoryByCursor(octokit, inputs, afterCursor)
     commits.push(...page.commits)
-    if (page.endCursor === undefined) {
+    if (page.hasNextPage === false) {
       break
     }
     afterCursor = page.endCursor
@@ -37,6 +37,7 @@ export const getCommitHistory = async (octokit: Octokit, inputs: Inputs): Promis
 
 type CommitHistoryPage = {
   commits: Commit[]
+  hasNextPage: boolean
   endCursor?: string
 }
 
@@ -97,6 +98,7 @@ export const parseAssociatedPullRequestsInCommitHistoryOfSubTreeQuery = (
 
   return {
     commits,
+    hasNextPage: q.repository.object.history.pageInfo.hasNextPage,
     endCursor: q.repository.object.history.pageInfo.endCursor ?? undefined,
   }
 }
