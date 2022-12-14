@@ -3,6 +3,7 @@ import {
   AssociatedPullRequestsInCommitHistoryOfSubTreeQuery,
   AssociatedPullRequestsInCommitHistoryOfSubTreeQueryVariables,
 } from '../generated/graphql'
+import { retryGraphqlResponseError } from './retry'
 
 type Octokit = InstanceType<typeof GitHub>
 
@@ -49,4 +50,5 @@ const query = /* GraphQL */ `
 export const getAssociatedPullRequestsInCommitHistoryOfSubTreeQuery = async (
   o: Octokit,
   v: AssociatedPullRequestsInCommitHistoryOfSubTreeQueryVariables
-): Promise<AssociatedPullRequestsInCommitHistoryOfSubTreeQuery> => await o.graphql(query, v)
+): Promise<AssociatedPullRequestsInCommitHistoryOfSubTreeQuery> =>
+  await retryGraphqlResponseError(async () => o.graphql(query, v), 5, 3000)
