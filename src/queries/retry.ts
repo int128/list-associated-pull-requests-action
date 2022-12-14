@@ -1,5 +1,5 @@
 import * as core from '@actions/core'
-import { GraphqlResponseError } from '@octokit/graphql'
+import { RequestError } from '@octokit/request-error'
 
 // Retry the query when it received a GraphQL error.
 // Sometimes GitHub API returns the following error:
@@ -17,9 +17,8 @@ export const retryGraphqlResponseError = async <T>(
   try {
     return await query()
   } catch (error) {
-    core.warning(`[Before retry check] ${error}`) // TODO: Remove after finishing debug
-    if (retryCount > 0 && error instanceof GraphqlResponseError) {
-      core.warning(`retry after ${retryAfterMs}ms: ${String(error)}`)
+    if (retryCount > 0 && error instanceof RequestError) {
+      core.warning(`retry after ${retryAfterMs}ms: status ${error.status}: ${String(error)}`)
       await new Promise((resolve) => setTimeout(resolve, retryAfterMs))
       return await retryGraphqlResponseError(query, retryCount - 1, retryAfterMs * 2)
     }
