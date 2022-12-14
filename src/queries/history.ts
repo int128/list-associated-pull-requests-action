@@ -22,7 +22,7 @@ const query = /* GraphQL */ `
       object(expression: $expression) {
         __typename
         ... on Commit {
-          history(path: $path, since: $since, first: 100, after: $after) {
+          history(path: $path, since: $since, first: 64, after: $after) {
             totalCount
             pageInfo {
               hasNextPage
