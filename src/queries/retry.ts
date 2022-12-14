@@ -17,6 +17,7 @@ export const retryGraphqlResponseError = async <T>(
   try {
     return await query()
   } catch (error) {
+    core.warning(`[Before retry check] ${error}`) // TODO: Remove after finishing debug
     if (retryCount > 0 && error instanceof GraphqlResponseError) {
       core.warning(`retry after ${retryAfterMs}ms: ${String(error)}`)
       await new Promise((resolve) => setTimeout(resolve, retryAfterMs))
