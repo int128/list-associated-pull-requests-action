@@ -6,7 +6,8 @@ export type AssociatedPullRequestsInCommitHistoryOfSubTreeQueryVariables = Types
   expression: Types.Scalars['String'];
   path: Types.Scalars['String'];
   since: Types.Scalars['GitTimestamp'];
-  after?: Types.InputMaybe<Types.Scalars['String']>;
+  historySize: Types.Scalars['Int'];
+  historyAfter?: Types.InputMaybe<Types.Scalars['String']>;
 }>;
 
 
