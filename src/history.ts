@@ -55,9 +55,10 @@ const getCommitHistoryByCursor = async (
     expression: inputs.ref,
     path: inputs.path,
     since: inputs.since,
-    after: afterCursor,
+    historySize: 100,
+    historyAfter: afterCursor,
   })
-  core.info(JSON.stringify(q, undefined, 2))
+  core.debug(JSON.stringify(q, undefined, 2))
   core.endGroup()
 
   return parseAssociatedPullRequestsInCommitHistoryOfSubTreeQuery(q, inputs.sinceCommitId)
