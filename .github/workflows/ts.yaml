@@ -29,6 +29,8 @@ jobs:
           cache: yarn
       - run: yarn
       - run: yarn lint
+      - run: yarn format
+      - run: yarn graphql-codegen
       - run: yarn test
       - run: yarn build
       - run: yarn package
@@ -61,17 +63,4 @@ jobs:
             ## Changes (grouped)
             ${{ steps.associated-pull-requests-grouped.outputs.body }}
 
-  generate:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.head_ref }}
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 16
-          cache: yarn
-      - run: yarn
-      - run: yarn format
-      - run: yarn graphql-codegen
       - uses: int128/update-generated-files-action@v2
