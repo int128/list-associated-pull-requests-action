@@ -25,7 +25,11 @@ inputs:
 
 outputs:
   body:
-    description: List of associated pull requests or commits (Markdown)
+    description: List of associated pull requests (Markdown)
+  body-groups:
+    description: Grouped lists of associated pull requests (Markdown)
+  body-others:
+    description: Others list of associated pull requests (Markdown)
 
 runs:
   using: 'node16'

@@ -12,6 +12,8 @@ const main = async (): Promise<void> => {
   })
 
   core.setOutput('body', outputs.body)
+  core.setOutput('body-groups', outputs.bodyGroups)
+  core.setOutput('body-others', outputs.bodyOthers)
 }
 
 main().catch((e) => core.setFailed(e instanceof Error ? e : String(e)))
