@@ -14,6 +14,8 @@ type Inputs = {
 
 type Outputs = {
   body: string
+  bodyGroups: string
+  bodyOthers: string
 }
 
 export const run = async (inputs: Inputs): Promise<Outputs> => {
@@ -43,16 +45,22 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
     showOthersGroup: inputs.showOthersGroup,
     groupByPaths,
   })
-  const body = []
+
+  const bodyGroups = []
   for (const [path, commits] of associatedPulls.commitsByPath) {
-    body.push(`### ${path}`)
-    body.push(...formatCommits(commits))
+    bodyGroups.push(`### ${path}`)
+    bodyGroups.push(...formatCommits(commits))
   }
+  const bodyOthers = []
   if (associatedPulls.others) {
-    body.push(`### Others`)
-    body.push(...formatCommits(associatedPulls.others))
+    bodyOthers.push(`### Others`)
+    bodyOthers.push(...formatCommits(associatedPulls.others))
   }
-  return { body: body.join('\n') }
+  return {
+    body: [...bodyGroups, ...bodyOthers].join('\n'),
+    bodyGroups: bodyGroups.join('\n'),
+    bodyOthers: bodyOthers.join('\n'),
+  }
 }
 
 const sanitizePaths = (groupByPaths: string[]) => groupByPaths.filter((p) => p.length > 0 && !p.startsWith('#'))

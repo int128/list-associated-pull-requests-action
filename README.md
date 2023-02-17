@@ -186,4 +186,6 @@ You need to set either `base` and `head`, or `pull-request`.
 
 | Name | Description
 |------|------------
-| `body` | List of associated pull requests or commits (Markdown)
+| `body` | List of associated pull requests (Markdown)
+| `body-groups` | Grouped lists of associated pull requests (Markdown)
+| `body-others` | Others list of associated pull requests (Markdown)
