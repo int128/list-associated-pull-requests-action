@@ -13420,6 +13420,8 @@ export type Organization = Actor & AnnouncementBanner & MemberStatusable & Node 
   requiresTwoFactorAuthentication?: Maybe<Scalars['Boolean']>;
   /** The HTTP path for this organization. */
   resourcePath: Scalars['URI'];
+  /** Returns a single ruleset from the current organization by ID. */
+  ruleset?: Maybe<RepositoryRuleset>;
   /** A list of rulesets for this organization. */
   rulesets?: Maybe<RepositoryRulesetConnection>;
   /** The Organization's SAML identity provider. Visible to (1) organization owners, (2) organization owners' personal access tokens (classic) with read:org or admin:org scope, (3) GitHub App with an installation token with read or write access to members. */
@@ -13716,6 +13718,12 @@ export type OrganizationRepositoryMigrationsArgs = {
   orderBy?: InputMaybe<RepositoryMigrationOrder>;
   repositoryName?: InputMaybe<Scalars['String']>;
   state?: InputMaybe<MigrationState>;
+};
+
+
+/** An account on GitHub, with one or more owners, that has repositories, members and teams. */
+export type OrganizationRulesetArgs = {
+  databaseId: Scalars['Int'];
 };
 
 
@@ -20153,6 +20161,8 @@ export type Repository = Node & PackageOwner & ProjectOwner & ProjectV2Recent & 
   repositoryTopics: RepositoryTopicConnection;
   /** The HTTP path for this repository */
   resourcePath: Scalars['URI'];
+  /** Returns a single ruleset from the current repository by ID. */
+  ruleset?: Maybe<RepositoryRuleset>;
   /** A list of rulesets for this repository. */
   rulesets?: Maybe<RepositoryRulesetConnection>;
   /** The security policy URL. */
@@ -20582,6 +20592,12 @@ export type RepositoryRepositoryTopicsArgs = {
   before?: InputMaybe<Scalars['String']>;
   first?: InputMaybe<Scalars['Int']>;
   last?: InputMaybe<Scalars['Int']>;
+};
+
+
+/** A repository contains the content for a project. */
+export type RepositoryRulesetArgs = {
+  databaseId: Scalars['Int'];
 };
 
 
@@ -21276,6 +21292,8 @@ export type RepositoryRuleset = Node & {
   bypassMode: RuleBypassMode;
   /** The set of conditions that must evaluate to true for this ruleset to apply */
   conditions: RepositoryRuleConditions;
+  /** Identifies the date and time when the object was created. */
+  createdAt: Scalars['DateTime'];
   /** Identifies the primary key from the database. */
   databaseId?: Maybe<Scalars['Int']>;
   /** The enforcement level of this ruleset */
@@ -21289,6 +21307,8 @@ export type RepositoryRuleset = Node & {
   source: RuleSource;
   /** Target of the ruleset. */
   target?: Maybe<RepositoryRulesetTarget>;
+  /** Identifies the date and time when the object was last updated. */
+  updatedAt: Scalars['DateTime'];
 };
 
 
