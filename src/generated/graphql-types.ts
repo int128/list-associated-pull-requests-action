@@ -12715,6 +12715,52 @@ export type OrgOauthAppAccessApprovedAuditEntry = AuditEntry & Node & OauthAppli
   userUrl?: Maybe<Scalars['URI']>;
 };
 
+/** Audit log entry for a org.oauth_app_access_blocked event. */
+export type OrgOauthAppAccessBlockedAuditEntry = AuditEntry & Node & OauthApplicationAuditEntryData & OrganizationAuditEntryData & {
+  __typename?: 'OrgOauthAppAccessBlockedAuditEntry';
+  /** The action name */
+  action: Scalars['String'];
+  /** The user who initiated the action */
+  actor?: Maybe<AuditEntryActor>;
+  /** The IP address of the actor */
+  actorIp?: Maybe<Scalars['String']>;
+  /** A readable representation of the actor's location */
+  actorLocation?: Maybe<ActorLocation>;
+  /** The username of the user who initiated the action */
+  actorLogin?: Maybe<Scalars['String']>;
+  /** The HTTP path for the actor. */
+  actorResourcePath?: Maybe<Scalars['URI']>;
+  /** The HTTP URL for the actor. */
+  actorUrl?: Maybe<Scalars['URI']>;
+  /** The time the action was initiated */
+  createdAt: Scalars['PreciseDateTime'];
+  id: Scalars['ID'];
+  /** The name of the OAuth application. */
+  oauthApplicationName?: Maybe<Scalars['String']>;
+  /** The HTTP path for the OAuth application */
+  oauthApplicationResourcePath?: Maybe<Scalars['URI']>;
+  /** The HTTP URL for the OAuth application */
+  oauthApplicationUrl?: Maybe<Scalars['URI']>;
+  /** The corresponding operation type for the action */
+  operationType?: Maybe<OperationType>;
+  /** The Organization associated with the Audit Entry. */
+  organization?: Maybe<Organization>;
+  /** The name of the Organization. */
+  organizationName?: Maybe<Scalars['String']>;
+  /** The HTTP path for the organization */
+  organizationResourcePath?: Maybe<Scalars['URI']>;
+  /** The HTTP URL for the organization */
+  organizationUrl?: Maybe<Scalars['URI']>;
+  /** The user affected by the action */
+  user?: Maybe<User>;
+  /** For actions involving two users, the actor is the initiator and the user is the affected user. */
+  userLogin?: Maybe<Scalars['String']>;
+  /** The HTTP path for the user. */
+  userResourcePath?: Maybe<Scalars['URI']>;
+  /** The HTTP URL for the user. */
+  userUrl?: Maybe<Scalars['URI']>;
+};
+
 /** Audit log entry for a org.oauth_app_access_denied event. */
 export type OrgOauthAppAccessDeniedAuditEntry = AuditEntry & Node & OauthApplicationAuditEntryData & OrganizationAuditEntryData & {
   __typename?: 'OrgOauthAppAccessDeniedAuditEntry';
@@ -12764,6 +12810,52 @@ export type OrgOauthAppAccessDeniedAuditEntry = AuditEntry & Node & OauthApplica
 /** Audit log entry for a org.oauth_app_access_requested event. */
 export type OrgOauthAppAccessRequestedAuditEntry = AuditEntry & Node & OauthApplicationAuditEntryData & OrganizationAuditEntryData & {
   __typename?: 'OrgOauthAppAccessRequestedAuditEntry';
+  /** The action name */
+  action: Scalars['String'];
+  /** The user who initiated the action */
+  actor?: Maybe<AuditEntryActor>;
+  /** The IP address of the actor */
+  actorIp?: Maybe<Scalars['String']>;
+  /** A readable representation of the actor's location */
+  actorLocation?: Maybe<ActorLocation>;
+  /** The username of the user who initiated the action */
+  actorLogin?: Maybe<Scalars['String']>;
+  /** The HTTP path for the actor. */
+  actorResourcePath?: Maybe<Scalars['URI']>;
+  /** The HTTP URL for the actor. */
+  actorUrl?: Maybe<Scalars['URI']>;
+  /** The time the action was initiated */
+  createdAt: Scalars['PreciseDateTime'];
+  id: Scalars['ID'];
+  /** The name of the OAuth application. */
+  oauthApplicationName?: Maybe<Scalars['String']>;
+  /** The HTTP path for the OAuth application */
+  oauthApplicationResourcePath?: Maybe<Scalars['URI']>;
+  /** The HTTP URL for the OAuth application */
+  oauthApplicationUrl?: Maybe<Scalars['URI']>;
+  /** The corresponding operation type for the action */
+  operationType?: Maybe<OperationType>;
+  /** The Organization associated with the Audit Entry. */
+  organization?: Maybe<Organization>;
+  /** The name of the Organization. */
+  organizationName?: Maybe<Scalars['String']>;
+  /** The HTTP path for the organization */
+  organizationResourcePath?: Maybe<Scalars['URI']>;
+  /** The HTTP URL for the organization */
+  organizationUrl?: Maybe<Scalars['URI']>;
+  /** The user affected by the action */
+  user?: Maybe<User>;
+  /** For actions involving two users, the actor is the initiator and the user is the affected user. */
+  userLogin?: Maybe<Scalars['String']>;
+  /** The HTTP path for the user. */
+  userResourcePath?: Maybe<Scalars['URI']>;
+  /** The HTTP URL for the user. */
+  userUrl?: Maybe<Scalars['URI']>;
+};
+
+/** Audit log entry for a org.oauth_app_access_unblocked event. */
+export type OrgOauthAppAccessUnblockedAuditEntry = AuditEntry & Node & OauthApplicationAuditEntryData & OrganizationAuditEntryData & {
+  __typename?: 'OrgOauthAppAccessUnblockedAuditEntry';
   /** The action name */
   action: Scalars['String'];
   /** The user who initiated the action */
@@ -13895,7 +13987,7 @@ export type OrganizationTotalSponsorshipAmountAsSponsorInCentsArgs = {
 };
 
 /** An audit entry in an organization audit log. */
-export type OrganizationAuditEntry = MembersCanDeleteReposClearAuditEntry | MembersCanDeleteReposDisableAuditEntry | MembersCanDeleteReposEnableAuditEntry | OauthApplicationCreateAuditEntry | OrgAddBillingManagerAuditEntry | OrgAddMemberAuditEntry | OrgBlockUserAuditEntry | OrgConfigDisableCollaboratorsOnlyAuditEntry | OrgConfigEnableCollaboratorsOnlyAuditEntry | OrgCreateAuditEntry | OrgDisableOauthAppRestrictionsAuditEntry | OrgDisableSamlAuditEntry | OrgDisableTwoFactorRequirementAuditEntry | OrgEnableOauthAppRestrictionsAuditEntry | OrgEnableSamlAuditEntry | OrgEnableTwoFactorRequirementAuditEntry | OrgInviteMemberAuditEntry | OrgInviteToBusinessAuditEntry | OrgOauthAppAccessApprovedAuditEntry | OrgOauthAppAccessDeniedAuditEntry | OrgOauthAppAccessRequestedAuditEntry | OrgRemoveBillingManagerAuditEntry | OrgRemoveMemberAuditEntry | OrgRemoveOutsideCollaboratorAuditEntry | OrgRestoreMemberAuditEntry | OrgUnblockUserAuditEntry | OrgUpdateDefaultRepositoryPermissionAuditEntry | OrgUpdateMemberAuditEntry | OrgUpdateMemberRepositoryCreationPermissionAuditEntry | OrgUpdateMemberRepositoryInvitationPermissionAuditEntry | PrivateRepositoryForkingDisableAuditEntry | PrivateRepositoryForkingEnableAuditEntry | RepoAccessAuditEntry | RepoAddMemberAuditEntry | RepoAddTopicAuditEntry | RepoArchivedAuditEntry | RepoChangeMergeSettingAuditEntry | RepoConfigDisableAnonymousGitAccessAuditEntry | RepoConfigDisableCollaboratorsOnlyAuditEntry | RepoConfigDisableContributorsOnlyAuditEntry | RepoConfigDisableSockpuppetDisallowedAuditEntry | RepoConfigEnableAnonymousGitAccessAuditEntry | RepoConfigEnableCollaboratorsOnlyAuditEntry | RepoConfigEnableContributorsOnlyAuditEntry | RepoConfigEnableSockpuppetDisallowedAuditEntry | RepoConfigLockAnonymousGitAccessAuditEntry | RepoConfigUnlockAnonymousGitAccessAuditEntry | RepoCreateAuditEntry | RepoDestroyAuditEntry | RepoRemoveMemberAuditEntry | RepoRemoveTopicAuditEntry | RepositoryVisibilityChangeDisableAuditEntry | RepositoryVisibilityChangeEnableAuditEntry | TeamAddMemberAuditEntry | TeamAddRepositoryAuditEntry | TeamChangeParentTeamAuditEntry | TeamRemoveMemberAuditEntry | TeamRemoveRepositoryAuditEntry;
+export type OrganizationAuditEntry = MembersCanDeleteReposClearAuditEntry | MembersCanDeleteReposDisableAuditEntry | MembersCanDeleteReposEnableAuditEntry | OauthApplicationCreateAuditEntry | OrgAddBillingManagerAuditEntry | OrgAddMemberAuditEntry | OrgBlockUserAuditEntry | OrgConfigDisableCollaboratorsOnlyAuditEntry | OrgConfigEnableCollaboratorsOnlyAuditEntry | OrgCreateAuditEntry | OrgDisableOauthAppRestrictionsAuditEntry | OrgDisableSamlAuditEntry | OrgDisableTwoFactorRequirementAuditEntry | OrgEnableOauthAppRestrictionsAuditEntry | OrgEnableSamlAuditEntry | OrgEnableTwoFactorRequirementAuditEntry | OrgInviteMemberAuditEntry | OrgInviteToBusinessAuditEntry | OrgOauthAppAccessApprovedAuditEntry | OrgOauthAppAccessBlockedAuditEntry | OrgOauthAppAccessDeniedAuditEntry | OrgOauthAppAccessRequestedAuditEntry | OrgOauthAppAccessUnblockedAuditEntry | OrgRemoveBillingManagerAuditEntry | OrgRemoveMemberAuditEntry | OrgRemoveOutsideCollaboratorAuditEntry | OrgRestoreMemberAuditEntry | OrgUnblockUserAuditEntry | OrgUpdateDefaultRepositoryPermissionAuditEntry | OrgUpdateMemberAuditEntry | OrgUpdateMemberRepositoryCreationPermissionAuditEntry | OrgUpdateMemberRepositoryInvitationPermissionAuditEntry | PrivateRepositoryForkingDisableAuditEntry | PrivateRepositoryForkingEnableAuditEntry | RepoAccessAuditEntry | RepoAddMemberAuditEntry | RepoAddTopicAuditEntry | RepoArchivedAuditEntry | RepoChangeMergeSettingAuditEntry | RepoConfigDisableAnonymousGitAccessAuditEntry | RepoConfigDisableCollaboratorsOnlyAuditEntry | RepoConfigDisableContributorsOnlyAuditEntry | RepoConfigDisableSockpuppetDisallowedAuditEntry | RepoConfigEnableAnonymousGitAccessAuditEntry | RepoConfigEnableCollaboratorsOnlyAuditEntry | RepoConfigEnableContributorsOnlyAuditEntry | RepoConfigEnableSockpuppetDisallowedAuditEntry | RepoConfigLockAnonymousGitAccessAuditEntry | RepoConfigUnlockAnonymousGitAccessAuditEntry | RepoCreateAuditEntry | RepoDestroyAuditEntry | RepoRemoveMemberAuditEntry | RepoRemoveTopicAuditEntry | RepositoryVisibilityChangeDisableAuditEntry | RepositoryVisibilityChangeEnableAuditEntry | TeamAddMemberAuditEntry | TeamAddRepositoryAuditEntry | TeamChangeParentTeamAuditEntry | TeamRemoveMemberAuditEntry | TeamRemoveRepositoryAuditEntry;
 
 /** The connection type for OrganizationAuditEntry. */
 export type OrganizationAuditEntryConnection = {
@@ -17600,6 +17692,8 @@ export type PullRequestThread = Node & {
   isResolved: Scalars['Boolean'];
   /** The line in the file to which this thread refers */
   line?: Maybe<Scalars['Int']>;
+  /** Identifies the file path of this thread. */
+  path: Scalars['String'];
   /** Identifies the pull request associated with this thread. */
   pullRequest: PullRequest;
   /** Identifies the repository associated with this thread. */
@@ -17610,6 +17704,8 @@ export type PullRequestThread = Node & {
   startDiffSide?: Maybe<DiffSide>;
   /** The line of the first file diff in the thread. */
   startLine?: Maybe<Scalars['Int']>;
+  /** The level at which the comments in the corresponding thread are targeted, can be a diff line or a file */
+  subjectType: PullRequestReviewThreadSubjectType;
   /** Indicates whether the current viewer can reply to this thread. */
   viewerCanReply: Scalars['Boolean'];
   /** Whether or not the viewer can resolve this thread */
