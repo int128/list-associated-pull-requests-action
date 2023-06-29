@@ -35,19 +35,14 @@ jobs:
       - run: yarn build
       - run: yarn package
 
-      - id: associated-pull-requests
+      - id: e2e-default
+        name: E2E test (default)
         uses: ./
         with:
           # https://github.com/int128/list-associated-pull-requests-action/pull/98
           pull-request: 98
-      - if: github.event_name == 'pull_request'
-        uses: int128/comment-action@v1
-        with:
-          post: |
-            ## Changes
-            ${{ steps.associated-pull-requests.outputs.body }}
-
-      - id: associated-pull-requests-grouped
+      - id: e2e-with-group
+        name: E2E test (group-by-paths)
         uses: ./
         with:
           # https://github.com/int128/list-associated-pull-requests-action/pull/98
@@ -56,11 +51,9 @@ jobs:
             src
             # comment
             .github
-      - if: github.event_name == 'pull_request'
-        uses: int128/comment-action@v1
-        with:
-          post: |
-            ## Changes (grouped)
-            ${{ steps.associated-pull-requests-grouped.outputs.body }}
+      - run: yarn test-with-e2e
+        env:
+          e2e_default_body: ${{ steps.e2e-default.outputs.body }}
+          e2e_with_group_body: ${{ steps.e2e-with-group.outputs.body }}
 
       - uses: int128/update-generated-files-action@v2
