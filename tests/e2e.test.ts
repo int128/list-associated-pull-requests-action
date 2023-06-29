@@ -1,6 +1,6 @@
 test('e2e_default_body', () => {
   // https://github.com/int128/list-associated-pull-requests-action/pull/98
-  expect(process.env.e2e_default_body).toBe(`## Changes
+  expect(process.env.e2e_default_body).toBe(`\
 ### Others
 - #97 @renovate
 - #90 @renovate
@@ -32,7 +32,7 @@ test('e2e_default_body', () => {
 
 test('e2e_with_group_body', () => {
   // https://github.com/int128/list-associated-pull-requests-action/pull/98
-  expect(process.env.e2e_with_group_body).toBe(`## Changes (grouped)
+  expect(process.env.e2e_with_group_body).toBe(`\
 ### src
 - #89 @int128
 - #88 @int128
