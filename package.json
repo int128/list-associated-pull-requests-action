@@ -7,7 +7,8 @@
     "format-check": "prettier --check **/*.ts",
     "lint": "eslint **/*.ts",
     "package": "ncc build --source-map --license licenses.txt",
-    "test": "jest",
+    "test": "jest --testPathIgnorePatterns e2e.test.ts",
+    "test-with-e2e": "jest",
     "graphql-codegen": "graphql-codegen --config graphql-codegen.yaml"
   },
   "dependencies": {
