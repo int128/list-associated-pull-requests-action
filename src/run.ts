@@ -30,12 +30,14 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
       pull_number: inputs.pullRequest,
     })
     core.info(`Found #${pull.number}`)
-    base = pull.base.ref
-    head = pull.head.ref
+    base = pull.base.sha
+    head = pull.head.sha
   }
   if (!base || !head) {
     throw new Error('you need to set either pull-request or base/head')
   }
+  core.info(`base = ${base}`)
+  core.info(`head = ${head}`)
 
   const associatedPulls = await listAssociatedPullRequests(octokit, {
     owner: github.context.repo.owner,
