@@ -1,13 +1,13 @@
 import * as Types from './graphql-types';
 
 export type AssociatedPullRequestsInCommitHistoryOfSubTreeQueryVariables = Types.Exact<{
-  owner: Types.Scalars['String'];
-  name: Types.Scalars['String'];
-  expression: Types.Scalars['String'];
-  path: Types.Scalars['String'];
-  since: Types.Scalars['GitTimestamp'];
-  historySize: Types.Scalars['Int'];
-  historyAfter?: Types.InputMaybe<Types.Scalars['String']>;
+  owner: Types.Scalars['String']['input'];
+  name: Types.Scalars['String']['input'];
+  expression: Types.Scalars['String']['input'];
+  path: Types.Scalars['String']['input'];
+  since: Types.Scalars['GitTimestamp']['input'];
+  historySize: Types.Scalars['Int']['input'];
+  historyAfter?: Types.InputMaybe<Types.Scalars['String']['input']>;
 }>;
 
 
