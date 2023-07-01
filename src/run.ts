@@ -2,6 +2,9 @@ import * as core from '@actions/core'
 import * as github from '@actions/github'
 import { Commit } from './history'
 import { listAssociatedPullRequests } from './list'
+import { GitHub } from '@actions/github/lib/utils'
+
+type Octokit = InstanceType<typeof GitHub>
 
 type Inputs = {
   token: string
@@ -18,11 +21,7 @@ type Outputs = {
   bodyOthers: string
 }
 
-export const run = async (inputs: Inputs): Promise<Outputs> => {
-  const octokit = github.getOctokit(inputs.token)
-  const groupByPaths = sanitizePaths(inputs.groupByPaths)
-
-  let { base, head } = inputs
+const parseInputs = async (octokit: Octokit, inputs: Inputs) => {
   if (inputs.pullRequest) {
     const { data: pull } = await octokit.rest.pulls.get({
       owner: github.context.repo.owner,
@@ -30,12 +29,20 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
       pull_number: inputs.pullRequest,
     })
     core.info(`Found #${pull.number}`)
-    base = pull.base.sha
-    head = pull.head.sha
+    return { base: pull.base.sha, head: pull.head.sha }
   }
+  const { base, head } = inputs
   if (!base || !head) {
     throw new Error('you need to set either pull-request or base/head')
   }
+  return { base, head }
+}
+
+export const run = async (inputs: Inputs): Promise<Outputs> => {
+  const octokit = github.getOctokit(inputs.token)
+  const groupByPaths = sanitizePaths(inputs.groupByPaths)
+
+  const { base, head } = await parseInputs(octokit, inputs)
   core.info(`base = ${base}`)
   core.info(`head = ${head}`)
 
