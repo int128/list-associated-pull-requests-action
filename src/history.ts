@@ -57,7 +57,7 @@ export const parseAssociatedPullRequestsInCommitHistoryOfSubTreeQuery = (
   sinceCommitId: string
 ): Page => {
   if (q.repository?.object?.__typename !== 'Commit') {
-    throw new Error(`unexpected typename ${String(q.repository?.object?.__typename)} !== Commit`)
+    throw new Error(`unexpected q.repository.object.__typename: ${JSON.stringify(q, undefined, 2)}`)
   }
 
   const nodes = filterNodes(q, sinceCommitId)
@@ -91,7 +91,7 @@ export const parseAssociatedPullRequestsInCommitHistoryOfSubTreeQuery = (
 
 const filterNodes = (q: AssociatedPullRequestsInCommitHistoryOfSubTreeQuery, sinceCommitId: string) => {
   if (q.repository?.object?.__typename !== 'Commit') {
-    throw new Error(`unexpected typename ${String(q.repository?.object?.__typename)} !== Commit`)
+    throw new Error(`unexpected q.repository.object.__typename: ${JSON.stringify(q, undefined, 2)}`)
   }
   const nodes = []
   for (const node of q.repository.object.history.nodes ?? []) {
