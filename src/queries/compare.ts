@@ -11,7 +11,7 @@ const query = /* GraphQL */ `
     }
     repository(owner: $owner, name: $name) {
       ref(qualifiedName: $base) {
-        compare(headRef: "refs/heads/develop") {
+        compare(headRef: $head) {
           commits(first: $size, after: $after) {
             totalCount
             pageInfo {
