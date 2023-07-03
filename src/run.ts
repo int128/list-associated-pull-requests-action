@@ -1,6 +1,6 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
-import { Commit } from './history'
+import { Commit } from './compare'
 import { listAssociatedPullRequests } from './list'
 import { GitHub } from '@actions/github/lib/utils'
 
