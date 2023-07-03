@@ -1,14 +1,11 @@
 import { GitHub } from '@actions/github/lib/utils'
-import {
-  AssociatedPullRequestsInCommitHistoryOfSubTreeQuery,
-  AssociatedPullRequestsInCommitHistoryOfSubTreeQueryVariables,
-} from '../generated/graphql'
+import { CommitHistoryOfSubTreeQuery, CommitHistoryOfSubTreeQueryVariables } from '../generated/graphql'
 import { retryHttpError } from './retry'
 
 type Octokit = InstanceType<typeof GitHub>
 
 const query = /* GraphQL */ `
-  query associatedPullRequestsInCommitHistoryOfSubTree(
+  query commitHistoryOfSubTree(
     $owner: String!
     $name: String!
     $expression: String!
@@ -32,14 +29,6 @@ const query = /* GraphQL */ `
             }
             nodes {
               oid
-              associatedPullRequests(first: 1, orderBy: { field: CREATED_AT, direction: ASC }) {
-                nodes {
-                  number
-                  author {
-                    login
-                  }
-                }
-              }
             }
           }
         }
@@ -48,13 +37,13 @@ const query = /* GraphQL */ `
   }
 `
 
-export const getAssociatedPullRequestsInCommitHistoryOfSubTreeQuery = async (
+export const findCommitHistoryOfSubTreeQuery = async (
   o: Octokit,
-  variables: AssociatedPullRequestsInCommitHistoryOfSubTreeQueryVariables
-): Promise<AssociatedPullRequestsInCommitHistoryOfSubTreeQuery> =>
+  variables: CommitHistoryOfSubTreeQueryVariables
+): Promise<CommitHistoryOfSubTreeQuery> =>
   await retryHttpError((v) => o.graphql(query, v), {
     variables,
-    nextVariables: (current: AssociatedPullRequestsInCommitHistoryOfSubTreeQueryVariables) => ({
+    nextVariables: (current: CommitHistoryOfSubTreeQueryVariables) => ({
       ...current,
       // decrease the page size to mitigate timeout error
       historySize: Math.floor(current.historySize * 0.8),

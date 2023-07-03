@@ -1,7 +1,7 @@
 import * as core from '@actions/core'
 import { GitHub } from '@actions/github/lib/utils'
-import { AssociatedPullRequestsInCommitHistoryOfSubTreeQuery } from './generated/graphql'
-import { getAssociatedPullRequestsInCommitHistoryOfSubTreeQuery } from './queries/history'
+import { CommitHistoryOfSubTreeQuery } from './generated/graphql'
+import { findCommitHistoryOfSubTreeQuery } from './queries/history'
 
 type Octokit = InstanceType<typeof GitHub>
 
@@ -14,18 +14,22 @@ type Inputs = {
   sinceCommitId: string
 }
 
-export type Commit = {
-  commitId: string
-  pull?: {
-    number: number
-    author: string
-  }
-}
+type CommitId = string
 
-export const getCommitHistory = async (octokit: Octokit, inputs: Inputs): Promise<Commit[]> => {
-  const commits: Commit[] = []
+export const findCommitHistoryOfSubTree = async (octokit: Octokit, inputs: Inputs): Promise<CommitId[]> => {
+  const commits: CommitId[] = []
   for (let afterCursor: string | undefined; ; ) {
-    const page = await getCommitHistoryByCursor(octokit, inputs, afterCursor)
+    core.info(`findCommitHistoryOfSubTreeQuery()`)
+    const q = await findCommitHistoryOfSubTreeQuery(octokit, {
+      owner: inputs.owner,
+      name: inputs.repo,
+      expression: inputs.ref,
+      path: inputs.path,
+      since: inputs.since,
+      historySize: 100,
+      historyAfter: afterCursor,
+    })
+    const page = parseCommitHistoryOfSubTreeQuery(q, inputs.sinceCommitId)
     commits.push(...page.commits)
     if (page.hasNextPage === false) {
       break
@@ -35,68 +39,18 @@ export const getCommitHistory = async (octokit: Octokit, inputs: Inputs): Promis
   return commits
 }
 
-type CommitHistoryPage = {
-  commits: Commit[]
+type Page = {
+  commits: CommitId[]
   hasNextPage: boolean
   endCursor?: string
 }
 
-const getCommitHistoryByCursor = async (
-  octokit: Octokit,
-  inputs: Inputs,
-  afterCursor?: string
-): Promise<CommitHistoryPage> => {
-  core.startGroup(
-    `AssociatedPullRequestsInCommitHistoryOfSubTreeQuery (${inputs.ref}, ${inputs.path}, ${inputs.since.toISOString()})`
-  )
-  const q = await getAssociatedPullRequestsInCommitHistoryOfSubTreeQuery(octokit, {
-    owner: inputs.owner,
-    name: inputs.repo,
-    expression: inputs.ref,
-    path: inputs.path,
-    since: inputs.since,
-    historySize: 100,
-    historyAfter: afterCursor,
-  })
-  core.debug(JSON.stringify(q, undefined, 2))
-  core.endGroup()
-
-  return parseAssociatedPullRequestsInCommitHistoryOfSubTreeQuery(q, inputs.sinceCommitId)
-}
-
-export const parseAssociatedPullRequestsInCommitHistoryOfSubTreeQuery = (
-  q: AssociatedPullRequestsInCommitHistoryOfSubTreeQuery,
-  sinceCommitId: string
-): CommitHistoryPage => {
+export const parseCommitHistoryOfSubTreeQuery = (q: CommitHistoryOfSubTreeQuery, sinceCommitId: string): Page => {
   if (q.repository?.object?.__typename !== 'Commit') {
     throw new Error(`unexpected typename ${String(q.repository?.object?.__typename)} !== Commit`)
   }
-
-  const nodes = filterNodes(q, sinceCommitId)
-  core.startGroup(`Found ${nodes.length} commit(s)`)
-  const commits: Commit[] = []
-  for (const node of nodes) {
-    if (!node.associatedPullRequests?.nodes?.length) {
-      core.info(`${node.oid} -> no pull request`)
-      commits.push({ commitId: node.oid })
-      continue
-    }
-    for (const pull of node.associatedPullRequests.nodes) {
-      if (pull?.number === undefined) {
-        continue
-      }
-      core.info(`${node.oid} -> #${pull.number}`)
-      commits.push({
-        commitId: node.oid,
-        pull: {
-          number: pull.number,
-          author: pull.author?.login ?? '',
-        },
-      })
-    }
-  }
-  core.endGroup()
-
+  const nodes = filterHistoryNodesSince(q, sinceCommitId)
+  const commits: CommitId[] = nodes.map((node) => node.oid)
   return {
     commits,
     hasNextPage: q.repository.object.history.pageInfo.hasNextPage,
@@ -104,7 +58,7 @@ export const parseAssociatedPullRequestsInCommitHistoryOfSubTreeQuery = (
   }
 }
 
-const filterNodes = (q: AssociatedPullRequestsInCommitHistoryOfSubTreeQuery, sinceCommitId: string) => {
+const filterHistoryNodesSince = (q: CommitHistoryOfSubTreeQuery, sinceCommitId: string) => {
   if (q.repository?.object?.__typename !== 'Commit') {
     throw new Error(`unexpected typename ${String(q.repository?.object?.__typename)} !== Commit`)
   }
