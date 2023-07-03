@@ -59,6 +59,6 @@ export const getAssociatedPullRequestsInCommitHistoryOfSubTreeQuery = async (
       // decrease the page size to mitigate timeout error
       historySize: Math.floor(current.historySize * 0.8),
     }),
-    count: 5,
-    afterMs: 1000,
+    remainingCount: 10,
+    afterMs: 3000,
   })

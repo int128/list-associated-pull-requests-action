@@ -4,12 +4,15 @@ import { RequestError } from '@octokit/request-error'
 export type RetrySpec<V> = {
   variables: V
   nextVariables: (current: V) => V
-  count: number
+  remainingCount: number
   afterMs: number
 }
 
 // Retry the query when it received a GraphQL error.
-// Sometimes GitHub API returns the following error:
+// Sometimes GitHub API returns the following errors:
+//  403:
+//  You have exceeded a secondary rate limit. Please wait a few minutes before you try again.
+//  502:
 //  {
 //    "data":null,
 //    "errors":[{
@@ -21,16 +24,36 @@ export const retryHttpError = async <T, V>(query: (v: V) => Promise<T>, spec: Re
     core.info(`query with variables ${JSON.stringify(spec.variables)}`)
     return await query(spec.variables)
   } catch (error) {
-    if (spec.count > 0 && error instanceof RequestError) {
-      core.warning(`retry after ${spec.afterMs} ms: status ${error.status}: ${String(error)}`)
-      await new Promise((resolve) => setTimeout(resolve, spec.afterMs))
+    if (!(error instanceof RequestError)) {
+      throw error
+    }
+    if (spec.remainingCount > 0) {
+      throw new Error(`retry over: ${String(error)}`)
+    }
+
+    if (error.status === 403) {
+      // wait a longer time for secondary rate limit
+      const waitMs = spec.afterMs + newJitter(60000)
+      core.warning(`retry after ${waitMs} ms: status ${error.status}: ${String(error)}`)
+      await new Promise((resolve) => setTimeout(resolve, waitMs))
       return await retryHttpError(query, {
-        variables: spec.nextVariables(spec.variables),
+        variables: spec.variables,
         nextVariables: spec.nextVariables,
-        count: spec.count - 1,
+        remainingCount: spec.remainingCount - 1,
         afterMs: spec.afterMs * 2,
       })
     }
-    throw error
+
+    const waitMs = spec.afterMs + newJitter(10000)
+    core.warning(`retry after ${waitMs} ms: status ${error.status}: ${String(error)}`)
+    await new Promise((resolve) => setTimeout(resolve, waitMs))
+    return await retryHttpError(query, {
+      variables: spec.nextVariables(spec.variables),
+      nextVariables: spec.nextVariables,
+      remainingCount: spec.remainingCount - 1,
+      afterMs: spec.afterMs * 2,
+    })
   }
 }
+
+const newJitter = (maxMs: number) => Math.ceil(maxMs * Math.random())
