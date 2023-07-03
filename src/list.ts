@@ -1,7 +1,8 @@
 import * as core from '@actions/core'
 import { GitHub } from '@actions/github/lib/utils'
-import { compareCommits } from './compare'
-import { Commit, getCommitHistory } from './history'
+import { Commit, compareBaseHead } from './compare'
+import { findCommitHistoryOfSubTree } from './history'
+import { findEarliestCommit } from './commit'
 
 type Octokit = InstanceType<typeof GitHub>
 
@@ -21,41 +22,47 @@ type Outputs = {
 
 export const listAssociatedPullRequests = async (octokit: Octokit, inputs: Inputs): Promise<Outputs> => {
   core.info(`Compare ${inputs.base} and ${inputs.head}`)
-  const compare = await compareCommits(octokit, {
+  const diffCommits = await compareBaseHead(octokit, {
     owner: inputs.owner,
     repo: inputs.repo,
     base: inputs.base,
     head: inputs.head,
   })
-  core.info(`commits = ${compare.commitIds.size}`)
-  core.info(`earliestCommit = ${compare.earliestCommitId} (${compare.earliestCommitDate.toISOString()})`)
+  core.info(`commits = ${diffCommits.length}`)
+
+  const earliestCommit = findEarliestCommit(diffCommits)
+  core.info(`earliestCommit = ${earliestCommit.commitId} (${earliestCommit.committedDate.toISOString()})`)
 
   const commitsByPath = new Map<string, Commit[]>()
   for (const path of inputs.groupByPaths) {
-    const commitHistory = await getCommitHistory(octokit, {
+    core.info(`Finding commit history of path ${path}`)
+    const subTreeCommitIds = await findCommitHistoryOfSubTree(octokit, {
       owner: inputs.owner,
       repo: inputs.repo,
       ref: inputs.head,
       path,
-      since: compare.earliestCommitDate,
-      sinceCommitId: compare.earliestCommitId,
+      since: earliestCommit.committedDate,
+      sinceCommitId: earliestCommit.commitId,
     })
-    const commits = commitHistory.filter((commit) => compare.commitIds.has(commit.commitId))
+    const subTreeCommitIdSet = new Set(subTreeCommitIds)
+    const commits = diffCommits.filter((commit) => subTreeCommitIdSet.has(commit.commitId))
     commitsByPath.set(path, commits)
   }
   if (!inputs.showOthersGroup) {
     return { commitsByPath }
   }
 
-  const rootCommitHistory = await getCommitHistory(octokit, {
+  core.info(`Finding commit history of root`)
+  const rootCommitIds = await findCommitHistoryOfSubTree(octokit, {
     owner: inputs.owner,
     repo: inputs.repo,
     ref: inputs.head,
     path: '.',
-    since: compare.earliestCommitDate,
-    sinceCommitId: compare.earliestCommitId,
+    since: earliestCommit.committedDate,
+    sinceCommitId: earliestCommit.commitId,
   })
-  const rootCommits = rootCommitHistory.filter((commit) => compare.commitIds.has(commit.commitId))
+  const rootCommitIdSet = new Set(rootCommitIds)
+  const rootCommits = diffCommits.filter((commit) => rootCommitIdSet.has(commit.commitId))
 
   const otherCommits = new Map<string, Commit>()
   for (const commit of rootCommits) {

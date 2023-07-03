@@ -1,5 +1,7 @@
 import * as core from '@actions/core'
 import { GitHub } from '@actions/github/lib/utils'
+import { compareBaseHeadQuery } from './queries/compare'
+import { CompareBaseHeadQuery } from './generated/graphql'
 
 type Octokit = InstanceType<typeof GitHub>
 
@@ -10,37 +12,73 @@ type Inputs = {
   head: string
 }
 
-type Outputs = {
-  commitIds: Set<string>
-  earliestCommitId: string
-  earliestCommitDate: Date
+export type Commit = {
+  commitId: string
+  committedDate: Date
+  pull?: {
+    number: number
+    author: string
+  }
 }
 
-export const compareCommits = async (octokit: Octokit, inputs: Inputs): Promise<Outputs> => {
-  const compareIterator = octokit.paginate.iterator(octokit.rest.repos.compareCommitsWithBasehead, {
-    owner: inputs.owner,
-    repo: inputs.repo,
-    basehead: `${inputs.base}...${inputs.head}`,
-    per_page: 100,
-  })
+export const compareBaseHead = async (octokit: Octokit, inputs: Inputs): Promise<Commit[]> => {
+  const commits: Commit[] = []
+  for (let afterCursor: string | undefined; ; ) {
+    core.info(`compareBaseHeadQuery()`)
+    const q = await compareBaseHeadQuery(octokit, {
+      owner: inputs.owner,
+      name: inputs.repo,
+      base: inputs.base,
+      head: inputs.head,
+      size: 100,
+      after: afterCursor,
+    })
+    const page = parseCompareBaseHeadQuery(q)
+    commits.push(...page.commits)
+    if (page.hasNextPage === false) {
+      break
+    }
+    afterCursor = page.endCursor
+  }
+  return commits
+}
 
-  const commitIds = new Set<string>()
-  let earliestCommitDate = new Date()
-  let earliestCommitId = ''
-  for await (const compare of compareIterator) {
-    core.info(`Received ${compare.data.commits.length} commits of total ${compare.data.total_commits}`)
-    core.info(`Remaining rate limit: ${compare.headers['x-ratelimit-remaining'] ?? '?'}`)
+type Page = {
+  commits: Commit[]
+  hasNextPage: boolean
+  endCursor?: string
+}
 
-    for (const commit of compare.data.commits) {
-      commitIds.add(commit.sha)
-      if (commit.commit.committer?.date) {
-        const d = new Date(commit.commit.committer.date)
-        if (d < earliestCommitDate) {
-          earliestCommitDate = d
-          earliestCommitId = commit.sha
+const parseCompareBaseHeadQuery = (q: CompareBaseHeadQuery): Page => {
+  if (q.repository?.ref?.compare?.commits == null) {
+    throw new Error(`unexpected response: ${JSON.stringify(q, undefined, 2)}`)
+  }
+  const commits: Commit[] = []
+  for (const commitNode of q.repository?.ref?.compare?.commits.nodes ?? []) {
+    if (commitNode === null) {
+      continue
+    }
+    let pull
+    if (commitNode.associatedPullRequests?.nodes?.length) {
+      const pullNode = commitNode.associatedPullRequests.nodes[0]
+      if (pullNode?.number !== undefined) {
+        core.info(`${commitNode.oid} -> #${pullNode.number}`)
+        pull = {
+          number: pullNode.number,
+          author: pullNode.author?.login ?? '',
         }
       }
     }
+    const committedDate = new Date(commitNode.committedDate)
+    commits.push({
+      commitId: commitNode.oid,
+      committedDate,
+      pull,
+    })
   }
-  return { commitIds, earliestCommitId, earliestCommitDate }
+  return {
+    commits,
+    hasNextPage: q.repository.ref.compare.commits.pageInfo.hasNextPage,
+    endCursor: q.repository.ref.compare.commits.pageInfo.endCursor ?? undefined,
+  }
 }
