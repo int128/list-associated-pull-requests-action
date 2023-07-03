@@ -30,16 +30,21 @@ export const listAssociatedPullRequests = async (octokit: Octokit, inputs: Input
   core.info(`commits = ${compare.commitIds.size}`)
   core.info(`earliestCommit = ${compare.earliestCommitId} (${compare.earliestCommitDate.toISOString()})`)
 
-  const commitsByPath = new Map<string, Commit[]>()
-  for (const path of inputs.groupByPaths) {
-    const commitHistory = await getCommitHistory(octokit, {
-      owner: inputs.owner,
-      repo: inputs.repo,
-      ref: inputs.head,
-      path,
-      since: compare.earliestCommitDate,
-      sinceCommitId: compare.earliestCommitId,
+  const commitHistoryByPath = await Promise.all(
+    inputs.groupByPaths.map(async (path) => {
+      const commitHistory = await getCommitHistory(octokit, {
+        owner: inputs.owner,
+        repo: inputs.repo,
+        ref: inputs.head,
+        path,
+        since: compare.earliestCommitDate,
+        sinceCommitId: compare.earliestCommitId,
+      })
+      return { path, commitHistory }
     })
+  )
+  const commitsByPath = new Map<string, Commit[]>()
+  for (const { path, commitHistory } of commitHistoryByPath) {
     const commits = commitHistory.filter((commit) => compare.commitIds.has(commit.commitId))
     commitsByPath.set(path, commits)
   }

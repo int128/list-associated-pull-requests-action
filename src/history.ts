@@ -25,7 +25,18 @@ export type Commit = {
 export const getCommitHistory = async (octokit: Octokit, inputs: Inputs): Promise<Commit[]> => {
   const commits: Commit[] = []
   for (let afterCursor: string | undefined; ; ) {
-    const page = await getCommitHistoryByCursor(octokit, inputs, afterCursor)
+    const q = await getAssociatedPullRequestsInCommitHistoryOfSubTreeQuery(octokit, {
+      owner: inputs.owner,
+      name: inputs.repo,
+      expression: inputs.ref,
+      path: inputs.path,
+      since: inputs.since,
+      historySize: 100,
+      historyAfter: afterCursor,
+    })
+    core.startGroup(`AssociatedPullRequestsInCommitHistoryOfSubTreeQuery(${inputs.path})`)
+    const page = parseAssociatedPullRequestsInCommitHistoryOfSubTreeQuery(q, inputs.sinceCommitId)
+    core.endGroup()
     commits.push(...page.commits)
     if (page.hasNextPage === false) {
       break
@@ -35,45 +46,21 @@ export const getCommitHistory = async (octokit: Octokit, inputs: Inputs): Promis
   return commits
 }
 
-type CommitHistoryPage = {
+type Page = {
   commits: Commit[]
   hasNextPage: boolean
   endCursor?: string
 }
 
-const getCommitHistoryByCursor = async (
-  octokit: Octokit,
-  inputs: Inputs,
-  afterCursor?: string
-): Promise<CommitHistoryPage> => {
-  core.startGroup(
-    `AssociatedPullRequestsInCommitHistoryOfSubTreeQuery (${inputs.ref}, ${inputs.path}, ${inputs.since.toISOString()})`
-  )
-  const q = await getAssociatedPullRequestsInCommitHistoryOfSubTreeQuery(octokit, {
-    owner: inputs.owner,
-    name: inputs.repo,
-    expression: inputs.ref,
-    path: inputs.path,
-    since: inputs.since,
-    historySize: 100,
-    historyAfter: afterCursor,
-  })
-  core.debug(JSON.stringify(q, undefined, 2))
-  core.endGroup()
-
-  return parseAssociatedPullRequestsInCommitHistoryOfSubTreeQuery(q, inputs.sinceCommitId)
-}
-
 export const parseAssociatedPullRequestsInCommitHistoryOfSubTreeQuery = (
   q: AssociatedPullRequestsInCommitHistoryOfSubTreeQuery,
   sinceCommitId: string
-): CommitHistoryPage => {
+): Page => {
   if (q.repository?.object?.__typename !== 'Commit') {
-    throw new Error(`unexpected typename ${String(q.repository?.object?.__typename)} !== Commit`)
+    throw new Error(`unexpected q.repository.object.__typename: ${JSON.stringify(q, undefined, 2)}`)
   }
 
   const nodes = filterNodes(q, sinceCommitId)
-  core.startGroup(`Found ${nodes.length} commit(s)`)
   const commits: Commit[] = []
   for (const node of nodes) {
     if (!node.associatedPullRequests?.nodes?.length) {
@@ -95,8 +82,6 @@ export const parseAssociatedPullRequestsInCommitHistoryOfSubTreeQuery = (
       })
     }
   }
-  core.endGroup()
-
   return {
     commits,
     hasNextPage: q.repository.object.history.pageInfo.hasNextPage,
@@ -106,7 +91,7 @@ export const parseAssociatedPullRequestsInCommitHistoryOfSubTreeQuery = (
 
 const filterNodes = (q: AssociatedPullRequestsInCommitHistoryOfSubTreeQuery, sinceCommitId: string) => {
   if (q.repository?.object?.__typename !== 'Commit') {
-    throw new Error(`unexpected typename ${String(q.repository?.object?.__typename)} !== Commit`)
+    throw new Error(`unexpected q.repository.object.__typename: ${JSON.stringify(q, undefined, 2)}`)
   }
   const nodes = []
   for (const node of q.repository.object.history.nodes ?? []) {
