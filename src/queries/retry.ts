@@ -27,7 +27,7 @@ export const retryHttpError = async <T, V>(query: (v: V) => Promise<T>, spec: Re
     if (!(error instanceof RequestError)) {
       throw error
     }
-    if (spec.remainingCount > 0) {
+    if (spec.remainingCount === 0) {
       throw new Error(`retry over: ${String(error)}`)
     }
 
