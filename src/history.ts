@@ -54,7 +54,7 @@ type Page = {
 
 export const parseAssociatedPullRequestsInCommitHistoryOfSubTreeQuery = (
   q: AssociatedPullRequestsInCommitHistoryOfSubTreeQuery,
-  sinceCommitId: string
+  sinceCommitId: string,
 ): Page => {
   if (q.repository?.object?.__typename !== 'Commit') {
     throw new Error(`unexpected q.repository.object.__typename: ${JSON.stringify(q, undefined, 2)}`)

@@ -41,7 +41,7 @@ export const listAssociatedPullRequests = async (octokit: Octokit, inputs: Input
         sinceCommitId: compare.earliestCommitId,
       })
       return { path, commitHistory }
-    })
+    }),
   )
   const commitsByPath = new Map<string, Commit[]>()
   for (const { path, commitHistory } of commitHistoryByPath) {
