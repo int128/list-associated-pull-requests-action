@@ -81,6 +81,6 @@ const formatCommits = (commits: Commit[]): string[] => [
         return `- #${commit.pull.number} @${commit.pull.author}`
       }
       return `- ${commit.commitId}`
-    })
+    }),
   ),
 ]
