@@ -1,7 +1,8 @@
+import assert from 'assert'
 import * as core from '@actions/core'
+import * as getCommitHistoryQuery from './queries/getCommitHistory'
 import { GitHub } from '@actions/github/lib/utils'
 import { GetCommitHistoryQuery } from './generated/graphql'
-import { getCommitHistory } from './queries/getCommitHistory'
 
 type Octokit = InstanceType<typeof GitHub>
 
@@ -22,40 +23,25 @@ export type Commit = {
   }
 }
 
-export const paginateCommitHistory = async (octokit: Octokit, inputs: Inputs): Promise<Commit[]> => {
-  const commits: Commit[] = []
-  for (let afterCursor: string | undefined; ; ) {
-    const q = await getCommitHistory(octokit, {
+export const getCommitHistory = async (octokit: Octokit, inputs: Inputs): Promise<Commit[]> => {
+  const commitHistory = await getCommitHistoryQuery.paginate(
+    getCommitHistoryQuery.withRetry(getCommitHistoryQuery.withOctokit(octokit)),
+    {
       owner: inputs.owner,
       name: inputs.repo,
       expression: inputs.ref,
       path: inputs.path,
       since: inputs.since,
       historySize: 100,
-      historyAfter: afterCursor,
-    })
-    core.startGroup(`GetCommitHistoryQuery(${inputs.path})`)
-    const page = parseGetCommitHistoryQuery(q, inputs.sinceCommitId)
-    core.endGroup()
-    commits.push(...page.commits)
-    if (page.hasNextPage === false) {
-      break
-    }
-    afterCursor = page.endCursor
-  }
-  return commits
+    },
+  )
+  return parseGetCommitHistoryQuery(commitHistory, inputs.sinceCommitId)
 }
 
-type Page = {
-  commits: Commit[]
-  hasNextPage: boolean
-  endCursor?: string
-}
-
-export const parseGetCommitHistoryQuery = (q: GetCommitHistoryQuery, sinceCommitId: string): Page => {
-  if (q.repository?.object?.__typename !== 'Commit') {
-    throw new Error(`unexpected q.repository.object.__typename: ${JSON.stringify(q, undefined, 2)}`)
-  }
+export const parseGetCommitHistoryQuery = (q: GetCommitHistoryQuery, sinceCommitId: string): Commit[] => {
+  assert(q.repository != null)
+  assert(q.repository.object != null)
+  assert.strictEqual(q.repository.object.__typename, 'Commit')
 
   const nodes = filterNodes(q, sinceCommitId)
   const commits: Commit[] = []
@@ -79,17 +65,14 @@ export const parseGetCommitHistoryQuery = (q: GetCommitHistoryQuery, sinceCommit
       })
     }
   }
-  return {
-    commits,
-    hasNextPage: q.repository.object.history.pageInfo.hasNextPage,
-    endCursor: q.repository.object.history.pageInfo.endCursor ?? undefined,
-  }
+  return commits
 }
 
 const filterNodes = (q: GetCommitHistoryQuery, sinceCommitId: string) => {
-  if (q.repository?.object?.__typename !== 'Commit') {
-    throw new Error(`unexpected q.repository.object.__typename: ${JSON.stringify(q, undefined, 2)}`)
-  }
+  assert(q.repository != null)
+  assert(q.repository.object != null)
+  assert.strictEqual(q.repository.object.__typename, 'Commit')
+
   const nodes = []
   for (const node of q.repository.object.history.nodes ?? []) {
     if (node == null) {

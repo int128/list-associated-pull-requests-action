@@ -1,7 +1,7 @@
 import * as core from '@actions/core'
 import { GitHub } from '@actions/github/lib/utils'
 import { compareCommits } from './compare'
-import { Commit, paginateCommitHistory } from './history'
+import { Commit, getCommitHistory } from './history'
 
 type Octokit = InstanceType<typeof GitHub>
 
@@ -32,7 +32,7 @@ export const listAssociatedPullRequests = async (octokit: Octokit, inputs: Input
 
   const commitHistoryByPath = await Promise.all(
     inputs.groupByPaths.map(async (path) => {
-      const commitHistory = await paginateCommitHistory(octokit, {
+      const commitHistory = await getCommitHistory(octokit, {
         owner: inputs.owner,
         repo: inputs.repo,
         ref: inputs.head,
@@ -52,7 +52,7 @@ export const listAssociatedPullRequests = async (octokit: Octokit, inputs: Input
     return { commitsByPath }
   }
 
-  const rootCommitHistory = await paginateCommitHistory(octokit, {
+  const rootCommitHistory = await getCommitHistory(octokit, {
     owner: inputs.owner,
     repo: inputs.repo,
     ref: inputs.head,
