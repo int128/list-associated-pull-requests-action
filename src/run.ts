@@ -7,6 +7,8 @@ import { GitHub } from '@actions/github/lib/utils'
 type Octokit = InstanceType<typeof GitHub>
 
 type Inputs = {
+  owner: string
+  repo: string
   token: string
   pullRequest?: number
   base?: string
@@ -24,8 +26,8 @@ type Outputs = {
 const parseInputs = async (octokit: Octokit, inputs: Inputs) => {
   if (inputs.pullRequest) {
     const { data: pull } = await octokit.rest.pulls.get({
-      owner: github.context.repo.owner,
-      repo: github.context.repo.repo,
+      owner: inputs.owner,
+      repo: inputs.repo,
       pull_number: inputs.pullRequest,
     })
     core.info(`Found #${pull.number}`)
@@ -47,8 +49,8 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
   core.info(`head = ${head}`)
 
   const associatedPulls = await listAssociatedPullRequests(octokit, {
-    owner: github.context.repo.owner,
-    repo: github.context.repo.repo,
+    owner: inputs.owner,
+    repo: inputs.repo,
     base,
     head,
     showOthersGroup: inputs.showOthersGroup,
