@@ -35,18 +35,19 @@ jobs:
       - run: yarn build
       - run: yarn package
 
+      # e2e-test depends on #98
       # https://github.com/int128/list-associated-pull-requests-action/pull/98
       - id: e2e-default
-        name: E2E test (default)
+        name: Run int128/list-associated-pull-requests-action (default)
         uses: ./
         with:
           pull-request: 98
-      - run: diff -u tests/e2e-default-expected.txt - <<< $actual
+      - run: diff -u tests/e2e/expected-default.md - <<< $actual
         env:
           actual: ${{ steps.e2e-default.outputs.body }}
 
       - id: e2e-with-group
-        name: E2E test (group-by-paths)
+        name: Run int128/list-associated-pull-requests-action (group-by-paths)
         uses: ./
         with:
           pull-request: 98
@@ -54,7 +55,7 @@ jobs:
             src
             # comment
             .github
-      - run: diff -u tests/e2e-with-group-expected.txt - <<< $actual
+      - run: diff -u tests/e2e/expected-with-group.md - <<< $actual
         env:
           actual: ${{ steps.e2e-with-group.outputs.body }}
 
