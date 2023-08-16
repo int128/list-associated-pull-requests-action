@@ -1,7 +1,8 @@
+import assert from 'assert'
 import * as core from '@actions/core'
 import { GitHub } from '@actions/github/lib/utils'
+import { Commit, CommitHistoryByPath, getCommitHistoryByPath } from './history'
 import { compareCommits } from './compare'
-import { Commit, getCommitHistory } from './history'
 
 type Octokit = InstanceType<typeof GitHub>
 
@@ -30,50 +31,43 @@ export const listAssociatedPullRequests = async (octokit: Octokit, inputs: Input
   core.info(`commits = ${compare.commitIds.size}`)
   core.info(`earliestCommit = ${compare.earliestCommitId} (${compare.earliestCommitDate.toISOString()})`)
 
-  const commitHistoryByPath = await Promise.all(
-    inputs.groupByPaths.map(async (path) => {
-      const commitHistory = await getCommitHistory(octokit, {
-        owner: inputs.owner,
-        repo: inputs.repo,
-        ref: inputs.head,
-        path,
-        since: compare.earliestCommitDate,
-        sinceCommitId: compare.earliestCommitId,
-      })
-      return { path, commitHistory }
-    }),
-  )
-  const commitsByPath = new Map<string, Commit[]>()
-  for (const { path, commitHistory } of commitHistoryByPath) {
-    const commits = commitHistory.filter((commit) => compare.commitIds.has(commit.commitId))
-    commitsByPath.set(path, commits)
+  const groupByPaths = [...inputs.groupByPaths]
+  if (inputs.showOthersGroup) {
+    groupByPaths.push('.')
   }
-  if (!inputs.showOthersGroup) {
-    return { commitsByPath }
-  }
-
-  const rootCommitHistory = await getCommitHistory(octokit, {
+  const commitHistoryByPath = await getCommitHistoryByPath(octokit, {
     owner: inputs.owner,
-    repo: inputs.repo,
-    ref: inputs.head,
-    path: '.',
-    since: compare.earliestCommitDate,
+    name: inputs.repo,
+    expression: inputs.head,
+    groupByPaths,
+    sinceCommitDate: compare.earliestCommitDate,
     sinceCommitId: compare.earliestCommitId,
+    filterCommitIds: compare.commitIds,
   })
-  const rootCommits = rootCommitHistory.filter((commit) => compare.commitIds.has(commit.commitId))
+
+  if (!inputs.showOthersGroup) {
+    return { commitsByPath: commitHistoryByPath }
+  }
+  return {
+    commitsByPath: commitHistoryByPath,
+    others: computeOthers(commitHistoryByPath),
+  }
+}
+
+const computeOthers = (commitHistoryByPath: CommitHistoryByPath): Commit[] => {
+  const rootCommits = commitHistoryByPath.get('.')
+  assert(rootCommits !== undefined)
+
+  commitHistoryByPath.delete('.')
 
   const otherCommits = new Map<string, Commit>()
   for (const commit of rootCommits) {
     otherCommits.set(commit.commitId, commit)
   }
-  for (const [, commits] of commitsByPath) {
+  for (const [, commits] of commitHistoryByPath) {
     for (const commit of commits) {
       otherCommits.delete(commit.commitId)
     }
   }
-
-  return {
-    commitsByPath,
-    others: [...otherCommits.values()],
-  }
+  return [...otherCommits.values()]
 }
