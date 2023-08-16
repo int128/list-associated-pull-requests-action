@@ -1,5 +1,5 @@
 import { GetCommitHistoryQuery } from '../src/generated/graphql'
-import { parseGetCommitHistoryQuery } from '../src/history'
+import { Commit, computeGroupsAndOthers, parseGetCommitHistoryQuery } from '../src/history'
 
 /*
 Commits of pull request #98.
@@ -417,4 +417,74 @@ test('parseGetCommitHistoryQuery', () => {
   const sinceCommitId = '3d9cb2f7a130e4427676df5f6da9c06cd228d7d7'
   const commits = parseGetCommitHistoryQuery(fixtureQuery, sinceCommitId, filterCommitIds)
   expect(commits).toMatchSnapshot()
+})
+
+describe('computeGroupsAndOthers', () => {
+  it('should return as-is if empty is given', () => {
+    const commitHistoryByPath = new Map<string, Commit[]>([['.', []]])
+    const actual = computeGroupsAndOthers(commitHistoryByPath)
+    expect(actual).toStrictEqual({
+      groups: new Map<string, Commit[]>(),
+      others: [],
+    })
+  })
+
+  it('should return as-is if only root is given', () => {
+    const commitHistoryByPath = new Map<string, Commit[]>([['.', [{ commitId: 'commit-1' }]]])
+    const actual = computeGroupsAndOthers(commitHistoryByPath)
+    expect(actual).toStrictEqual({
+      groups: new Map<string, Commit[]>(),
+      others: [{ commitId: 'commit-1' }],
+    })
+  })
+
+  it('should return as-is if root is empty', () => {
+    const commitHistoryByPath = new Map<string, Commit[]>([
+      ['.', []],
+      ['foo', [{ commitId: 'commit-2' }]],
+      ['bar', [{ commitId: 'commit-3' }]],
+    ])
+    const actual = computeGroupsAndOthers(commitHistoryByPath)
+    expect(actual).toStrictEqual({
+      groups: new Map<string, Commit[]>([
+        ['foo', [{ commitId: 'commit-2' }]],
+        ['bar', [{ commitId: 'commit-3' }]],
+      ]),
+      others: [],
+    })
+  })
+
+  it('should return as-is if root and groups are independent', () => {
+    const commitHistoryByPath = new Map<string, Commit[]>([
+      ['.', [{ commitId: 'commit-1' }]],
+      ['foo', [{ commitId: 'commit-2' }]],
+      ['bar', [{ commitId: 'commit-3' }]],
+    ])
+    const actual = computeGroupsAndOthers(commitHistoryByPath)
+    expect(actual).toStrictEqual({
+      groups: new Map<string, Commit[]>([
+        ['foo', [{ commitId: 'commit-2' }]],
+        ['bar', [{ commitId: 'commit-3' }]],
+      ]),
+      others: [{ commitId: 'commit-1' }],
+    })
+  })
+
+  it('should exclude commits of groups from root', () => {
+    const commitHistoryByPath = new Map<string, Commit[]>([
+      ['.', [{ commitId: 'commit-1' }, { commitId: 'commit-2' }, { commitId: 'commit-3' }, { commitId: 'commit-4' }]],
+      ['foo', [{ commitId: 'commit-2' }]],
+      ['bar', [{ commitId: 'commit-3' }]],
+      ['baz', [{ commitId: 'commit-2' }]],
+    ])
+    const actual = computeGroupsAndOthers(commitHistoryByPath)
+    expect(actual).toStrictEqual({
+      groups: new Map<string, Commit[]>([
+        ['foo', [{ commitId: 'commit-2' }]],
+        ['bar', [{ commitId: 'commit-3' }]],
+        ['baz', [{ commitId: 'commit-2' }]],
+      ]),
+      others: [{ commitId: 'commit-1' }, { commitId: 'commit-4' }],
+    })
+  })
 })

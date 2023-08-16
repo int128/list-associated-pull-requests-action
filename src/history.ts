@@ -109,3 +109,36 @@ const filterNodes = (q: GetCommitHistoryQuery, sinceCommitId: string, filterComm
   }
   return nodes
 }
+
+type CommitHistoryGroupsAndOthers = {
+  groups: CommitHistoryByPath
+  others: Commit[]
+}
+
+export const getCommitHistoryGroupsAndOthers = async (
+  octokit: Octokit,
+  variables: GetCommitHistoryByPathVariables,
+): Promise<CommitHistoryGroupsAndOthers> => {
+  const commitHistoryByPath = await getCommitHistoryByPath(octokit, {
+    ...variables,
+    groupByPaths: ['.', ...variables.groupByPaths],
+  })
+  return computeGroupsAndOthers(commitHistoryByPath)
+}
+
+export const computeGroupsAndOthers = (commitHistoryByPath: CommitHistoryByPath): CommitHistoryGroupsAndOthers => {
+  const groups = new Map(commitHistoryByPath)
+  groups.delete('.')
+
+  const commitIdsInGroups = new Set<string>()
+  for (const commits of groups.values()) {
+    for (const commit of commits) {
+      commitIdsInGroups.add(commit.commitId)
+    }
+  }
+
+  const root = commitHistoryByPath.get('.')
+  assert(root !== undefined)
+  const others = root.filter((commit) => !commitIdsInGroups.has(commit.commitId))
+  return { groups, others }
+}
