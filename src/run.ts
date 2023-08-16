@@ -1,9 +1,9 @@
 import assert from 'assert'
 import * as core from '@actions/core'
 import * as github from '@actions/github'
-import { Commit, CommitHistoryByPath } from './history'
-import { getCommitHistoryByPathInBaseHead } from './list'
+import { Commit, CommitHistoryByPath, getCommitHistoryByPath } from './history'
 import { GitHub } from '@actions/github/lib/utils'
+import { compareCommits } from './compare'
 
 type Octokit = InstanceType<typeof GitHub>
 
@@ -43,21 +43,31 @@ const parseInputs = async (octokit: Octokit, inputs: Inputs) => {
 
 export const run = async (inputs: Inputs): Promise<Outputs> => {
   const octokit = github.getOctokit(inputs.token)
-  const groupByPaths = sanitizePaths(inputs.groupByPaths)
-  if (inputs.showOthersGroup) {
-    groupByPaths.push('.')
-  }
 
   const { base, head } = await parseInputs(octokit, inputs)
-  core.info(`base = ${base}`)
-  core.info(`head = ${head}`)
-
-  const commitHistoryByPath = await getCommitHistoryByPathInBaseHead(octokit, {
+  core.info(`Comparing base ${base} and head ${head}`)
+  const compare = await compareCommits(octokit, {
     owner: inputs.owner,
     repo: inputs.repo,
     base,
     head,
+  })
+  core.info(`Found ${compare.commitIds.size} commits`)
+  core.info(`The earliest commit is ${compare.earliestCommitId} at ${compare.earliestCommitDate.toISOString()}`)
+
+  const groupByPaths = sanitizePaths(inputs.groupByPaths)
+  if (inputs.showOthersGroup) {
+    groupByPaths.push('.')
+  }
+  core.info(`Getting commit history`)
+  const commitHistoryByPath = await getCommitHistoryByPath(octokit, {
+    owner: inputs.owner,
+    name: inputs.repo,
+    expression: head,
     groupByPaths,
+    sinceCommitDate: compare.earliestCommitDate,
+    sinceCommitId: compare.earliestCommitId,
+    filterCommitIds: compare.commitIds,
   })
 
   if (!inputs.showOthersGroup) {
