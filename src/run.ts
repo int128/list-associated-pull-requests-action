@@ -1,7 +1,8 @@
+import assert from 'assert'
 import * as core from '@actions/core'
 import * as github from '@actions/github'
-import { Commit } from './history'
-import { listAssociatedPullRequests } from './list'
+import { Commit, CommitHistoryByPath } from './history'
+import { getCommitHistoryByPathInBaseHead } from './list'
 import { GitHub } from '@actions/github/lib/utils'
 
 type Octokit = InstanceType<typeof GitHub>
@@ -43,38 +44,64 @@ const parseInputs = async (octokit: Octokit, inputs: Inputs) => {
 export const run = async (inputs: Inputs): Promise<Outputs> => {
   const octokit = github.getOctokit(inputs.token)
   const groupByPaths = sanitizePaths(inputs.groupByPaths)
+  if (inputs.showOthersGroup) {
+    groupByPaths.push('.')
+  }
 
   const { base, head } = await parseInputs(octokit, inputs)
   core.info(`base = ${base}`)
   core.info(`head = ${head}`)
 
-  const associatedPulls = await listAssociatedPullRequests(octokit, {
+  const commitHistoryByPath = await getCommitHistoryByPathInBaseHead(octokit, {
     owner: inputs.owner,
     repo: inputs.repo,
     base,
     head,
-    showOthersGroup: inputs.showOthersGroup,
     groupByPaths,
   })
 
-  const bodyGroups = []
-  for (const [path, commits] of associatedPulls.commitsByPath) {
-    bodyGroups.push(`### ${path}`)
-    bodyGroups.push(...formatCommits(commits))
+  if (!inputs.showOthersGroup) {
+    const body = formatCommitHistory(commitHistoryByPath)
+    return { body, bodyGroups: body, bodyOthers: '' }
   }
-  const bodyOthers = []
-  if (associatedPulls.others) {
-    bodyOthers.push(`### Others`)
-    bodyOthers.push(...formatCommits(associatedPulls.others))
-  }
+
+  const { groups, others } = computeGroupsOthers(commitHistoryByPath)
+  const bodyGroups = formatCommitHistory(groups)
+  const bodyOthers = formatCommitHistory(others)
   return {
-    body: [...bodyGroups, ...bodyOthers].join('\n'),
-    bodyGroups: bodyGroups.join('\n'),
-    bodyOthers: bodyOthers.join('\n'),
+    body: [bodyGroups, bodyOthers].join('\n').trim(),
+    bodyGroups,
+    bodyOthers,
   }
 }
 
+export const computeGroupsOthers = (commitHistoryByPath: CommitHistoryByPath) => {
+  const groups = new Map(commitHistoryByPath)
+  groups.delete('.')
+
+  const commitIdsInGroups = new Set<string>()
+  for (const commits of groups.values()) {
+    for (const commit of commits) {
+      commitIdsInGroups.add(commit.commitId)
+    }
+  }
+
+  const root = commitHistoryByPath.get('.')
+  assert(root !== undefined)
+  const otherCommits = root.filter((commit) => !commitIdsInGroups.has(commit.commitId))
+  return { groups, others: new Map([['Others', otherCommits]]) }
+}
+
 const sanitizePaths = (groupByPaths: string[]) => groupByPaths.filter((p) => p.length > 0 && !p.startsWith('#'))
+
+const formatCommitHistory = (commitHistoryByPath: CommitHistoryByPath): string => {
+  const body = []
+  for (const [path, commits] of commitHistoryByPath) {
+    body.push(`### ${path}`)
+    body.push(...formatCommits(commits))
+  }
+  return body.join('\n')
+}
 
 const formatCommits = (commits: Commit[]): string[] => [
   ...new Set(

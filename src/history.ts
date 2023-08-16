@@ -5,18 +5,7 @@ import { GetCommitHistoryQuery, GetCommitHistoryQueryVariables } from './generat
 
 type Octokit = InstanceType<typeof GitHub>
 
-const getCommitHistoryQuery = async (
-  octokit: Octokit,
-  v: GetCommitHistoryQueryVariables,
-): Promise<GetCommitHistoryQuery> =>
-  await getCommitHistory.paginate(getCommitHistory.withRetry(getCommitHistory.withOctokit(octokit)), v)
-
-type Inputs = Pick<GetCommitHistoryQueryVariables, 'owner' | 'name' | 'expression'> & {
-  groupByPaths: string[]
-  sinceCommitDate: Date
-  sinceCommitId: string
-  filterCommitIds: Set<string>
-}
+export type CommitHistoryByPath = Map<string, Commit[]>
 
 export type Commit = {
   commitId: string
@@ -26,32 +15,47 @@ export type Commit = {
   }
 }
 
-export type CommitHistoryByPath = Map<string, Commit[]>
+type GetCommitHistoryByPathVariables = {
+  owner: string
+  name: string
+  expression: string
+  groupByPaths: string[]
+  sinceCommitDate: Date
+  sinceCommitId: string
+  filterCommitIds: Set<string>
+}
 
-export const getCommitHistoryByPath = async (octokit: Octokit, inputs: Inputs): Promise<CommitHistoryByPath> => {
+export const getCommitHistoryByPath = async (
+  octokit: Octokit,
+  variables: GetCommitHistoryByPathVariables,
+): Promise<CommitHistoryByPath> => {
   const results = await Promise.all(
-    inputs.groupByPaths.map(async (groupByPath) => {
-      const variables: GetCommitHistoryQueryVariables = {
-        owner: inputs.owner,
-        name: inputs.name,
-        expression: inputs.expression,
-        since: inputs.sinceCommitDate,
-        path: groupByPath,
+    variables.groupByPaths.map(async (path) => {
+      const query = await getCommitHistoryQuery(octokit, {
+        owner: variables.owner,
+        name: variables.name,
+        expression: variables.expression,
+        since: variables.sinceCommitDate,
+        path,
         historySize: 100,
-      }
-      const query = await getCommitHistoryQuery(octokit, variables)
-      return { variables, query }
+      })
+      return { path, query }
     }),
   )
 
   const commitHistoryByPath = new Map<string, Commit[]>()
   for (const result of results) {
-    const groupByPath = result.variables.path
-    const commits = parseGetCommitHistoryQuery(result.query, inputs.sinceCommitId, inputs.filterCommitIds)
-    commitHistoryByPath.set(groupByPath, commits)
+    const commits = parseGetCommitHistoryQuery(result.query, variables.sinceCommitId, variables.filterCommitIds)
+    commitHistoryByPath.set(result.path, commits)
   }
   return commitHistoryByPath
 }
+
+const getCommitHistoryQuery = async (
+  octokit: Octokit,
+  v: GetCommitHistoryQueryVariables,
+): Promise<GetCommitHistoryQuery> =>
+  await getCommitHistory.paginate(getCommitHistory.withRetry(getCommitHistory.withOctokit(octokit)), v)
 
 export const parseGetCommitHistoryQuery = (
   q: GetCommitHistoryQuery,
