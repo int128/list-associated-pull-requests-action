@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`GitHub integration test should generate outputs of pr-98 1`] = `
+exports[`GitHub integration tests should generate outputs of pr-98 1`] = `
 {
   "body": "### src
 - #89 @int128
@@ -71,7 +71,7 @@ exports[`GitHub integration test should generate outputs of pr-98 1`] = `
 }
 `;
 
-exports[`GitHub integration test should generate outputs of pr-491 1`] = `
+exports[`GitHub integration tests should generate outputs of pr-491 1`] = `
 {
   "body": "### src
 - #484 @int128
