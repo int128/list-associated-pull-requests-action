@@ -1,192 +1,188 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`parseGetCommitHistoryQuery 1`] = `
-{
-  "commits": [
-    {
-      "commitId": "0f9bbfade221f8b590163c664e27c3839fffd3c8",
-      "pull": {
-        "author": "renovate",
-        "number": 97,
-      },
+[
+  {
+    "commitId": "0f9bbfade221f8b590163c664e27c3839fffd3c8",
+    "pull": {
+      "author": "renovate",
+      "number": 97,
     },
-    {
-      "commitId": "f2ac78bee33a1a55186732a1f2fb6b7d68008a53",
-      "pull": {
-        "author": "renovate",
-        "number": 90,
-      },
+  },
+  {
+    "commitId": "f2ac78bee33a1a55186732a1f2fb6b7d68008a53",
+    "pull": {
+      "author": "renovate",
+      "number": 90,
     },
-    {
-      "commitId": "dcff886579270638a2146cf8ba5380f2240774c7",
-      "pull": {
-        "author": "int128",
-        "number": 96,
-      },
+  },
+  {
+    "commitId": "dcff886579270638a2146cf8ba5380f2240774c7",
+    "pull": {
+      "author": "int128",
+      "number": 96,
     },
-    {
-      "commitId": "4e216f67567bdbb723ad28b1d946c63b6cb09a8d",
-      "pull": {
-        "author": "int128",
-        "number": 91,
-      },
+  },
+  {
+    "commitId": "4e216f67567bdbb723ad28b1d946c63b6cb09a8d",
+    "pull": {
+      "author": "int128",
+      "number": 91,
     },
-    {
-      "commitId": "aba1fb9e861f34176727a527a6e5af8ba74f628c",
-      "pull": {
-        "author": "int128",
-        "number": 89,
-      },
+  },
+  {
+    "commitId": "aba1fb9e861f34176727a527a6e5af8ba74f628c",
+    "pull": {
+      "author": "int128",
+      "number": 89,
     },
-    {
-      "commitId": "ca85088adb0f411ef934833e2b4c47941794ac58",
-      "pull": {
-        "author": "int128",
-        "number": 88,
-      },
+  },
+  {
+    "commitId": "ca85088adb0f411ef934833e2b4c47941794ac58",
+    "pull": {
+      "author": "int128",
+      "number": 88,
     },
-    {
-      "commitId": "ebb87b274ad05f7e5d9a38c677f2e399041dae01",
-      "pull": {
-        "author": "int128",
-        "number": 87,
-      },
+  },
+  {
+    "commitId": "ebb87b274ad05f7e5d9a38c677f2e399041dae01",
+    "pull": {
+      "author": "int128",
+      "number": 87,
     },
-    {
-      "commitId": "fc7d55b8f3e86b9f2b71c30d9e8578dffc40c807",
-      "pull": {
-        "author": "renovate",
-        "number": 86,
-      },
+  },
+  {
+    "commitId": "fc7d55b8f3e86b9f2b71c30d9e8578dffc40c807",
+    "pull": {
+      "author": "renovate",
+      "number": 86,
     },
-    {
-      "commitId": "8e07a09848e1158d3326ec2ab9006077c087bd33",
-      "pull": {
-        "author": "renovate",
-        "number": 85,
-      },
+  },
+  {
+    "commitId": "8e07a09848e1158d3326ec2ab9006077c087bd33",
+    "pull": {
+      "author": "renovate",
+      "number": 85,
     },
-    {
-      "commitId": "aed841c2c1550f2e2bac160837085856b6cc5120",
-      "pull": {
-        "author": "renovate",
-        "number": 84,
-      },
+  },
+  {
+    "commitId": "aed841c2c1550f2e2bac160837085856b6cc5120",
+    "pull": {
+      "author": "renovate",
+      "number": 84,
     },
-    {
-      "commitId": "13868898d92652c27d889259bd11215f7a4551c1",
-      "pull": {
-        "author": "renovate",
-        "number": 83,
-      },
+  },
+  {
+    "commitId": "13868898d92652c27d889259bd11215f7a4551c1",
+    "pull": {
+      "author": "renovate",
+      "number": 83,
     },
-    {
-      "commitId": "d486e046fca314b3a42693a5ca878e47c69a89ed",
-      "pull": {
-        "author": "renovate",
-        "number": 82,
-      },
+  },
+  {
+    "commitId": "d486e046fca314b3a42693a5ca878e47c69a89ed",
+    "pull": {
+      "author": "renovate",
+      "number": 82,
     },
-    {
-      "commitId": "6df54289158cbd5a61c8604cf97b8a0f7d1847f7",
-      "pull": {
-        "author": "renovate",
-        "number": 81,
-      },
+  },
+  {
+    "commitId": "6df54289158cbd5a61c8604cf97b8a0f7d1847f7",
+    "pull": {
+      "author": "renovate",
+      "number": 81,
     },
-    {
-      "commitId": "49a339c426a28b6e5abd3203fadcc749560b2362",
-      "pull": {
-        "author": "renovate",
-        "number": 80,
-      },
+  },
+  {
+    "commitId": "49a339c426a28b6e5abd3203fadcc749560b2362",
+    "pull": {
+      "author": "renovate",
+      "number": 80,
     },
-    {
-      "commitId": "d5414767c25010a8d42f44121dba0ee870c1da53",
-      "pull": {
-        "author": "renovate",
-        "number": 79,
-      },
+  },
+  {
+    "commitId": "d5414767c25010a8d42f44121dba0ee870c1da53",
+    "pull": {
+      "author": "renovate",
+      "number": 79,
     },
-    {
-      "commitId": "e1d47057c2a2eafd8ebb570c8f7a4a84dffb234e",
-      "pull": {
-        "author": "int128",
-        "number": 78,
-      },
+  },
+  {
+    "commitId": "e1d47057c2a2eafd8ebb570c8f7a4a84dffb234e",
+    "pull": {
+      "author": "int128",
+      "number": 78,
     },
-    {
-      "commitId": "15a4eb0b903195d92d089454ab9ffa1c7598d3ef",
-      "pull": {
-        "author": "int128",
-        "number": 77,
-      },
+  },
+  {
+    "commitId": "15a4eb0b903195d92d089454ab9ffa1c7598d3ef",
+    "pull": {
+      "author": "int128",
+      "number": 77,
     },
-    {
-      "commitId": "797d211a801b403772b703ed29e60dc148d708b8",
-      "pull": {
-        "author": "int128",
-        "number": 76,
-      },
+  },
+  {
+    "commitId": "797d211a801b403772b703ed29e60dc148d708b8",
+    "pull": {
+      "author": "int128",
+      "number": 76,
     },
-    {
-      "commitId": "b256f3b36b635040e4ce150eec4c4d2fdab3495c",
-      "pull": {
-        "author": "int128",
-        "number": 75,
-      },
+  },
+  {
+    "commitId": "b256f3b36b635040e4ce150eec4c4d2fdab3495c",
+    "pull": {
+      "author": "int128",
+      "number": 75,
     },
-    {
-      "commitId": "1a74c41db6587e71a6c97a2a64741d6152a88638",
-      "pull": {
-        "author": "renovate",
-        "number": 74,
-      },
+  },
+  {
+    "commitId": "1a74c41db6587e71a6c97a2a64741d6152a88638",
+    "pull": {
+      "author": "renovate",
+      "number": 74,
     },
-    {
-      "commitId": "6c696b80a95830b40ae8ed882bbb9bbe1972b24c",
-      "pull": {
-        "author": "int128",
-        "number": 73,
-      },
+  },
+  {
+    "commitId": "6c696b80a95830b40ae8ed882bbb9bbe1972b24c",
+    "pull": {
+      "author": "int128",
+      "number": 73,
     },
-    {
-      "commitId": "ead2316173fbd364d6d241b8c05df4a349c7821f",
-      "pull": {
-        "author": "int128",
-        "number": 70,
-      },
+  },
+  {
+    "commitId": "ead2316173fbd364d6d241b8c05df4a349c7821f",
+    "pull": {
+      "author": "int128",
+      "number": 70,
     },
-    {
-      "commitId": "4449d60e7f1ce5fd3d26750c66b5d708cbac1d20",
-      "pull": {
-        "author": "renovate",
-        "number": 71,
-      },
+  },
+  {
+    "commitId": "4449d60e7f1ce5fd3d26750c66b5d708cbac1d20",
+    "pull": {
+      "author": "renovate",
+      "number": 71,
     },
-    {
-      "commitId": "f656f6812207d5301492cab12f399463e35fbdbb",
-      "pull": {
-        "author": "int128",
-        "number": 69,
-      },
+  },
+  {
+    "commitId": "f656f6812207d5301492cab12f399463e35fbdbb",
+    "pull": {
+      "author": "int128",
+      "number": 69,
     },
-    {
-      "commitId": "0ad635a9b2be184a6a02253bcdb090dab6e195c9",
-      "pull": {
-        "author": "int128",
-        "number": 68,
-      },
+  },
+  {
+    "commitId": "0ad635a9b2be184a6a02253bcdb090dab6e195c9",
+    "pull": {
+      "author": "int128",
+      "number": 68,
     },
-    {
-      "commitId": "3d9cb2f7a130e4427676df5f6da9c06cd228d7d7",
-      "pull": {
-        "author": "renovate",
-        "number": 67,
-      },
+  },
+  {
+    "commitId": "3d9cb2f7a130e4427676df5f6da9c06cd228d7d7",
+    "pull": {
+      "author": "renovate",
+      "number": 67,
     },
-  ],
-  "endCursor": undefined,
-  "hasNextPage": false,
-}
+  },
+]
 `;
