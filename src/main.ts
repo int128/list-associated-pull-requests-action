@@ -4,12 +4,19 @@ import { run } from './run'
 const main = async (): Promise<void> => {
   const outputs = await run({
     token: core.getInput('token', { required: true }),
-    base: core.getInput('base', { required: true }),
-    head: core.getInput('head', { required: true }),
-    path: core.getInput('path', { required: true }),
+    pullRequest: parseInt(core.getInput('pull-request')) || undefined,
+    base: core.getInput('base') || undefined,
+    head: core.getInput('head') || undefined,
+    groupByPaths: core.getMultilineInput('group-by-paths'),
+    showOthersGroup: core.getBooleanInput('show-others-group', { required: true }),
   })
-  core.setOutput('pull-request-list', outputs.pullRequestList)
-  core.setOutput('pull-request-list-markdown', outputs.pullRequestListMarkdown)
+
+  core.setOutput('body', outputs.body)
+  core.setOutput('body-groups', outputs.bodyGroups)
+  core.setOutput('body-others', outputs.bodyOthers)
 }
 
-main().catch((e) => core.setFailed(e instanceof Error ? e.message : JSON.stringify(e)))
+main().catch((e: Error) => {
+  core.setFailed(e)
+  console.error(e)
+})

@@ -1,28 +1,40 @@
-name: release-note-action
-description: Action to generate release note from commit history
+name: list-associated-pull-requests-action
+description: Action to generate a list of associated pull requests by paths in monorepo
 
 inputs:
   token:
     description: GitHub token
     required: true
     default: ${{ github.token }}
+  pull-request:
+    description: Pull request to parse (experimental)
+    required: false
   base:
     description: Base branch or commit
-    required: true
+    required: false
   head:
     description: Head branch or commit
+    required: false
+  group-by-paths:
+    description: Group pull requests by paths (Multiline)
+    required: false
+  show-others-group:
+    description: Show others group
     required: true
-  path:
-    description: Path to get commit history of subtree
-    required: true
-    default: '.'
+    default: 'true'
 
 outputs:
-  pull-request-list:
-    description: List of pull requests in multiline
-  pull-request-list-markdown:
-    description: List of pull requests in markdown
+  body:
+    description: List of associated pull requests (Markdown)
+  body-groups:
+    description: Grouped lists of associated pull requests (Markdown)
+  body-others:
+    description: Others list of associated pull requests (Markdown)
 
 runs:
   using: 'node16'
   main: 'dist/index.js'
+
+branding:
+  icon: git-pull-request
+  color: blue

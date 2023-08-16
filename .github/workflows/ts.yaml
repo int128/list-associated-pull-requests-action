@@ -22,39 +22,38 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
         with:
           node-version: 16
           cache: yarn
       - run: yarn
       - run: yarn lint
+      - run: yarn format
+      - run: yarn graphql-codegen
       - run: yarn test
       - run: yarn build
       - run: yarn package
 
-      - if: github.event_name == 'pull_request'
-        id: release-note
+      - id: e2e-default
+        name: E2E test (default)
         uses: ./
         with:
-          base: ${{ github.base_ref }}
-          head: ${{ github.head_ref }}
-      - if: github.event_name == 'pull_request'
-        uses: int128/comment-action@v1
+          # https://github.com/int128/list-associated-pull-requests-action/pull/98
+          pull-request: 98
+      - id: e2e-with-group
+        name: E2E test (group-by-paths)
+        uses: ./
         with:
-          post: ${{ steps.release-note.outputs.pull-request-list-markdown }}
+          # https://github.com/int128/list-associated-pull-requests-action/pull/98
+          pull-request: 98
+          group-by-paths: |
+            src
+            # comment
+            .github
+      - run: yarn test-with-e2e
+        env:
+          e2e_default_body: ${{ steps.e2e-default.outputs.body }}
+          e2e_with_group_body: ${{ steps.e2e-with-group.outputs.body }}
 
-  generate:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          ref: ${{ github.head_ref }}
-      - uses: actions/setup-node@v2
-        with:
-          node-version: 16
-          cache: yarn
-      - run: yarn
-      - run: yarn format
-      - run: yarn graphql-codegen
       - uses: int128/update-generated-files-action@v2
