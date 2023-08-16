@@ -1,7 +1,7 @@
 import * as core from '@actions/core'
 import { GitHub } from '@actions/github/lib/utils'
-import { AssociatedPullRequestsInCommitHistoryOfSubTreeQuery } from './generated/graphql'
-import { getAssociatedPullRequestsInCommitHistoryOfSubTreeQuery } from './queries/history'
+import { GetCommitHistoryQuery } from './generated/graphql'
+import { getCommitHistory } from './queries/getCommitHistory'
 
 type Octokit = InstanceType<typeof GitHub>
 
@@ -22,10 +22,10 @@ export type Commit = {
   }
 }
 
-export const getCommitHistory = async (octokit: Octokit, inputs: Inputs): Promise<Commit[]> => {
+export const paginateCommitHistory = async (octokit: Octokit, inputs: Inputs): Promise<Commit[]> => {
   const commits: Commit[] = []
   for (let afterCursor: string | undefined; ; ) {
-    const q = await getAssociatedPullRequestsInCommitHistoryOfSubTreeQuery(octokit, {
+    const q = await getCommitHistory(octokit, {
       owner: inputs.owner,
       name: inputs.repo,
       expression: inputs.ref,
@@ -34,8 +34,8 @@ export const getCommitHistory = async (octokit: Octokit, inputs: Inputs): Promis
       historySize: 100,
       historyAfter: afterCursor,
     })
-    core.startGroup(`AssociatedPullRequestsInCommitHistoryOfSubTreeQuery(${inputs.path})`)
-    const page = parseAssociatedPullRequestsInCommitHistoryOfSubTreeQuery(q, inputs.sinceCommitId)
+    core.startGroup(`GetCommitHistoryQuery(${inputs.path})`)
+    const page = parseGetCommitHistoryQuery(q, inputs.sinceCommitId)
     core.endGroup()
     commits.push(...page.commits)
     if (page.hasNextPage === false) {
@@ -52,10 +52,7 @@ type Page = {
   endCursor?: string
 }
 
-export const parseAssociatedPullRequestsInCommitHistoryOfSubTreeQuery = (
-  q: AssociatedPullRequestsInCommitHistoryOfSubTreeQuery,
-  sinceCommitId: string,
-): Page => {
+export const parseGetCommitHistoryQuery = (q: GetCommitHistoryQuery, sinceCommitId: string): Page => {
   if (q.repository?.object?.__typename !== 'Commit') {
     throw new Error(`unexpected q.repository.object.__typename: ${JSON.stringify(q, undefined, 2)}`)
   }
@@ -89,7 +86,7 @@ export const parseAssociatedPullRequestsInCommitHistoryOfSubTreeQuery = (
   }
 }
 
-const filterNodes = (q: AssociatedPullRequestsInCommitHistoryOfSubTreeQuery, sinceCommitId: string) => {
+const filterNodes = (q: GetCommitHistoryQuery, sinceCommitId: string) => {
   if (q.repository?.object?.__typename !== 'Commit') {
     throw new Error(`unexpected q.repository.object.__typename: ${JSON.stringify(q, undefined, 2)}`)
   }

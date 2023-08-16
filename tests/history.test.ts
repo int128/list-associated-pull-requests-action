@@ -1,5 +1,5 @@
-import { AssociatedPullRequestsInCommitHistoryOfSubTreeQuery } from '../src/generated/graphql'
-import { parseAssociatedPullRequestsInCommitHistoryOfSubTreeQuery } from '../src/history'
+import { GetCommitHistoryQuery } from '../src/generated/graphql'
+import { parseGetCommitHistoryQuery } from '../src/history'
 
 /*
 Commits of pull request #98.
@@ -13,7 +13,7 @@ You can get this from https://docs.github.com/en/graphql/overview/explorer with:
   "since": "2022-05-13T22:33:57Z"
 }
 */
-const fixtureQuery: AssociatedPullRequestsInCommitHistoryOfSubTreeQuery = {
+const fixtureQuery: GetCommitHistoryQuery = {
   rateLimit: {
     cost: 1,
   },
@@ -384,8 +384,8 @@ const fixtureQuery: AssociatedPullRequestsInCommitHistoryOfSubTreeQuery = {
   },
 }
 
-test('parseAssociatedPullRequestsInCommitHistoryOfSubTreeQuery', () => {
+test('parseGetCommitHistoryQuery', () => {
   const sinceCommitId = '3d9cb2f7a130e4427676df5f6da9c06cd228d7d7'
-  const commits = parseAssociatedPullRequestsInCommitHistoryOfSubTreeQuery(fixtureQuery, sinceCommitId)
+  const commits = parseGetCommitHistoryQuery(fixtureQuery, sinceCommitId)
   expect(commits).toMatchSnapshot()
 })
