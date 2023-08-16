@@ -32,6 +32,8 @@ jobs:
       - run: yarn format
       - run: yarn graphql-codegen
       - run: yarn test
+        env:
+          INTEGRATION_TEST_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: yarn build
       - run: yarn package
 
