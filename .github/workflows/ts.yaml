@@ -35,25 +35,27 @@ jobs:
       - run: yarn build
       - run: yarn package
 
+      # https://github.com/int128/list-associated-pull-requests-action/pull/98
       - id: e2e-default
         name: E2E test (default)
         uses: ./
         with:
-          # https://github.com/int128/list-associated-pull-requests-action/pull/98
           pull-request: 98
+      - run: diff -u tests/e2e-default-expected.txt - <<< $actual
+        env:
+          actual: ${{ steps.e2e-default.outputs.body }}
+
       - id: e2e-with-group
         name: E2E test (group-by-paths)
         uses: ./
         with:
-          # https://github.com/int128/list-associated-pull-requests-action/pull/98
           pull-request: 98
           group-by-paths: |
             src
             # comment
             .github
-      - run: yarn test-with-e2e
+      - run: diff -u tests/e2e-with-group-expected.txt - <<< $actual
         env:
-          e2e_default_body: ${{ steps.e2e-default.outputs.body }}
-          e2e_with_group_body: ${{ steps.e2e-with-group.outputs.body }}
+          actual: ${{ steps.e2e-with-group.outputs.body }}
 
       - uses: int128/update-generated-files-action@v2
