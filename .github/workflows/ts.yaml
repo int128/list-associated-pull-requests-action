@@ -30,6 +30,8 @@ jobs:
           cache: yarn
       - run: yarn
       - run: yarn test
+        env:
+          INTEGRATION_TEST_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   e2e-test:
     runs-on: ubuntu-latest
