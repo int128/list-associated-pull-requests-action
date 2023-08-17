@@ -64,8 +64,9 @@ export const retryHttpError = async <T, V>(query: (v: V) => Promise<T>, spec: Re
 }
 
 const getRetryAfterHeaderMs = (error: RequestError, defaultValue: number): number => {
-  const sec = error.response?.headers['retry-after']
-  if (typeof sec === 'number') {
+  // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Retry-After
+  const sec = Number(error.response?.headers['retry-after'])
+  if (Number.isSafeInteger(sec)) {
     return sec * 1000
   }
   return defaultValue
@@ -76,14 +77,12 @@ const newJitter = (maxMs: number) => Math.ceil(maxMs * Math.random())
 const sleep = (waitMs: number) => new Promise((resolve) => setTimeout(resolve, waitMs))
 
 const logger = <V>(error: RequestError, afterMs: number, v: V) => {
-  core.startGroup(`Query(${JSON.stringify(v)})`)
   core.warning(`Retry after ${Math.round(afterMs / 1000)}s: HTTP ${error.status}: ${error.message}`)
+  core.startGroup(`HTTP ${error.status}`)
+  core.info(JSON.stringify(v, undefined, 2))
   if (error.response) {
-    core.info(`Response URL: ${error.response.url}`)
-    core.info(`Response headers:`)
-    for (const [k, v] of Object.entries(error.response.headers)) {
-      core.info(`  ${k}: ${v}`)
-    }
+    core.info(`retry-after: ${error.response.headers['retry-after']}`)
+    core.info(`x-github-request-id: ${error.response.headers['x-github-request-id']}`)
   }
   core.endGroup()
 }
