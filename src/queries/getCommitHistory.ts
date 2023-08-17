@@ -2,7 +2,6 @@ import assert from 'assert'
 import * as core from '@actions/core'
 import { GitHub } from '@actions/github/lib/utils'
 import { GetCommitHistoryQuery, GetCommitHistoryQueryVariables } from '../generated/graphql'
-import { RequestError } from '@octokit/request-error'
 import { retryHttpError } from './retry'
 
 type Octokit = InstanceType<typeof GitHub>
@@ -60,19 +59,14 @@ const withOctokit = (o: Octokit) => async (v: GetCommitHistoryQueryVariables) =>
 const withRetry = (fn: QueryFunction) => async (v: GetCommitHistoryQueryVariables) =>
   await retryHttpError(fn, {
     variables: v,
-    nextVariables: (current: GetCommitHistoryQueryVariables) => ({
+    retryVariables: (current: GetCommitHistoryQueryVariables) => ({
       ...current,
-      // decrease the page size to mitigate timeout error
+      // decrease the page size to mitigate the timeout error
       historySize: Math.floor(current.historySize * 0.8),
     }),
     remainingCount: 10,
     afterMs: 3000,
-    logger: (error: RequestError, waitMs: number, v: GetCommitHistoryQueryVariables) => {
-      core.warning(`Retry after ${waitMs} ms: HTTP ${error.status}: ${error.message}`)
-      core.startGroup(`GetCommitHistoryQuery: HTTP ${error.status}`)
-      core.info(`variables: ${JSON.stringify(v, undefined, 2)}\nerror: ${error.stack}`)
-      core.endGroup()
-    },
+    maxJitterMs: 15000,
   })
 
 export const paginate = async (
