@@ -1,18 +1,21 @@
+import * as core from '@actions/core'
 import { RequestError } from '@octokit/request-error'
+
+const DO_NOT_RETRY_CODES = [400, 401, 404, 422, 451]
 
 export type RetrySpec<V> = {
   variables: V
-  nextVariables: (current: V) => V
+  retryVariables: (current: V) => V
   remainingCount: number
   afterMs: number
-  logger: (error: RequestError, waitMs: number, v: V) => void
+  maxJitterMs: number
 }
 
 // Retry the query when it received a GraphQL error.
 // Sometimes GitHub API returns the following errors:
-//  403:
+//  HTTP 403:
 //  You have exceeded a secondary rate limit. Please wait a few minutes before you try again.
-//  502:
+//  HTTP 502:
 //  {
 //    "data":null,
 //    "errors":[{
@@ -26,37 +29,61 @@ export const retryHttpError = async <T, V>(query: (v: V) => Promise<T>, spec: Re
     if (!(error instanceof RequestError)) {
       throw error
     }
+    if (DO_NOT_RETRY_CODES.includes(error.status)) {
+      throw error
+    }
     if (spec.remainingCount === 0) {
       throw new Error(`retry over: ${String(error)}`)
     }
 
+    // For the secondary rate limits, respect retry-after header.
+    // https://docs.github.com/en/rest/overview/resources-in-the-rest-api#secondary-rate-limits
     if (error.status === 403) {
-      // wait a longer time for secondary rate limit
-      const waitMs = spec.afterMs + newJitter(60000)
-      spec.logger(error, waitMs, spec.variables)
-      await sleep(waitMs)
+      const retryAfterMs = getRetryAfterHeaderMs(error, 30000)
+      const afterMs = retryAfterMs + newJitter(spec.maxJitterMs)
+      logger(error, afterMs, spec.variables)
+      await sleep(afterMs)
       return await retryHttpError(query, {
-        variables: spec.variables,
-        nextVariables: spec.nextVariables,
+        ...spec,
         remainingCount: spec.remainingCount - 1,
-        afterMs: spec.afterMs * 2,
-        logger: spec.logger,
+        // retry with the same variables
       })
     }
 
-    const waitMs = spec.afterMs + newJitter(10000)
-    spec.logger(error, waitMs, spec.variables)
-    await sleep(waitMs)
+    // For a temporary error, try the new variables.
+    const afterMs = spec.afterMs + newJitter(spec.maxJitterMs)
+    logger(error, afterMs, spec.variables)
+    await sleep(afterMs)
     return await retryHttpError(query, {
-      variables: spec.nextVariables(spec.variables),
-      nextVariables: spec.nextVariables,
+      ...spec,
+      variables: spec.retryVariables(spec.variables),
       remainingCount: spec.remainingCount - 1,
       afterMs: spec.afterMs * 2,
-      logger: spec.logger,
     })
   }
+}
+
+const getRetryAfterHeaderMs = (error: RequestError, defaultValue: number): number => {
+  const sec = error.response?.headers['retry-after']
+  if (typeof sec === 'number') {
+    return sec * 1000
+  }
+  return defaultValue
 }
 
 const newJitter = (maxMs: number) => Math.ceil(maxMs * Math.random())
 
 const sleep = (waitMs: number) => new Promise((resolve) => setTimeout(resolve, waitMs))
+
+const logger = <V>(error: RequestError, afterMs: number, v: V) => {
+  core.startGroup(`Query(${JSON.stringify(v)})`)
+  core.warning(`Retry after ${Math.round(afterMs / 1000)}s: HTTP ${error.status}: ${error.message}`)
+  if (error.response) {
+    core.info(`Response URL: ${error.response.url}`)
+    core.info(`Response headers:`)
+    for (const [k, v] of Object.entries(error.response.headers)) {
+      core.info(`  ${k}: ${v}`)
+    }
+  }
+  core.endGroup()
+}
