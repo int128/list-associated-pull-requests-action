@@ -1,4 +1,5 @@
 import assert from 'assert'
+import * as core from '@actions/core'
 import * as getCommitHistory from './queries/getCommitHistory'
 import { GitHub } from '@actions/github/lib/utils'
 import { GetCommitHistoryQuery, GetCommitHistoryQueryVariables } from './generated/graphql'
@@ -39,6 +40,7 @@ export const getCommitHistoryByPath = async (
         path,
         historySize: 100,
       })
+      core.info(`Completed commit history of path ${path}`)
       return { path, query }
     }),
   )

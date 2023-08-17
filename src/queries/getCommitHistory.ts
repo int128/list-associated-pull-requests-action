@@ -18,6 +18,7 @@ const query = /* GraphQL */ `
   ) {
     rateLimit {
       cost
+      remaining
     }
     repository(owner: $owner, name: $name) {
       object(expression: $expression) {
@@ -95,5 +96,9 @@ export const paginate = async (
     ...current.repository.object.history.nodes,
     ...next.repository.object.history.nodes,
   ]
+
+  const receivedCount = next.repository.object.history.nodes.length
+  const { totalCount } = next.repository.object.history
+  core.info(`Received ${receivedCount} / ${totalCount} commits (ratelimit-remaining: ${next.rateLimit?.remaining})`)
   return next
 }

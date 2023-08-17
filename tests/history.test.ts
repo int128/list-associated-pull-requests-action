@@ -16,6 +16,7 @@ You can get this from https://docs.github.com/en/graphql/overview/explorer with:
 const fixtureQuery: GetCommitHistoryQuery = {
   rateLimit: {
     cost: 1,
+    remaining: 999,
   },
   repository: {
     object: {

@@ -28,9 +28,6 @@ export const compareCommits = async (octokit: Octokit, inputs: Inputs): Promise<
   let earliestCommitDate = new Date()
   let earliestCommitId = ''
   for await (const compare of compareIterator) {
-    core.info(`Received ${compare.data.commits.length} commits of total ${compare.data.total_commits}`)
-    core.info(`Remaining rate limit: ${compare.headers['x-ratelimit-remaining'] ?? '?'}`)
-
     for (const commit of compare.data.commits) {
       commitIds.add(commit.sha)
       if (commit.commit.committer?.date) {
@@ -41,6 +38,9 @@ export const compareCommits = async (octokit: Octokit, inputs: Inputs): Promise<
         }
       }
     }
+    core.info(
+      `Received ${commitIds.size} / ${compare.data.total_commits} commits (ratelimit-remaining: ${compare.headers['x-ratelimit-remaining']})`,
+    )
   }
   return { commitIds, earliestCommitId, earliestCommitDate }
 }

@@ -52,7 +52,6 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
     base,
     head,
   })
-  core.info(`Found ${compare.commitIds.size} commits`)
   core.info(`The earliest commit is ${compare.earliestCommitId} at ${compare.earliestCommitDate.toISOString()}`)
 
   if (inputs.showOthersGroup) {

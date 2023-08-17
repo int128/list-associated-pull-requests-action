@@ -21,7 +21,6 @@ export type RetrySpec<V> = {
 //  }
 export const retryHttpError = async <T, V>(query: (v: V) => Promise<T>, spec: RetrySpec<V>): Promise<T> => {
   try {
-    core.info(`query with variables ${JSON.stringify(spec.variables)}`)
     return await query(spec.variables)
   } catch (error) {
     if (!(error instanceof RequestError)) {
@@ -34,7 +33,7 @@ export const retryHttpError = async <T, V>(query: (v: V) => Promise<T>, spec: Re
     if (error.status === 403) {
       // wait a longer time for secondary rate limit
       const waitMs = spec.afterMs + newJitter(60000)
-      core.warning(`retry after ${waitMs} ms: status ${error.status}: ${String(error)}`)
+      core.warning(`retry after ${waitMs} ms: status ${error.status}: ${error.message}\n${error.stack}`)
       await new Promise((resolve) => setTimeout(resolve, waitMs))
       return await retryHttpError(query, {
         variables: spec.variables,
@@ -45,7 +44,7 @@ export const retryHttpError = async <T, V>(query: (v: V) => Promise<T>, spec: Re
     }
 
     const waitMs = spec.afterMs + newJitter(10000)
-    core.warning(`retry after ${waitMs} ms: status ${error.status}: ${String(error)}`)
+    core.warning(`retry after ${waitMs} ms: status ${error.status}: ${error.message}\n${error.stack}`)
     await new Promise((resolve) => setTimeout(resolve, waitMs))
     return await retryHttpError(query, {
       variables: spec.nextVariables(spec.variables),
