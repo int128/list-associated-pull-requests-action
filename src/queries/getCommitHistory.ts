@@ -95,8 +95,8 @@ export const paginate = async (
   }
 
   core.info(
-    `Path ${v.path}: ` +
-      `received ${query.repository.object.history.nodes.length} / ${query.repository.object.history.totalCount} commits ` +
+    `Received ${query.repository.object.history.nodes.length} / ${query.repository.object.history.totalCount} commits ` +
+      `(path: ${v.path}) ` +
       `(ratelimit-remaining: ${query.rateLimit?.remaining})`,
   )
 
