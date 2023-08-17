@@ -17,6 +17,7 @@ type Outputs = {
 }
 
 export const compareCommits = async (octokit: Octokit, inputs: Inputs): Promise<Outputs> => {
+  core.info(`Comparing base ${inputs.base} and head ${inputs.head}`)
   const compareIterator = octokit.paginate.iterator(octokit.rest.repos.compareCommitsWithBasehead, {
     owner: inputs.owner,
     repo: inputs.repo,
