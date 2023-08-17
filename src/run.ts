@@ -45,18 +45,15 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
   const groupByPaths = sanitizePaths(inputs.groupByPaths)
 
   const { base, head } = await parseInputs(octokit, inputs)
-  core.info(`Comparing base ${base} and head ${head}`)
   const compare = await compareCommits(octokit, {
     owner: inputs.owner,
     repo: inputs.repo,
     base,
     head,
   })
-  core.info(`Found ${compare.commitIds.size} commits`)
   core.info(`The earliest commit is ${compare.earliestCommitId} at ${compare.earliestCommitDate.toISOString()}`)
 
   if (inputs.showOthersGroup) {
-    core.info(`Getting commit history`)
     const commitHistoryGroupsAndOthers = await getCommitHistoryGroupsAndOthers(octokit, {
       owner: inputs.owner,
       name: inputs.repo,
@@ -75,7 +72,6 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
     }
   }
 
-  core.info(`Getting commit history`)
   const commitHistoryByPath = await getCommitHistoryByPath(octokit, {
     owner: inputs.owner,
     name: inputs.repo,

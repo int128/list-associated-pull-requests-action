@@ -2,6 +2,7 @@ import assert from 'assert'
 import * as core from '@actions/core'
 import { GitHub } from '@actions/github/lib/utils'
 import { GetCommitHistoryQuery, GetCommitHistoryQueryVariables } from '../generated/graphql'
+import { RequestError } from '@octokit/request-error'
 import { retryHttpError } from './retry'
 
 type Octokit = InstanceType<typeof GitHub>
@@ -18,6 +19,7 @@ const query = /* GraphQL */ `
   ) {
     rateLimit {
       cost
+      remaining
     }
     repository(owner: $owner, name: $name) {
       object(expression: $expression) {
@@ -47,53 +49,60 @@ const query = /* GraphQL */ `
   }
 `
 
+export const execute = async (octokit: Octokit, v: GetCommitHistoryQueryVariables): Promise<GetCommitHistoryQuery> =>
+  await paginate(withRetry(withOctokit(octokit)), v)
+
 type QueryFunction = (v: GetCommitHistoryQueryVariables) => Promise<GetCommitHistoryQuery>
 
-export const withOctokit =
-  (o: Octokit): QueryFunction =>
-  async (v: GetCommitHistoryQueryVariables): Promise<GetCommitHistoryQuery> =>
-    await o.graphql(query, v)
+const withOctokit = (o: Octokit) => async (v: GetCommitHistoryQueryVariables) =>
+  await o.graphql<GetCommitHistoryQuery>(query, v)
 
-export const withRetry =
-  (getCommitHistory: QueryFunction): QueryFunction =>
-  async (variables: GetCommitHistoryQueryVariables): Promise<GetCommitHistoryQuery> =>
-    await retryHttpError(getCommitHistory, {
-      variables,
-      nextVariables: (current: GetCommitHistoryQueryVariables) => ({
-        ...current,
-        // decrease the page size to mitigate timeout error
-        historySize: Math.floor(current.historySize * 0.8),
-      }),
-      remainingCount: 10,
-      afterMs: 3000,
-    })
+const withRetry = (fn: QueryFunction) => async (v: GetCommitHistoryQueryVariables) =>
+  await retryHttpError(fn, {
+    variables: v,
+    nextVariables: (current: GetCommitHistoryQueryVariables) => ({
+      ...current,
+      // decrease the page size to mitigate timeout error
+      historySize: Math.floor(current.historySize * 0.8),
+    }),
+    remainingCount: 10,
+    afterMs: 3000,
+    logger: (error: RequestError, waitMs: number, v: GetCommitHistoryQueryVariables) => {
+      core.warning(`Retry after ${waitMs} ms: HTTP ${error.status}: ${error.message}`)
+      core.startGroup(`GetCommitHistoryQuery: HTTP ${error.status}`)
+      core.info(`variables: ${JSON.stringify(v, undefined, 2)}\nerror: ${error.stack}`)
+      core.endGroup()
+    },
+  })
 
 export const paginate = async (
-  getCommitHistory: QueryFunction,
+  fn: QueryFunction,
   v: GetCommitHistoryQueryVariables,
+  previous?: GetCommitHistoryQuery,
 ): Promise<GetCommitHistoryQuery> => {
-  const current = await getCommitHistory(v)
-  core.startGroup(`GetCommitHistoryQuery(${JSON.stringify(v)})`)
-  core.debug(JSON.stringify(current, undefined, 2))
-  core.endGroup()
+  const query = await fn(v)
+  assert(query.repository != null)
+  assert(query.repository.object != null)
+  assert.strictEqual(query.repository.object.__typename, 'Commit')
+  assert(query.repository.object.history.nodes != null)
 
-  assert(current.repository != null)
-  assert(current.repository.object != null)
-  assert.strictEqual(current.repository.object.__typename, 'Commit')
-  assert(current.repository.object.history.nodes != null)
-  if (!current.repository.object.history.pageInfo.hasNextPage) {
-    return current
+  if (previous !== undefined) {
+    assert(previous.repository != null)
+    assert(previous.repository.object != null)
+    assert.strictEqual(previous.repository.object.__typename, 'Commit')
+    assert(previous.repository.object.history.nodes != null)
+    query.repository.object.history.nodes.unshift(...previous.repository.object.history.nodes)
   }
 
-  const historyAfter = current.repository.object.history.pageInfo.endCursor
-  const next = await paginate(getCommitHistory, { ...v, historyAfter })
-  assert(next.repository != null)
-  assert(next.repository.object != null)
-  assert.strictEqual(next.repository.object.__typename, 'Commit')
-  assert(next.repository.object.history.nodes != null)
-  next.repository.object.history.nodes = [
-    ...current.repository.object.history.nodes,
-    ...next.repository.object.history.nodes,
-  ]
-  return next
+  core.info(
+    `Received ${query.repository.object.history.nodes.length} / ${query.repository.object.history.totalCount} commits ` +
+      `(path: ${v.path}) ` +
+      `(ratelimit-remaining: ${query.rateLimit?.remaining})`,
+  )
+
+  if (!query.repository.object.history.pageInfo.hasNextPage) {
+    return query
+  }
+  const historyAfter = query.repository.object.history.pageInfo.endCursor
+  return await paginate(fn, { ...v, historyAfter }, query)
 }

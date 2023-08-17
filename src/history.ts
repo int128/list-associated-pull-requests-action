@@ -1,7 +1,7 @@
 import assert from 'assert'
 import * as getCommitHistory from './queries/getCommitHistory'
 import { GitHub } from '@actions/github/lib/utils'
-import { GetCommitHistoryQuery, GetCommitHistoryQueryVariables } from './generated/graphql'
+import { GetCommitHistoryQuery } from './generated/graphql'
 
 type Octokit = InstanceType<typeof GitHub>
 
@@ -31,7 +31,7 @@ export const getCommitHistoryByPath = async (
 ): Promise<CommitHistoryByPath> => {
   const results = await Promise.all(
     variables.groupByPaths.map(async (path) => {
-      const query = await getCommitHistoryQuery(octokit, {
+      const query = await getCommitHistory.execute(octokit, {
         owner: variables.owner,
         name: variables.name,
         expression: variables.expression,
@@ -50,12 +50,6 @@ export const getCommitHistoryByPath = async (
   }
   return commitHistoryByPath
 }
-
-const getCommitHistoryQuery = async (
-  octokit: Octokit,
-  v: GetCommitHistoryQueryVariables,
-): Promise<GetCommitHistoryQuery> =>
-  await getCommitHistory.paginate(getCommitHistory.withRetry(getCommitHistory.withOctokit(octokit)), v)
 
 export const parseGetCommitHistoryQuery = (
   q: GetCommitHistoryQuery,
