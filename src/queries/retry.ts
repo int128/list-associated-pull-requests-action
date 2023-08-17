@@ -1,4 +1,3 @@
-import * as core from '@actions/core'
 import { RequestError } from '@octokit/request-error'
 
 export type RetrySpec<V> = {
@@ -6,6 +5,7 @@ export type RetrySpec<V> = {
   nextVariables: (current: V) => V
   remainingCount: number
   afterMs: number
+  logger: (error: RequestError, waitMs: number, v: V) => void
 }
 
 // Retry the query when it received a GraphQL error.
@@ -33,26 +33,30 @@ export const retryHttpError = async <T, V>(query: (v: V) => Promise<T>, spec: Re
     if (error.status === 403) {
       // wait a longer time for secondary rate limit
       const waitMs = spec.afterMs + newJitter(60000)
-      core.warning(`Retry after ${waitMs} ms: status ${error.status}: ${error.message}\n${error.stack}`)
-      await new Promise((resolve) => setTimeout(resolve, waitMs))
+      spec.logger(error, waitMs, spec.variables)
+      await sleep(waitMs)
       return await retryHttpError(query, {
         variables: spec.variables,
         nextVariables: spec.nextVariables,
         remainingCount: spec.remainingCount - 1,
         afterMs: spec.afterMs * 2,
+        logger: spec.logger,
       })
     }
 
     const waitMs = spec.afterMs + newJitter(10000)
-    core.warning(`Retry after ${waitMs} ms: status ${error.status}: ${error.message}\n${error.stack}`)
-    await new Promise((resolve) => setTimeout(resolve, waitMs))
+    spec.logger(error, waitMs, spec.variables)
+    await sleep(waitMs)
     return await retryHttpError(query, {
       variables: spec.nextVariables(spec.variables),
       nextVariables: spec.nextVariables,
       remainingCount: spec.remainingCount - 1,
       afterMs: spec.afterMs * 2,
+      logger: spec.logger,
     })
   }
 }
 
 const newJitter = (maxMs: number) => Math.ceil(maxMs * Math.random())
+
+const sleep = (waitMs: number) => new Promise((resolve) => setTimeout(resolve, waitMs))

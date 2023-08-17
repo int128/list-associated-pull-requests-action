@@ -2,6 +2,7 @@ import assert from 'assert'
 import * as core from '@actions/core'
 import { GitHub } from '@actions/github/lib/utils'
 import { GetCommitHistoryQuery, GetCommitHistoryQueryVariables } from '../generated/graphql'
+import { RequestError } from '@octokit/request-error'
 import { retryHttpError } from './retry'
 
 type Octokit = InstanceType<typeof GitHub>
@@ -49,20 +50,12 @@ const query = /* GraphQL */ `
 `
 
 export const execute = async (octokit: Octokit, v: GetCommitHistoryQueryVariables): Promise<GetCommitHistoryQuery> =>
-  await paginate(withRetry(withLogger(withOctokit(octokit))), v)
+  await paginate(withRetry(withOctokit(octokit)), v)
 
 type QueryFunction = (v: GetCommitHistoryQueryVariables) => Promise<GetCommitHistoryQuery>
 
 const withOctokit = (o: Octokit) => async (v: GetCommitHistoryQueryVariables) =>
   await o.graphql<GetCommitHistoryQuery>(query, v)
-
-const withLogger = (fn: QueryFunction) => async (v: GetCommitHistoryQueryVariables) => {
-  const query = await fn(v)
-  core.startGroup(`GetCommitHistoryQuery(${JSON.stringify(v)})`)
-  core.debug(JSON.stringify(query, undefined, 2))
-  core.endGroup()
-  return query
-}
 
 const withRetry = (fn: QueryFunction) => async (v: GetCommitHistoryQueryVariables) =>
   await retryHttpError(fn, {
@@ -74,9 +67,15 @@ const withRetry = (fn: QueryFunction) => async (v: GetCommitHistoryQueryVariable
     }),
     remainingCount: 10,
     afterMs: 3000,
+    logger: (error: RequestError, waitMs: number, v: GetCommitHistoryQueryVariables) => {
+      core.warning(`Retry after ${waitMs} ms: HTTP ${error.status}: ${error.message}`)
+      core.startGroup(`GetCommitHistoryQuery: HTTP ${error.status}`)
+      core.info(`variables: ${JSON.stringify(v, undefined, 2)}\nerror: ${error.stack}`)
+      core.endGroup()
+    },
   })
 
-const paginate = async (
+export const paginate = async (
   fn: QueryFunction,
   v: GetCommitHistoryQueryVariables,
   previous?: GetCommitHistoryQuery,
@@ -92,15 +91,14 @@ const paginate = async (
     assert(previous.repository.object != null)
     assert.strictEqual(previous.repository.object.__typename, 'Commit')
     assert(previous.repository.object.history.nodes != null)
-    query.repository.object.history.nodes = [
-      ...previous.repository.object.history.nodes,
-      ...query.repository.object.history.nodes,
-    ]
+    query.repository.object.history.nodes.unshift(...previous.repository.object.history.nodes)
   }
 
-  const receivedCount = query.repository.object.history.nodes.length
-  const { totalCount } = query.repository.object.history
-  core.info(`Received ${receivedCount} / ${totalCount} commits (ratelimit-remaining: ${query.rateLimit?.remaining})`)
+  core.info(
+    `Path ${v.path}: ` +
+      `received ${query.repository.object.history.nodes.length} / ${query.repository.object.history.totalCount} commits ` +
+      `(ratelimit-remaining: ${query.rateLimit?.remaining})`,
+  )
 
   if (!query.repository.object.history.pageInfo.hasNextPage) {
     return query
