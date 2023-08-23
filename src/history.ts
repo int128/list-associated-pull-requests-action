@@ -1,7 +1,10 @@
 import assert from 'assert'
 import * as getCommitHistory from './queries/getCommitHistory'
+import * as queue from './queue'
 import { GitHub } from '@actions/github/lib/utils'
 import { GetCommitHistoryQuery } from './generated/graphql'
+
+const GRAPHQL_QUERY_CONCURRENCY = 6
 
 type Octokit = InstanceType<typeof GitHub>
 
@@ -29,19 +32,18 @@ export const getCommitHistoryByPath = async (
   octokit: Octokit,
   variables: GetCommitHistoryByPathVariables,
 ): Promise<CommitHistoryByPath> => {
-  const results = await Promise.all(
-    variables.groupByPaths.map(async (path) => {
-      const query = await getCommitHistory.execute(octokit, {
-        owner: variables.owner,
-        name: variables.name,
-        expression: variables.expression,
-        since: variables.sinceCommitDate,
-        path,
-        historySize: 100,
-      })
-      return { path, query }
-    }),
-  )
+  const tasks = variables.groupByPaths.map((path) => async () => {
+    const query = await getCommitHistory.execute(octokit, {
+      owner: variables.owner,
+      name: variables.name,
+      expression: variables.expression,
+      since: variables.sinceCommitDate,
+      path,
+      historySize: 100,
+    })
+    return { path, query }
+  })
+  const results = await queue.execute(GRAPHQL_QUERY_CONCURRENCY, tasks)
 
   const commitHistoryByPath = new Map<string, Commit[]>()
   for (const result of results) {
