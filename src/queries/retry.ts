@@ -7,8 +7,6 @@ export type RetrySpec<V> = {
   variables: V
   retryVariables: (current: V) => V
   remainingCount: number
-  afterMs: number
-  maxJitterMs: number
 }
 
 // Retry the query when it received a GraphQL error.
@@ -39,8 +37,8 @@ export const retryHttpError = async <T, V>(query: (v: V) => Promise<T>, spec: Re
     // For the secondary rate limits, respect retry-after header.
     // https://docs.github.com/en/rest/overview/resources-in-the-rest-api#secondary-rate-limits
     if (error.status === 403) {
-      const retryAfterMs = getRetryAfterHeaderMs(error, 30000)
-      const afterMs = retryAfterMs + newJitter(spec.maxJitterMs)
+      const retryAfterMs = getRetryAfterHeaderMs(error)
+      const afterMs = retryAfterMs + newJitter(retryAfterMs)
       logger(error, afterMs, spec.variables)
       await sleep(afterMs)
       return await retryHttpError(query, {
@@ -50,26 +48,36 @@ export const retryHttpError = async <T, V>(query: (v: V) => Promise<T>, spec: Re
       })
     }
 
-    // For a temporary error, try the new variables.
-    const afterMs = spec.afterMs + newJitter(spec.maxJitterMs)
+    // For 502 error, retry with the new variables.
+    if (error.status === 502) {
+      logger(error, 0, spec.variables)
+      return await retryHttpError(query, {
+        ...spec,
+        variables: spec.retryVariables(spec.variables),
+        remainingCount: spec.remainingCount - 1,
+      })
+    }
+
+    // For a temporary error, retry later.
+    const afterMs = newJitter(10000)
     logger(error, afterMs, spec.variables)
     await sleep(afterMs)
     return await retryHttpError(query, {
       ...spec,
-      variables: spec.retryVariables(spec.variables),
       remainingCount: spec.remainingCount - 1,
-      afterMs: spec.afterMs * 2,
     })
   }
 }
 
-const getRetryAfterHeaderMs = (error: RequestError, defaultValue: number): number => {
+const RETRY_AFTER_DEFAULT_MS = 30000
+
+const getRetryAfterHeaderMs = (error: RequestError): number => {
   // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Retry-After
   const sec = Number(error.response?.headers['retry-after'])
   if (Number.isSafeInteger(sec)) {
     return sec * 1000
   }
-  return defaultValue
+  return RETRY_AFTER_DEFAULT_MS
 }
 
 const newJitter = (maxMs: number) => Math.ceil(maxMs * Math.random())
