@@ -17,6 +17,13 @@ const main = async (): Promise<void> => {
   core.setOutput('body', outputs.body)
   core.setOutput('body-groups', outputs.bodyGroups)
   core.setOutput('body-others', outputs.bodyOthers)
+
+  core.info('Outputs:')
+  core.info(outputs.bodyGroups)
+  core.info(outputs.bodyOthers)
+  core.summary.addRaw(outputs.bodyGroups, true)
+  core.summary.addRaw(outputs.bodyOthers, true)
+  await core.summary.write()
 }
 
 main().catch((e: Error) => {
