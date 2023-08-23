@@ -65,8 +65,6 @@ const withRetry = (fn: QueryFunction) => async (v: GetCommitHistoryQueryVariable
       historySize: Math.floor(current.historySize * 0.8),
     }),
     remainingCount: 10,
-    afterMs: 3000,
-    maxJitterMs: 15000,
   })
 
 export const paginate = async (
