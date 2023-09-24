@@ -4,6 +4,7 @@ import { run } from '../src/run'
 const { INTEGRATION_TEST_GITHUB_TOKEN } = process.env
 const describeOnlyIfToken = INTEGRATION_TEST_GITHUB_TOKEN ? describe : describe.skip
 
+// TODO: https://github.com/int128/list-associated-pull-requests-action/issues/547
 describeOnlyIfToken('GitHub integration test', () => {
   it('should generate outputs of pr-491', async () => {
     assert(INTEGRATION_TEST_GITHUB_TOKEN)
