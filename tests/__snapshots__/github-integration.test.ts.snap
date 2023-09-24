@@ -411,7 +411,7 @@ exports[`GitHub integration test should generate outputs of pr-491 1`] = `
 - #111 @renovate
 - #106 @renovate
 - #110 @int128
-- 1dd6f0618288c1836386f05dd1a4b81c7ae893c7
+- #109 @renovate
 - #108 @renovate
 - #107 @renovate
 - #105 @renovate
@@ -491,7 +491,7 @@ exports[`GitHub integration test should generate outputs of pr-491 1`] = `
 - #10 @renovate
 - #8 @renovate
 - #7 @renovate
-- 4ca8d2b69e5e637d5311cbe7ec16d39b9a032b35",
+- #5 @renovate",
   "bodyGroups": "### src
 - #484 @int128
 - #479 @renovate
@@ -901,7 +901,7 @@ exports[`GitHub integration test should generate outputs of pr-491 1`] = `
 - #111 @renovate
 - #106 @renovate
 - #110 @int128
-- 1dd6f0618288c1836386f05dd1a4b81c7ae893c7
+- #109 @renovate
 - #108 @renovate
 - #107 @renovate
 - #105 @renovate
@@ -981,6 +981,6 @@ exports[`GitHub integration test should generate outputs of pr-491 1`] = `
 - #10 @renovate
 - #8 @renovate
 - #7 @renovate
-- 4ca8d2b69e5e637d5311cbe7ec16d39b9a032b35",
+- #5 @renovate",
 }
 `;

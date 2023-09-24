@@ -1,6 +1,10 @@
 import assert from 'assert'
 import { run } from '../src/run'
 
+// GitHub token is required.
+// To run locally,
+//   export INTEGRATION_TEST_GITHUB_TOKEN="$(gh auth token)"
+//   yarn test
 const { INTEGRATION_TEST_GITHUB_TOKEN } = process.env
 const describeOnlyIfToken = INTEGRATION_TEST_GITHUB_TOKEN ? describe : describe.skip
 
