@@ -6,7 +6,7 @@ on:
       - src/**
       - tests/**
       - '*.json'
-      - action.yaml
+      - '*.yaml'
       - .github/workflows/ts.yaml
   push:
     branches:
@@ -15,7 +15,7 @@ on:
       - src/**
       - tests/**
       - '*.json'
-      - action.yaml
+      - '*.yaml'
       - .github/workflows/ts.yaml
 
 jobs:
@@ -27,9 +27,9 @@ jobs:
       - uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
         with:
           node-version: 20
-          cache: yarn
-      - run: yarn
-      - run: yarn test
+      - run: corepack enable pnpm
+      - run: pnpm i
+      - run: pnpm test
         env:
           INTEGRATION_TEST_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -41,10 +41,9 @@ jobs:
       - uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
         with:
           node-version: 20
-          cache: yarn
-      - run: yarn
-      - run: yarn build
-      - run: yarn package
+      - run: corepack enable pnpm
+      - run: pnpm i
+      - run: pnpm build
 
       # e2e-test depends on #98
       # https://github.com/int128/list-associated-pull-requests-action/pull/98
@@ -81,9 +80,9 @@ jobs:
       - uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
         with:
           node-version: 20
-          cache: yarn
-      - run: yarn
-      - run: yarn lint --fix
-      - run: yarn format
-      - run: yarn graphql-codegen
+      - run: corepack enable pnpm
+      - run: pnpm i
+      - run: pnpm lint --fix
+      - run: pnpm format
+      - run: pnpm graphql-codegen
       - uses: int128/update-generated-files-action@1bf39f3aec4afa88c0c7060cdb0d88332c052991 # v2.48.0
