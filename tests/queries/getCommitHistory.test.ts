@@ -1,5 +1,5 @@
-import { GetCommitHistoryQuery, GetCommitHistoryQueryVariables } from '../../src/generated/graphql'
-import { paginate } from '../../src/queries/getCommitHistory'
+import { GetCommitHistoryQuery, GetCommitHistoryQueryVariables } from '../../src/generated/graphql.js'
+import { paginate } from '../../src/queries/getCommitHistory.js'
 
 describe('paginate', () => {
   const variables: GetCommitHistoryQueryVariables = {
