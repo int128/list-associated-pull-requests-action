@@ -1,5 +1,5 @@
 import assert from 'assert'
-import { run } from '../src/run'
+import { run } from '../src/run.js'
 
 // GitHub token is required.
 // To run locally,

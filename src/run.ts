@@ -1,10 +1,9 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
-import { Commit, CommitHistoryByPath, getCommitHistoryByPath, getCommitHistoryGroupsAndOthers } from './history'
-import { GitHub } from '@actions/github/lib/utils'
-import { compareCommits } from './compare'
+import { Commit, CommitHistoryByPath, getCommitHistoryByPath, getCommitHistoryGroupsAndOthers } from './history.js'
+import { compareCommits } from './compare.js'
 
-type Octokit = InstanceType<typeof GitHub>
+type Octokit = ReturnType<typeof github.getOctokit>
 
 type Inputs = {
   owner: string

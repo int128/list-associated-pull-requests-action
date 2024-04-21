@@ -1,10 +1,10 @@
 import assert from 'assert'
 import * as core from '@actions/core'
-import { GitHub } from '@actions/github/lib/utils'
-import { GetCommitHistoryQuery, GetCommitHistoryQueryVariables } from '../generated/graphql'
-import { retryHttpError } from './retry'
+import * as github from '@actions/github'
+import { GetCommitHistoryQuery, GetCommitHistoryQueryVariables } from '../generated/graphql.js'
+import { retryHttpError } from './retry.js'
 
-type Octokit = InstanceType<typeof GitHub>
+type Octokit = ReturnType<typeof github.getOctokit>
 
 const query = /* GraphQL */ `
   query getCommitHistory(

@@ -1,9 +1,9 @@
 import assert from 'assert'
-import * as getCommitHistory from './queries/getCommitHistory'
-import { GitHub } from '@actions/github/lib/utils'
-import { GetCommitHistoryQuery } from './generated/graphql'
+import * as github from '@actions/github'
+import * as getCommitHistory from './queries/getCommitHistory.js'
+import { GetCommitHistoryQuery } from './generated/graphql.js'
 
-type Octokit = InstanceType<typeof GitHub>
+type Octokit = ReturnType<typeof github.getOctokit>
 
 export type CommitHistoryByPath = Map<string, Commit[]>
 

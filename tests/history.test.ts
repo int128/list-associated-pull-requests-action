@@ -1,5 +1,5 @@
-import { GetCommitHistoryQuery } from '../src/generated/graphql'
-import { Commit, computeGroupsAndOthers, parseGetCommitHistoryQuery } from '../src/history'
+import { GetCommitHistoryQuery } from '../src/generated/graphql.js'
+import { Commit, computeGroupsAndOthers, parseGetCommitHistoryQuery } from '../src/history.js'
 
 /*
 Commits of pull request #98.
