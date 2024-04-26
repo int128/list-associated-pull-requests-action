@@ -15,8 +15,8 @@ importers:
         specifier: 6.0.0
         version: 6.0.0
       '@octokit/request-error':
-        specifier: 5.1.0
-        version: 5.1.0
+        specifier: 6.1.1
+        version: 6.1.1
       graphql:
         specifier: 16.8.1
         version: 16.8.1
@@ -34,8 +34,8 @@ importers:
         specifier: 4.2.0
         version: 4.2.0(graphql@16.8.1)
       '@octokit/graphql-schema':
-        specifier: 14.58.0
-        version: 14.58.0
+        specifier: 15.13.0
+        version: 15.13.0
       '@tsconfig/node20':
         specifier: 20.1.4
         version: 20.1.4
@@ -855,8 +855,8 @@ packages:
     resolution: {integrity: sha512-DWPLtr1Kz3tv8L0UvXTDP1fNwM0S+z6EJpRcvH66orY6Eld4XBMCSYsaWp4xIm61jTWxK68BrR7ibO+vSDnZqw==}
     engines: {node: '>= 18'}
 
-  '@octokit/graphql-schema@14.58.0':
-    resolution: {integrity: sha512-89QSUV1Dgxzq90wqkv0Nmw7jHfFCAQ4K/fjp5ezvDEHqFFzMCn25TBQlm38WB8ams+hGxInRDbITCP0n7GTGlg==}
+  '@octokit/graphql-schema@15.13.0':
+    resolution: {integrity: sha512-sJSfthiICvYTrT9fG0YBmRiRGTuZajmphzEJ6dmbJ2dARcNx904atCWwjdFJWs5Il5YtPzsaa9GNa8oejDtbQw==}
 
   '@octokit/graphql@7.0.2':
     resolution: {integrity: sha512-OJ2iGMtj5Tg3s6RaXH22cJcxXRi7Y3EBqbHTBRq+PQAqfaS8f/236fUrWhfSn8P4jovyzqucxme7/vWSSZBX2Q==}
@@ -882,6 +882,10 @@ packages:
 
   '@octokit/request-error@5.1.0':
     resolution: {integrity: sha512-GETXfE05J0+7H2STzekpKObFe765O5dlAKUTLNGeH+x47z7JjXHfsHKo5z21D/o/IOZTUEI6nyWyR+bZVP/n5Q==}
+    engines: {node: '>= 18'}
+
+  '@octokit/request-error@6.1.1':
+    resolution: {integrity: sha512-1mw1gqT3fR/WFvnoVpY/zUM2o/XkMs/2AszUUG9I69xn0JFLv6PGkPhNk5lbfvROs79wiS0bqiJNxfCZcRJJdg==}
     engines: {node: '>= 18'}
 
   '@octokit/request@8.2.0':
@@ -4080,7 +4084,7 @@ snapshots:
       '@octokit/types': 12.6.0
       universal-user-agent: 6.0.1
 
-  '@octokit/graphql-schema@14.58.0':
+  '@octokit/graphql-schema@15.13.0':
     dependencies:
       graphql: 16.8.1
       graphql-tag: 2.12.6(graphql@16.8.1)
@@ -4110,6 +4114,10 @@ snapshots:
       '@octokit/types': 13.1.0
       deprecation: 2.3.1
       once: 1.4.0
+
+  '@octokit/request-error@6.1.1':
+    dependencies:
+      '@octokit/types': 13.1.0
 
   '@octokit/request@8.2.0':
     dependencies:
