@@ -1,9 +1,7 @@
 import * as core from '@actions/core'
-import * as github from '@actions/github'
 import { Commit, CommitHistoryByPath, getCommitHistoryByPath, getCommitHistoryGroupsAndOthers } from './history.js'
+import { Octokit } from '@octokit/action'
 import { compareCommits } from './compare.js'
-
-type Octokit = ReturnType<typeof github.getOctokit>
 
 type Inputs = {
   owner: string
@@ -40,7 +38,7 @@ const parseInputs = async (octokit: Octokit, inputs: Inputs) => {
 }
 
 export const run = async (inputs: Inputs): Promise<Outputs> => {
-  const octokit = github.getOctokit(inputs.token)
+  const octokit = new Octokit({ auth: inputs.token, authStrategy: null })
   const groupByPaths = sanitizePaths(inputs.groupByPaths)
 
   const { base, head } = await parseInputs(octokit, inputs)

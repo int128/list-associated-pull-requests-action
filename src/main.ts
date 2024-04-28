@@ -1,11 +1,14 @@
 import * as core from '@actions/core'
-import * as github from '@actions/github'
 import { run } from './run.js'
+import assert from 'assert'
+
+assert(process.env.GITHUB_REPOSITORY)
+const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/')
 
 const main = async (): Promise<void> => {
   const outputs = await run({
-    owner: github.context.repo.owner,
-    repo: github.context.repo.repo,
+    owner,
+    repo,
     token: core.getInput('token', { required: true }),
     pullRequest: parseInt(core.getInput('pull-request')) || undefined,
     base: core.getInput('base') || undefined,
