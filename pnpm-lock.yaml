@@ -15,8 +15,8 @@ importers:
         specifier: 6.0.0
         version: 6.0.0
       '@octokit/request-error':
-        specifier: 5.1.0
-        version: 5.1.0
+        specifier: 6.1.1
+        version: 6.1.1
       graphql:
         specifier: 16.8.1
         version: 16.8.1
@@ -882,6 +882,10 @@ packages:
 
   '@octokit/request-error@5.1.0':
     resolution: {integrity: sha512-GETXfE05J0+7H2STzekpKObFe765O5dlAKUTLNGeH+x47z7JjXHfsHKo5z21D/o/IOZTUEI6nyWyR+bZVP/n5Q==}
+    engines: {node: '>= 18'}
+
+  '@octokit/request-error@6.1.1':
+    resolution: {integrity: sha512-1mw1gqT3fR/WFvnoVpY/zUM2o/XkMs/2AszUUG9I69xn0JFLv6PGkPhNk5lbfvROs79wiS0bqiJNxfCZcRJJdg==}
     engines: {node: '>= 18'}
 
   '@octokit/request@8.2.0':
@@ -4104,6 +4108,10 @@ snapshots:
       '@octokit/types': 13.1.0
       deprecation: 2.3.1
       once: 1.4.0
+
+  '@octokit/request-error@6.1.1':
+    dependencies:
+      '@octokit/types': 13.1.0
 
   '@octokit/request@8.2.0':
     dependencies:
