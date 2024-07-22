@@ -23,6 +23,7 @@ type GetCommitHistoryByPathVariables = {
   sinceCommitDate: Date
   sinceCommitId: string
   filterCommitIds: Set<string>
+  maxFetchCommits: number | undefined
 }
 
 export const getCommitHistoryByPath = async (
@@ -31,14 +32,20 @@ export const getCommitHistoryByPath = async (
 ): Promise<CommitHistoryByPath> => {
   const results = await Promise.all(
     variables.groupByPaths.map(async (path) => {
-      const query = await getCommitHistory.execute(octokit, {
-        owner: variables.owner,
-        name: variables.name,
-        expression: variables.expression,
-        since: variables.sinceCommitDate,
-        path,
-        historySize: 100,
-      })
+      const query = await getCommitHistory.execute(
+        octokit,
+        {
+          owner: variables.owner,
+          name: variables.name,
+          expression: variables.expression,
+          since: variables.sinceCommitDate,
+          path,
+          historySize: 100,
+        },
+        {
+          maxFetchCommits: variables.maxFetchCommits,
+        },
+      )
       return { path, query }
     }),
   )

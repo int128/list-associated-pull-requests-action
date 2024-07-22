@@ -14,6 +14,7 @@ type Inputs = {
   head?: string
   groupByPaths: string[]
   showOthersGroup: boolean
+  maxFetchCommits: number | undefined
 }
 
 type Outputs = {
@@ -61,6 +62,7 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
       sinceCommitDate: compare.earliestCommitDate,
       sinceCommitId: compare.earliestCommitId,
       filterCommitIds: compare.commitIds,
+      maxFetchCommits: inputs.maxFetchCommits,
     })
     const bodyGroups = formatCommitHistory(commitHistoryGroupsAndOthers.groups)
     const bodyOthers = formatCommitHistory(new Map([['Others', commitHistoryGroupsAndOthers.others]]))
@@ -79,6 +81,7 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
     sinceCommitDate: compare.earliestCommitDate,
     sinceCommitId: compare.earliestCommitId,
     filterCommitIds: compare.commitIds,
+    maxFetchCommits: inputs.maxFetchCommits,
   })
   const body = formatCommitHistory(commitHistoryByPath)
   return { body, bodyGroups: body, bodyOthers: '' }

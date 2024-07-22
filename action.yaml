@@ -22,6 +22,9 @@ inputs:
     description: Show others group
     required: true
     default: 'true'
+  max-fetch-commits:
+    description: Maximum number of commits to fetch. Default is unlimited
+    required: false
 
 outputs:
   body:

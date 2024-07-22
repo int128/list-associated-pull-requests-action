@@ -12,6 +12,7 @@ const main = async (): Promise<void> => {
     head: core.getInput('head') || undefined,
     groupByPaths: core.getMultilineInput('group-by-paths'),
     showOthersGroup: core.getBooleanInput('show-others-group', { required: true }),
+    maxFetchCommits: Number.parseInt(core.getInput('max-fetch-commits')) || undefined,
   })
 
   core.setOutput('body', outputs.body)

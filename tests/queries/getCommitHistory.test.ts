@@ -27,7 +27,7 @@ describe('paginate', () => {
         },
       },
     })
-    const query = await paginate(mockFn, variables)
+    const query = await paginate(mockFn, variables, { maxFetchCommits: undefined })
     expect(mockFn).toHaveBeenCalledTimes(1)
     expect(query).toStrictEqual({
       repository: {
@@ -61,7 +61,7 @@ describe('paginate', () => {
         },
       },
     })
-    const query = await paginate(mockFn, variables)
+    const query = await paginate(mockFn, variables, { maxFetchCommits: undefined })
     expect(mockFn).toHaveBeenCalledTimes(1)
     expect(query).toStrictEqual({
       repository: {
@@ -125,7 +125,7 @@ describe('paginate', () => {
         },
       },
     })
-    const query = await paginate(mockFn, variables)
+    const query = await paginate(mockFn, variables, { maxFetchCommits: undefined })
     expect(mockFn).toHaveBeenCalledTimes(3)
     expect(query).toStrictEqual({
       repository: {

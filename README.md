@@ -2,7 +2,6 @@
 
 This is an action to generate a list of pull requests associated to a pull request.
 
-
 ## Purpose
 
 ### Problem to solve
@@ -82,11 +81,11 @@ You can group associated pull requests by paths.
 This feature is useful for monorepo.
 
 ```yaml
-      - uses: int128/list-associated-pull-requests-action@v1
-        with:
-          group-by-paths: |
-            backend
-            frontend
+- uses: int128/list-associated-pull-requests-action@v1
+  with:
+    group-by-paths: |
+      backend
+      frontend
 ```
 
 Here is an example.
@@ -98,15 +97,15 @@ This action ignores a line which starts with `#`.
 For example,
 
 ```yaml
-      - uses: int128/list-associated-pull-requests-action@v1
-        with:
-          group-by-paths: |
-            # microservices
-            payment-frontend
-            payment-backend
-            # monolith
-            frontend
-            api
+- uses: int128/list-associated-pull-requests-action@v1
+  with:
+    group-by-paths: |
+      # microservices
+      payment-frontend
+      payment-backend
+      # monolith
+      frontend
+      api
 ```
 
 ### How it groups
@@ -128,9 +127,12 @@ this action returns the following markdown:
 
 ```markdown
 ### api
+
 - #1
 - #2
+
 ### backend
+
 - #1
 - #3
 ```
@@ -139,7 +141,6 @@ this action returns the following markdown:
 
 If a pull request does not belong to any group, it is grouped as "Others".
 You can hide the Others group by `show-others-group`.
-
 
 ## Compare base and head
 
@@ -164,28 +165,29 @@ jobs:
             ${{ steps.associated-pull-requests.outputs.body }}
 ```
 
-
 ## Specification
 
 ### Inputs
 
-| Name | Default | Description
-|------|----------|------------
-| `token` | `github.token` | GitHub token
-| `pull-request` | <sup>*1</sup> | Pull request to parse
-| `group-by-paths` | (optional) | Group pull requests by paths (Multiline)
-| `show-others-group` | `true` | Show others group
-| `base` | <sup>*1</sup> | Base branch
-| `head` | <sup>*1</sup> | Head branch
-| `path` | `.` | Path to get the commit history of subtree
+| Name                | Default        | Description                               |
+| ------------------- | -------------- | ----------------------------------------- |
+| `token`             | `github.token` | GitHub token                              |
+| `pull-request`      | <sup>\*1</sup> | Pull request to parse                     |
+| `group-by-paths`    | (optional)     | Group pull requests by paths (Multiline)  |
+| `show-others-group` | `true`         | Show others group                         |
+| `base`              | <sup>\*1</sup> | Base branch                               |
+| `head`              | <sup>\*1</sup> | Head branch                               |
+| `path`              | `.`            | Path to get the commit history of subtree |
+| `max-fetch-commits` | (unlimited)    | Maximum number of commits to fetch        |
 
 You need to set either `base` and `head`, or `pull-request`.
 
+For a large monorepo, you can set `max-fetch-commits` to avoid the rate limit or job timeout.
 
 ### Outputs
 
-| Name | Description
-|------|------------
-| `body` | List of associated pull requests (Markdown)
-| `body-groups` | Grouped lists of associated pull requests (Markdown)
-| `body-others` | Others list of associated pull requests (Markdown)
+| Name          | Description                                          |
+| ------------- | ---------------------------------------------------- |
+| `body`        | List of associated pull requests (Markdown)          |
+| `body-groups` | Grouped lists of associated pull requests (Markdown) |
+| `body-others` | Others list of associated pull requests (Markdown)   |
