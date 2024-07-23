@@ -48,8 +48,15 @@ const query = /* GraphQL */ `
   }
 `
 
-export const execute = async (octokit: Octokit, v: GetCommitHistoryQueryVariables): Promise<GetCommitHistoryQuery> =>
-  await paginate(withRetry(withOctokit(octokit)), v)
+type Options = {
+  maxFetchCommits: number | undefined
+}
+
+export const execute = async (
+  octokit: Octokit,
+  v: GetCommitHistoryQueryVariables,
+  o: Options,
+): Promise<GetCommitHistoryQuery> => await paginate(withRetry(withOctokit(octokit)), v, o)
 
 type QueryFunction = (v: GetCommitHistoryQueryVariables) => Promise<GetCommitHistoryQuery>
 
@@ -70,6 +77,7 @@ const withRetry = (fn: QueryFunction) => async (v: GetCommitHistoryQueryVariable
 export const paginate = async (
   fn: QueryFunction,
   v: GetCommitHistoryQueryVariables,
+  o: Options,
   previous?: GetCommitHistoryQuery,
 ): Promise<GetCommitHistoryQuery> => {
   const query = await fn(v)
@@ -86,8 +94,9 @@ export const paginate = async (
     query.repository.object.history.nodes.unshift(...previous.repository.object.history.nodes)
   }
 
+  const receivedCount = query.repository.object.history.nodes.length
   core.info(
-    `Received ${query.repository.object.history.nodes.length} / ${query.repository.object.history.totalCount} commits ` +
+    `Received ${receivedCount} / ${query.repository.object.history.totalCount} commits ` +
       `(path: ${v.path}) ` +
       `(ratelimit-remaining: ${query.rateLimit?.remaining})`,
   )
@@ -95,6 +104,10 @@ export const paginate = async (
   if (!query.repository.object.history.pageInfo.hasNextPage) {
     return query
   }
+  if (o.maxFetchCommits !== undefined && receivedCount > o.maxFetchCommits) {
+    core.warning(`Gave up fetching commits due to maxFetchCommits=${o.maxFetchCommits}`)
+    return query
+  }
   const historyAfter = query.repository.object.history.pageInfo.endCursor
-  return await paginate(fn, { ...v, historyAfter }, query)
+  return await paginate(fn, { ...v, historyAfter }, o, query)
 }

@@ -20,6 +20,7 @@ describeOnlyIfToken('GitHub integration test', () => {
       pullRequest: 491,
       groupByPaths: ['src', 'tests', '.github'],
       showOthersGroup: true,
+      maxFetchCommits: undefined,
     })
     expect(outputs).toMatchSnapshot()
   }, 30000)
