@@ -182,7 +182,8 @@ jobs:
 
 You need to set either `base` and `head`, or `pull-request`.
 
-For a large monorepo, you can set `max-fetch-commits` to avoid the rate limit or job timeout.
+If there is a very old commit in the repository, this action may fetch a lot of commits.
+You can set `max-fetch-commits` to avoid the job timeout or GitHub API rate-limit.
 
 ### Outputs
 
