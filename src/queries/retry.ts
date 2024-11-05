@@ -21,8 +21,9 @@ export type RetrySpec<V> = {
 //    }]
 //  }
 export const retryHttpError = async <T, V>(query: (v: V) => Promise<T>, spec: RetrySpec<V>): Promise<T> => {
+  let response: T
   try {
-    return await query(spec.variables)
+    response = await query(spec.variables)
   } catch (error) {
     if (!(error instanceof RequestError)) {
       throw error
@@ -67,6 +68,17 @@ export const retryHttpError = async <T, V>(query: (v: V) => Promise<T>, spec: Re
       remainingCount: spec.remainingCount - 1,
     })
   }
+
+  // Octokit.graphql sometimes returns undefined. Retry it.
+  if (response === undefined) {
+    const afterMs = newJitter(10000)
+    core.warning(`Retry after ${Math.round(afterMs / 1000)}s: Octokit.graphql() returned undefined`)
+    return await retryHttpError(query, {
+      ...spec,
+      remainingCount: spec.remainingCount - 1,
+    })
+  }
+  return response
 }
 
 const RETRY_AFTER_DEFAULT_MS = 30000
