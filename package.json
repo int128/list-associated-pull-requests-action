@@ -11,7 +11,7 @@
   "dependencies": {
     "@actions/core": "1.11.1",
     "@actions/github": "6.0.0",
-    "@octokit/request-error": "5.1.0",
+    "@octokit/request-error": "6.1.6",
     "graphql": "16.10.0"
   },
   "devDependencies": {
