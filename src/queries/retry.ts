@@ -114,4 +114,15 @@ type RequestError = Error & {
 }
 
 const isRequestError = (error: unknown): error is RequestError =>
-  error instanceof Error && 'status' in error && typeof error.status === 'number'
+  error instanceof Error &&
+  'status' in error &&
+  typeof error.status === 'number' &&
+  // error.response is optional
+  (!('response' in error) || error.response === undefined || isRequestErrorResponse(error.response))
+
+const isRequestErrorResponse = (response: unknown): response is RequestError['response'] =>
+  typeof response === 'object' &&
+  response !== null &&
+  'headers' in response &&
+  typeof response.headers === 'object' &&
+  response.headers !== null
