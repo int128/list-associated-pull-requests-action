@@ -1,5 +1,4 @@
 import * as core from '@actions/core'
-import { RequestError } from '@octokit/request-error'
 
 const DO_NOT_RETRY_CODES = [400, 401, 404, 422, 451]
 
@@ -25,7 +24,7 @@ export const retryHttpError = async <T, V>(query: (v: V) => Promise<T>, spec: Re
   try {
     response = await query(spec.variables)
   } catch (error) {
-    if (!(error instanceof RequestError)) {
+    if (!isRequestError(error)) {
       throw error
     }
     if (DO_NOT_RETRY_CODES.includes(error.status)) {
@@ -106,3 +105,24 @@ const logger = <V>(error: RequestError, afterMs: number, v: V) => {
   }
   core.endGroup()
 }
+
+type RequestError = Error & {
+  status: number
+  response?: {
+    headers: Record<string, string>
+  }
+}
+
+const isRequestError = (error: unknown): error is RequestError =>
+  error instanceof Error &&
+  'status' in error &&
+  typeof error.status === 'number' &&
+  // error.response is optional
+  (!('response' in error) || error.response === undefined || isRequestErrorResponse(error.response))
+
+const isRequestErrorResponse = (response: unknown): response is RequestError['response'] =>
+  typeof response === 'object' &&
+  response !== null &&
+  'headers' in response &&
+  typeof response.headers === 'object' &&
+  response.headers !== null
