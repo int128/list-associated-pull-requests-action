@@ -1,3 +1,4 @@
+import { describe, expect, test, vi } from 'vitest'
 import { GetCommitHistoryQuery, GetCommitHistoryQueryVariables } from '../../src/generated/graphql.js'
 import { paginate } from '../../src/queries/getCommitHistory.js'
 
@@ -12,7 +13,7 @@ describe('paginate', () => {
   }
 
   test('empty', async () => {
-    const mockFn = jest.fn<Promise<GetCommitHistoryQuery>, [GetCommitHistoryQueryVariables]>()
+    const mockFn = vi.fn<(v: GetCommitHistoryQueryVariables) => Promise<GetCommitHistoryQuery>>()
     mockFn.mockResolvedValueOnce({
       repository: {
         object: {
@@ -46,7 +47,7 @@ describe('paginate', () => {
   })
 
   test('single page', async () => {
-    const mockFn = jest.fn<Promise<GetCommitHistoryQuery>, [GetCommitHistoryQueryVariables]>()
+    const mockFn = vi.fn<(v: GetCommitHistoryQueryVariables) => Promise<GetCommitHistoryQuery>>()
     mockFn.mockResolvedValueOnce({
       repository: {
         object: {
@@ -80,7 +81,7 @@ describe('paginate', () => {
   })
 
   test('multiple pages', async () => {
-    const mockFn = jest.fn<Promise<GetCommitHistoryQuery>, [GetCommitHistoryQueryVariables]>()
+    const mockFn = vi.fn<(v: GetCommitHistoryQueryVariables) => Promise<GetCommitHistoryQuery>>()
     mockFn.mockResolvedValueOnce({
       repository: {
         object: {

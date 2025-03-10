@@ -1,3 +1,4 @@
+import { describe, expect, it, test } from 'vitest'
 import { GetCommitHistoryQuery } from '../src/generated/graphql.js'
 import { Commit, computeGroupsAndOthers, parseGetCommitHistoryQuery } from '../src/history.js'
 
