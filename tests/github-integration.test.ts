@@ -1,5 +1,6 @@
 import assert from 'assert'
 import { run } from '../src/run.js'
+import { describe, expect, it } from 'vitest'
 
 // GitHub token is required.
 // To run locally,
