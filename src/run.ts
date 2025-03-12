@@ -1,7 +1,8 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
-import { Commit, CommitHistoryByPath, getCommitHistoryByPath, getCommitHistoryGroupsAndOthers } from './history.js'
 import { compareCommits } from './compare.js'
+import { retry } from '@octokit/plugin-retry'
+import { Commit, CommitHistoryByPath, getCommitHistoryByPath, getCommitHistoryGroupsAndOthers } from './history.js'
 
 type Octokit = ReturnType<typeof github.getOctokit>
 
@@ -41,7 +42,7 @@ const parseInputs = async (octokit: Octokit, inputs: Inputs) => {
 }
 
 export const run = async (inputs: Inputs): Promise<Outputs> => {
-  const octokit = github.getOctokit(inputs.token)
+  const octokit = github.getOctokit(inputs.token, {}, retry)
   const groupByPaths = sanitizePaths(inputs.groupByPaths)
 
   const { base, head } = await parseInputs(octokit, inputs)
