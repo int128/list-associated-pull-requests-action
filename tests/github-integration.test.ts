@@ -3,9 +3,8 @@ import { run } from '../src/run.js'
 import { describe, expect, it } from 'vitest'
 
 // GitHub token is required.
-// To run locally,
-//   export INTEGRATION_TEST_GITHUB_TOKEN="$(gh auth token)"
-//   yarn test
+// To run locally:
+//   INTEGRATION_TEST_GITHUB_TOKEN="$(gh auth token)" pnpm test run
 const { INTEGRATION_TEST_GITHUB_TOKEN } = process.env
 const describeOnlyIfToken = INTEGRATION_TEST_GITHUB_TOKEN ? describe : describe.skip
 
