@@ -10,7 +10,8 @@
   "type": "module",
   "dependencies": {
     "@actions/core": "1.11.1",
-    "@actions/github": "6.0.0",
+    "@octokit/action": "7.0.1",
+    "@octokit/plugin-retry": "7.1.4",
     "graphql": "16.10.0"
   },
   "devDependencies": {

@@ -1,14 +1,10 @@
 import * as core from '@actions/core'
-import * as github from '@actions/github'
-import { Commit, CommitHistoryByPath, getCommitHistoryByPath, getCommitHistoryGroupsAndOthers } from './history.js'
+import { Context } from './github.js'
+import { Octokit } from '@octokit/action'
 import { compareCommits } from './compare.js'
-
-type Octokit = ReturnType<typeof github.getOctokit>
+import { Commit, CommitHistoryByPath, getCommitHistoryByPath, getCommitHistoryGroupsAndOthers } from './history.js'
 
 type Inputs = {
-  owner: string
-  repo: string
-  token: string
   pullRequest?: number
   base?: string
   head?: string
@@ -23,11 +19,11 @@ type Outputs = {
   bodyOthers: string
 }
 
-const parseInputs = async (octokit: Octokit, inputs: Inputs) => {
+const parseInputs = async (inputs: Inputs, octokit: Octokit, context: Context) => {
   if (inputs.pullRequest) {
     const { data: pull } = await octokit.rest.pulls.get({
-      owner: inputs.owner,
-      repo: inputs.repo,
+      owner: context.repo.owner,
+      repo: context.repo.repo,
       pull_number: inputs.pullRequest,
     })
     core.info(`Found #${pull.number}`)
@@ -40,14 +36,13 @@ const parseInputs = async (octokit: Octokit, inputs: Inputs) => {
   return { base, head }
 }
 
-export const run = async (inputs: Inputs): Promise<Outputs> => {
-  const octokit = github.getOctokit(inputs.token)
+export const run = async (inputs: Inputs, octokit: Octokit, context: Context): Promise<Outputs> => {
   const groupByPaths = sanitizePaths(inputs.groupByPaths)
 
-  const { base, head } = await parseInputs(octokit, inputs)
+  const { base, head } = await parseInputs(inputs, octokit, context)
   const compare = await compareCommits(octokit, {
-    owner: inputs.owner,
-    repo: inputs.repo,
+    owner: context.repo.owner,
+    repo: context.repo.repo,
     base,
     head,
   })
@@ -55,8 +50,8 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
 
   if (inputs.showOthersGroup) {
     const commitHistoryGroupsAndOthers = await getCommitHistoryGroupsAndOthers(octokit, {
-      owner: inputs.owner,
-      name: inputs.repo,
+      owner: context.repo.owner,
+      name: context.repo.repo,
       expression: head,
       groupByPaths,
       sinceCommitDate: compare.earliestCommitDate,
@@ -74,8 +69,8 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
   }
 
   const commitHistoryByPath = await getCommitHistoryByPath(octokit, {
-    owner: inputs.owner,
-    name: inputs.repo,
+    owner: context.repo.owner,
+    name: context.repo.repo,
     expression: head,
     groupByPaths,
     sinceCommitDate: compare.earliestCommitDate,

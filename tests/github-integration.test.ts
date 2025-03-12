@@ -1,6 +1,7 @@
 import assert from 'assert'
 import { run } from '../src/run.js'
 import { describe, expect, it } from 'vitest'
+import { Octokit } from '@octokit/action'
 
 // GitHub token is required.
 // To run locally:
@@ -13,15 +14,21 @@ describeOnlyIfToken('GitHub integration test', () => {
     assert(INTEGRATION_TEST_GITHUB_TOKEN)
 
     // https://github.com/int128/list-associated-pull-requests-action/pull/491
-    const outputs = await run({
-      owner: 'int128',
-      repo: 'list-associated-pull-requests-action',
-      token: INTEGRATION_TEST_GITHUB_TOKEN,
-      pullRequest: 491,
-      groupByPaths: ['src', 'tests', '.github'],
-      showOthersGroup: true,
-      maxFetchCommits: undefined,
-    })
+    const outputs = await run(
+      {
+        pullRequest: 491,
+        groupByPaths: ['src', 'tests', '.github'],
+        showOthersGroup: true,
+        maxFetchCommits: undefined,
+      },
+      new Octokit({ auth: INTEGRATION_TEST_GITHUB_TOKEN, authStrategy: null }),
+      {
+        repo: {
+          owner: 'int128',
+          repo: 'list-associated-pull-requests-action',
+        },
+      },
+    )
     expect(outputs).toMatchSnapshot()
   }, 30000)
 })
