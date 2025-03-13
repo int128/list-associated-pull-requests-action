@@ -56,7 +56,7 @@ jobs:
         uses: ./
         with:
           pull-request: 98
-      - run: diff -u tests/e2e/expected-default.md - <<< $actual
+      - run: diff -u tests/e2e-snapshots/expected-default.md - <<< $actual
         env:
           actual: ${{ steps.e2e-default.outputs.body }}
       - run: jq . <<< $actual
@@ -72,7 +72,7 @@ jobs:
             src
             # comment
             .github
-      - run: diff -u tests/e2e/expected-with-group.md - <<< $actual
+      - run: diff -u tests/e2e-snapshots/expected-with-group.md - <<< $actual
         env:
           actual: ${{ steps.e2e-with-group.outputs.body }}
       - run: jq . <<< $actual
