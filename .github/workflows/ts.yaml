@@ -59,6 +59,9 @@ jobs:
       - run: diff -u tests/e2e/expected-default.md - <<< $actual
         env:
           actual: ${{ steps.e2e-default.outputs.body }}
+      - run: jq . <<< $actual
+        env:
+          actual: ${{ steps.e2e-default.outputs.json }}
 
       - id: e2e-with-group
         name: Run int128/list-associated-pull-requests-action (group-by-paths)
@@ -72,6 +75,9 @@ jobs:
       - run: diff -u tests/e2e/expected-with-group.md - <<< $actual
         env:
           actual: ${{ steps.e2e-with-group.outputs.body }}
+      - run: jq . <<< $actual
+        env:
+          actual: ${{ steps.e2e-with-group.outputs.json }}
 
   generate:
     runs-on: ubuntu-latest

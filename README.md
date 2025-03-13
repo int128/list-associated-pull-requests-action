@@ -192,3 +192,4 @@ You can set `max-fetch-commits` to avoid the job timeout or GitHub API rate-limi
 | `body`        | List of associated pull requests (Markdown)          |
 | `body-groups` | Grouped lists of associated pull requests (Markdown) |
 | `body-others` | Others list of associated pull requests (Markdown)   |
+| `json`        | List of associated pull requests (JSON)              |
