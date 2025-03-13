@@ -1,7 +1,5 @@
 import * as core from '@actions/core'
-import * as github from '@actions/github'
-
-type Octokit = ReturnType<typeof github.getOctokit>
+import { Octokit } from '@octokit/action'
 
 type Inputs = {
   owner: string
@@ -28,7 +26,9 @@ export const compareCommits = async (octokit: Octokit, inputs: Inputs): Promise<
   const commitIds = new Set<string>()
   let earliestCommitDate = new Date()
   let earliestCommitId = ''
-  for await (const compare of compareIterator) {
+  for await (const _compare of compareIterator) {
+    // workaround for https://github.com/octokit/plugin-paginate-rest.js/issues/647#issuecomment-2720580932
+    const compare = _compare as Awaited<ReturnType<typeof octokit.rest.repos.compareCommitsWithBasehead>>
     for (const commit of compare.data.commits) {
       commitIds.add(commit.sha)
       if (commit.commit.committer?.date) {
