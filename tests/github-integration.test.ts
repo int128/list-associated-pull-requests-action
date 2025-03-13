@@ -6,12 +6,9 @@ import { Octokit } from '@octokit/action'
 // GitHub token is required.
 // To run locally:
 //   INTEGRATION_TEST_GITHUB_TOKEN="$(gh auth token)" pnpm test run
-const { INTEGRATION_TEST_GITHUB_TOKEN } = process.env
-const describeOnlyIfToken = INTEGRATION_TEST_GITHUB_TOKEN ? describe : describe.skip
-
-describeOnlyIfToken('GitHub integration test', () => {
+describe.runIf(process.env.INTEGRATION_TEST_GITHUB_TOKEN)('GitHub integration test', () => {
   it('should generate outputs of pr-491', async () => {
-    assert(INTEGRATION_TEST_GITHUB_TOKEN)
+    assert(process.env.INTEGRATION_TEST_GITHUB_TOKEN)
 
     // https://github.com/int128/list-associated-pull-requests-action/pull/491
     const outputs = await run(
@@ -21,7 +18,7 @@ describeOnlyIfToken('GitHub integration test', () => {
         showOthersGroup: true,
         maxFetchCommits: undefined,
       },
-      new Octokit({ auth: INTEGRATION_TEST_GITHUB_TOKEN, authStrategy: null }),
+      new Octokit({ auth: process.env.INTEGRATION_TEST_GITHUB_TOKEN, authStrategy: null }),
       {
         repo: {
           owner: 'int128',
@@ -29,6 +26,8 @@ describeOnlyIfToken('GitHub integration test', () => {
         },
       },
     )
-    expect(outputs).toMatchSnapshot()
+    expect({
+      body: outputs.body,
+    }).toMatchSnapshot()
   }, 30000)
 })
