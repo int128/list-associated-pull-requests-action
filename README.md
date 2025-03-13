@@ -192,3 +192,27 @@ You can set `max-fetch-commits` to avoid the job timeout or GitHub API rate-limi
 | `body`        | List of associated pull requests (Markdown)          |
 | `body-groups` | Grouped lists of associated pull requests (Markdown) |
 | `body-others` | Others list of associated pull requests (Markdown)   |
+| `json`        | List of associated pull requests (JSON)              |
+
+#### `json` output
+
+Here is an example of `json` output.
+
+```json
+{
+  "groups": {
+    "frontend": [
+      {
+        "commitId": "aba1fb9e861f34176727a527a6e5af8ba74f628c",
+        "pull": {
+          "number": 89,
+          "author": "int128"
+        }
+      }
+    ]
+  },
+  "others": []
+}
+```
+
+See the type definition in [src/history.ts](src/history.ts).

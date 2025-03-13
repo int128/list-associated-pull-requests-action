@@ -33,6 +33,8 @@ outputs:
     description: Grouped lists of associated pull requests (Markdown)
   body-others:
     description: Others list of associated pull requests (Markdown)
+  json:
+    description: List of associated pull requests (JSON)
 
 runs:
   using: 'node20'

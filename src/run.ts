@@ -17,6 +17,10 @@ type Outputs = {
   body: string
   bodyGroups: string
   bodyOthers: string
+  json: {
+    groups: Record<string, Commit[]>
+    others: Commit[]
+  }
 }
 
 const parseInputs = async (inputs: Inputs, octokit: Octokit, context: Context) => {
@@ -65,6 +69,10 @@ export const run = async (inputs: Inputs, octokit: Octokit, context: Context): P
       body: [bodyGroups, bodyOthers].join('\n').trim(),
       bodyGroups,
       bodyOthers,
+      json: {
+        groups: transformCommitHistoryToObject(commitHistoryGroupsAndOthers.groups),
+        others: commitHistoryGroupsAndOthers.others,
+      },
     }
   }
 
@@ -79,7 +87,15 @@ export const run = async (inputs: Inputs, octokit: Octokit, context: Context): P
     maxFetchCommits: inputs.maxFetchCommits,
   })
   const body = formatCommitHistory(commitHistoryByPath)
-  return { body, bodyGroups: body, bodyOthers: '' }
+  return {
+    body,
+    bodyGroups: body,
+    bodyOthers: '',
+    json: {
+      groups: transformCommitHistoryToObject(commitHistoryByPath),
+      others: [],
+    },
+  }
 }
 
 const sanitizePaths = (groupByPaths: string[]) => groupByPaths.filter((p) => p.length > 0 && !p.startsWith('#'))
@@ -103,3 +119,11 @@ const formatCommits = (commits: Commit[]): string[] => [
     }),
   ),
 ]
+
+const transformCommitHistoryToObject = (commitHistoryByPath: CommitHistoryByPath): Record<string, Commit[]> => {
+  const result: Record<string, Commit[]> = {}
+  for (const [path, commits] of commitHistoryByPath) {
+    result[path] = commits
+  }
+  return result
+}
