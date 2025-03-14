@@ -206,6 +206,7 @@ Here is an example of `json` output.
         "commitId": "aba1fb9e861f34176727a527a6e5af8ba74f628c",
         "pull": {
           "number": 89,
+          "title": "refactor: split basehead.ts",
           "author": "int128"
         }
       }

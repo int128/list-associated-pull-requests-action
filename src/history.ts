@@ -9,6 +9,7 @@ export type Commit = {
   commitId: string
   pull?: {
     number: number
+    title: string
     author: string
   }
 }
@@ -80,6 +81,7 @@ export const parseGetCommitHistoryQuery = (
         commitId: node.oid,
         pull: {
           number: pull.number,
+          title: pull.title,
           author: pull.author?.login ?? '',
         },
       })

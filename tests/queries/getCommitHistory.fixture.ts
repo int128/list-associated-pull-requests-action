@@ -18,7 +18,7 @@ export const fixtureResponse: { data: GetCommitHistoryQuery } = {
   data: {
     rateLimit: {
       cost: 1,
-      remaining: 4992,
+      remaining: 4998,
     },
     repository: {
       object: {
@@ -36,6 +36,7 @@ export const fixtureResponse: { data: GetCommitHistoryQuery } = {
                 nodes: [
                   {
                     number: 97,
+                    title: 'chore(deps): update dependency eslint-plugin-jest to v26.4.2',
                     author: {
                       login: 'renovate',
                     },
@@ -49,6 +50,7 @@ export const fixtureResponse: { data: GetCommitHistoryQuery } = {
                 nodes: [
                   {
                     number: 90,
+                    title: 'chore(deps): update dependency eslint-plugin-jest to v26.3.0',
                     author: {
                       login: 'renovate',
                     },
@@ -62,6 +64,7 @@ export const fixtureResponse: { data: GetCommitHistoryQuery } = {
                 nodes: [
                   {
                     number: 96,
+                    title: 'Use test fixture pull request',
                     author: {
                       login: 'int128',
                     },
@@ -75,6 +78,7 @@ export const fixtureResponse: { data: GetCommitHistoryQuery } = {
                 nodes: [
                   {
                     number: 91,
+                    title: 'Rename to list-associated-pull-requests-action',
                     author: {
                       login: 'int128',
                     },
@@ -88,6 +92,7 @@ export const fixtureResponse: { data: GetCommitHistoryQuery } = {
                 nodes: [
                   {
                     number: 89,
+                    title: 'refactor: split basehead.ts',
                     author: {
                       login: 'int128',
                     },
@@ -101,6 +106,7 @@ export const fixtureResponse: { data: GetCommitHistoryQuery } = {
                 nodes: [
                   {
                     number: 88,
+                    title: 'Remove deprecated outputs',
                     author: {
                       login: 'int128',
                     },
@@ -114,6 +120,7 @@ export const fixtureResponse: { data: GetCommitHistoryQuery } = {
                 nodes: [
                   {
                     number: 87,
+                    title: 'Add pull-request parameter',
                     author: {
                       login: 'int128',
                     },
@@ -127,6 +134,7 @@ export const fixtureResponse: { data: GetCommitHistoryQuery } = {
                 nodes: [
                   {
                     number: 86,
+                    title: 'Update dependency @vercel/ncc to v0.34.0',
                     author: {
                       login: 'renovate',
                     },
@@ -140,6 +148,7 @@ export const fixtureResponse: { data: GetCommitHistoryQuery } = {
                 nodes: [
                   {
                     number: 85,
+                    title: 'Update dependency typescript to v4.7.2',
                     author: {
                       login: 'renovate',
                     },
@@ -153,6 +162,7 @@ export const fixtureResponse: { data: GetCommitHistoryQuery } = {
                 nodes: [
                   {
                     number: 84,
+                    title: 'Update dependency ts-jest to v28.0.3',
                     author: {
                       login: 'renovate',
                     },
@@ -166,6 +176,7 @@ export const fixtureResponse: { data: GetCommitHistoryQuery } = {
                 nodes: [
                   {
                     number: 83,
+                    title: 'Update eslint to v5.26.0',
                     author: {
                       login: 'renovate',
                     },
@@ -179,6 +190,7 @@ export const fixtureResponse: { data: GetCommitHistoryQuery } = {
                 nodes: [
                   {
                     number: 82,
+                    title: 'Update dependency eslint to v8.16.0',
                     author: {
                       login: 'renovate',
                     },
@@ -192,6 +204,7 @@ export const fixtureResponse: { data: GetCommitHistoryQuery } = {
                 nodes: [
                   {
                     number: 81,
+                    title: 'Update eslint to v5.25.0',
                     author: {
                       login: 'renovate',
                     },
@@ -205,6 +218,7 @@ export const fixtureResponse: { data: GetCommitHistoryQuery } = {
                 nodes: [
                   {
                     number: 80,
+                    title: 'Update dependency @types/node to v16.11.36',
                     author: {
                       login: 'renovate',
                     },
@@ -218,6 +232,7 @@ export const fixtureResponse: { data: GetCommitHistoryQuery } = {
                 nodes: [
                   {
                     number: 79,
+                    title: 'Update eslint to v5.24.0',
                     author: {
                       login: 'renovate',
                     },
@@ -231,6 +246,7 @@ export const fixtureResponse: { data: GetCommitHistoryQuery } = {
                 nodes: [
                   {
                     number: 78,
+                    title: 'Sanitize group-by-sub-paths',
                     author: {
                       login: 'int128',
                     },
@@ -244,6 +260,7 @@ export const fixtureResponse: { data: GetCommitHistoryQuery } = {
                 nodes: [
                   {
                     number: 77,
+                    title: 'Refactor doc',
                     author: {
                       login: 'int128',
                     },
@@ -257,6 +274,7 @@ export const fixtureResponse: { data: GetCommitHistoryQuery } = {
                 nodes: [
                   {
                     number: 76,
+                    title: 'Show section only if pull exists in group',
                     author: {
                       login: 'int128',
                     },
@@ -270,6 +288,7 @@ export const fixtureResponse: { data: GetCommitHistoryQuery } = {
                 nodes: [
                   {
                     number: 75,
+                    title: 'refactor: rename to ChangeSet',
                     author: {
                       login: 'int128',
                     },
@@ -283,6 +302,7 @@ export const fixtureResponse: { data: GetCommitHistoryQuery } = {
                 nodes: [
                   {
                     number: 74,
+                    title: 'Update dependency eslint-plugin-jest to v26.2.2',
                     author: {
                       login: 'renovate',
                     },
@@ -296,6 +316,7 @@ export const fixtureResponse: { data: GetCommitHistoryQuery } = {
                 nodes: [
                   {
                     number: 73,
+                    title: 'Update README.md',
                     author: {
                       login: 'int128',
                     },
@@ -309,6 +330,7 @@ export const fixtureResponse: { data: GetCommitHistoryQuery } = {
                 nodes: [
                   {
                     number: 70,
+                    title: 'Group pull requests by sub paths',
                     author: {
                       login: 'int128',
                     },
@@ -322,6 +344,7 @@ export const fixtureResponse: { data: GetCommitHistoryQuery } = {
                 nodes: [
                   {
                     number: 71,
+                    title: 'Update dependency eslint-plugin-jest to v26.2.1',
                     author: {
                       login: 'renovate',
                     },
@@ -335,6 +358,7 @@ export const fixtureResponse: { data: GetCommitHistoryQuery } = {
                 nodes: [
                   {
                     number: 69,
+                    title: 'refactor: return pulls in findAssociation()',
                     author: {
                       login: 'int128',
                     },
@@ -348,6 +372,7 @@ export const fixtureResponse: { data: GetCommitHistoryQuery } = {
                 nodes: [
                   {
                     number: 68,
+                    title: 'refactor: extract getPullRequestHistoryOfSubTree()',
                     author: {
                       login: 'int128',
                     },
@@ -361,6 +386,7 @@ export const fixtureResponse: { data: GetCommitHistoryQuery } = {
                 nodes: [
                   {
                     number: 67,
+                    title: 'Update dependency eslint-plugin-jest to v26.2.0',
                     author: {
                       login: 'renovate',
                     },
@@ -374,6 +400,7 @@ export const fixtureResponse: { data: GetCommitHistoryQuery } = {
                 nodes: [
                   {
                     number: 64,
+                    title: 'Update dependency @actions/github to v5.0.3',
                     author: {
                       login: 'renovate',
                     },
