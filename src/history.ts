@@ -141,5 +141,19 @@ export const computeGroupsAndOthers = (commitHistoryByPath: CommitHistoryByPath)
   const root = commitHistoryByPath.get('.')
   assert(root !== undefined)
   const others = root.filter((commit) => !commitIdsInGroups.has(commit.commitId))
-  return { groups, others }
+  return {
+    groups: new Map([...groups].map(([path, commits]) => [path, dedupeCommitsByPullRequest(commits)])),
+    others: dedupeCommitsByPullRequest(others),
+  }
+}
+
+export const dedupeCommitsByPullRequest = (commits: Commit[]): Commit[] => {
+  const deduped = new Map<number | string, Commit>()
+  for (const commit of commits) {
+    const key = commit.pull?.number ?? commit.commitId
+    if (!deduped.has(key)) {
+      deduped.set(key, commit)
+    }
+  }
+  return [...deduped.values()]
 }
