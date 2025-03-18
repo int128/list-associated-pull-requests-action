@@ -119,15 +119,17 @@ describe('dedupeCommitsByPullRequest', () => {
       { commitId: 'commit-2' },
       { commitId: 'commit-3', pull: { number: 1, author: 'x', title: 'y' } },
       { commitId: 'commit-4', pull: { number: 2, author: 'x', title: 'y' } },
-      { commitId: 'commit-5', pull: { number: 3, author: 'x', title: 'y' } },
+      { commitId: 'commit-5' },
       { commitId: 'commit-6', pull: { number: 3, author: 'x', title: 'y' } },
+      { commitId: 'commit-7', pull: { number: 3, author: 'x', title: 'y' } },
     ]
     const actual = dedupeCommitsByPullRequest(commits)
     expect(actual).toStrictEqual([
       { commitId: 'commit-1', pull: { number: 1, author: 'x', title: 'y' } },
       { commitId: 'commit-2' },
       { commitId: 'commit-4', pull: { number: 2, author: 'x', title: 'y' } },
-      { commitId: 'commit-5', pull: { number: 3, author: 'x', title: 'y' } },
+      { commitId: 'commit-5' },
+      { commitId: 'commit-6', pull: { number: 3, author: 'x', title: 'y' } },
     ])
   })
 })
