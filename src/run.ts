@@ -104,21 +104,17 @@ const formatCommitHistory = (commitHistoryByPath: CommitHistoryByPath): string =
   const body = []
   for (const [path, commits] of commitHistoryByPath) {
     body.push(`### ${path}`)
-    body.push(...formatCommits(commits))
+    body.push(
+      ...commits.map((commit) => {
+        if (commit.pull) {
+          return `- #${commit.pull.number} @${commit.pull.author}`
+        }
+        return `- ${commit.commitId}`
+      }),
+    )
   }
   return body.join('\n')
 }
-
-const formatCommits = (commits: Commit[]): string[] => [
-  ...new Set(
-    commits.map((commit) => {
-      if (commit.pull) {
-        return `- #${commit.pull.number} @${commit.pull.author}`
-      }
-      return `- ${commit.commitId}`
-    }),
-  ),
-]
 
 const transformCommitHistoryToObject = (commitHistoryByPath: CommitHistoryByPath): Record<string, Commit[]> => {
   const result: Record<string, Commit[]> = {}

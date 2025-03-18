@@ -124,7 +124,11 @@ export const getCommitHistoryGroupsAndOthers = async (
     ...variables,
     groupByPaths: ['.', ...variables.groupByPaths],
   })
-  return computeGroupsAndOthers(commitHistoryByPath)
+  const { groups, others } = computeGroupsAndOthers(commitHistoryByPath)
+  return {
+    groups: new Map([...groups.entries()].map(([path, commits]) => [path, dedupeCommitsByPullRequest(commits)])),
+    others: dedupeCommitsByPullRequest(others),
+  }
 }
 
 export const computeGroupsAndOthers = (commitHistoryByPath: CommitHistoryByPath): CommitHistoryGroupsAndOthers => {
@@ -142,4 +146,18 @@ export const computeGroupsAndOthers = (commitHistoryByPath: CommitHistoryByPath)
   assert(root !== undefined)
   const others = root.filter((commit) => !commitIdsInGroups.has(commit.commitId))
   return { groups, others }
+}
+
+const dedupeCommitsByPullRequest = (commits: Commit[]): Commit[] => {
+  const seen = new Set<number>()
+  return commits.filter((commit) => {
+    if (!commit.pull) {
+      return true
+    }
+    if (seen.has(commit.pull.number)) {
+      return false
+    }
+    seen.add(commit.pull.number)
+    return true
+  })
 }
