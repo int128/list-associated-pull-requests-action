@@ -1,6 +1,11 @@
 import { fixtureResponse } from './queries/getCommitHistory.fixture.js'
 import { describe, expect, it, test } from 'vitest'
-import { Commit, computeGroupsAndOthers, parseGetCommitHistoryQuery } from '../src/history.js'
+import {
+  Commit,
+  computeGroupsAndOthers,
+  dedupeCommitsByPullRequest,
+  parseGetCommitHistoryQuery,
+} from '../src/history.js'
 
 test('parseGetCommitHistoryQuery', () => {
   const filterCommitIds = new Set<string>([
@@ -104,5 +109,25 @@ describe('computeGroupsAndOthers', () => {
       ]),
       others: [{ commitId: 'commit-1' }, { commitId: 'commit-4' }],
     })
+  })
+})
+
+describe('dedupeCommitsByPullRequest', () => {
+  it('should dedupe commits by pull request', () => {
+    const commits: Commit[] = [
+      { commitId: 'commit-1', pull: { number: 1, author: 'x', title: 'y' } },
+      { commitId: 'commit-2' },
+      { commitId: 'commit-3', pull: { number: 1, author: 'x', title: 'y' } },
+      { commitId: 'commit-4', pull: { number: 2, author: 'x', title: 'y' } },
+      { commitId: 'commit-5', pull: { number: 3, author: 'x', title: 'y' } },
+      { commitId: 'commit-6', pull: { number: 3, author: 'x', title: 'y' } },
+    ]
+    const actual = dedupeCommitsByPullRequest(commits)
+    expect(actual).toStrictEqual([
+      { commitId: 'commit-1', pull: { number: 1, author: 'x', title: 'y' } },
+      { commitId: 'commit-2' },
+      { commitId: 'commit-4', pull: { number: 2, author: 'x', title: 'y' } },
+      { commitId: 'commit-5', pull: { number: 3, author: 'x', title: 'y' } },
+    ])
   })
 })
