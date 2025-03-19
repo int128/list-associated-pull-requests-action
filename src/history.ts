@@ -51,7 +51,9 @@ export const getCommitHistoryByPath = async (
 
   const commitHistoryByPath = new Map<string, Commit[]>()
   for (const result of results) {
-    const commits = parseGetCommitHistoryQuery(result.query, variables.sinceCommitId, variables.filterCommitIds)
+    const commits = dedupeCommitsByPullRequest(
+      parseGetCommitHistoryQuery(result.query, variables.sinceCommitId, variables.filterCommitIds),
+    )
     commitHistoryByPath.set(result.path, commits)
   }
   return commitHistoryByPath
@@ -141,10 +143,7 @@ export const computeGroupsAndOthers = (commitHistoryByPath: CommitHistoryByPath)
   const root = commitHistoryByPath.get('.')
   assert(root !== undefined)
   const others = root.filter((commit) => !commitIdsInGroups.has(commit.commitId))
-  return {
-    groups: new Map([...groups].map(([path, commits]) => [path, dedupeCommitsByPullRequest(commits)])),
-    others: dedupeCommitsByPullRequest(others),
-  }
+  return { groups, others }
 }
 
 export const dedupeCommitsByPullRequest = (commits: Commit[]): Commit[] => {
