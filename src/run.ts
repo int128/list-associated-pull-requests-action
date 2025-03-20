@@ -27,12 +27,19 @@ export const run = async (inputs: Inputs, octokit: Octokit, context: Context): P
   const groupByPaths = sanitizePaths(inputs.groupByPaths)
   const { base, head } = await determineBaseHeadFromInputs(inputs, octokit, context)
 
+  core.startGroup(`Compare base ${base} and head ${head}`)
   const compare = await compareCommits(octokit, {
     owner: context.repo.owner,
     repo: context.repo.repo,
     base,
     head,
   })
+  core.endGroup()
+
+  core.summary.addHeading('list-associated-pull-requests-action summary', 2)
+  core.summary.addRaw(
+    `Parsed ${compare.commitIds.size} commits between base <code>${base}</code> and head <code>${head}</code>.`,
+  )
   core.info(`The earliest commit is ${compare.earliestCommitId} at ${compare.earliestCommitDate.toISOString()}`)
 
   if (inputs.showOthersGroup) {
@@ -46,6 +53,9 @@ export const run = async (inputs: Inputs, octokit: Octokit, context: Context): P
       filterCommitIds: compare.commitIds,
       maxFetchCommits: inputs.maxFetchCommits,
     })
+    writeSummaryOfCommitHistoryGroups(commitHistoryGroupsWithOthers.groups)
+    writeSummaryOfCommitHistoryGroups(new Map([['Others', commitHistoryGroupsWithOthers.others]]))
+    await core.summary.write()
     const bodyGroups = formatCommitHistoryGroups(commitHistoryGroupsWithOthers.groups)
     const bodyOthers = formatCommitHistoryGroups(new Map([['Others', commitHistoryGroupsWithOthers.others]]))
     return {
@@ -69,6 +79,8 @@ export const run = async (inputs: Inputs, octokit: Octokit, context: Context): P
     filterCommitIds: compare.commitIds,
     maxFetchCommits: inputs.maxFetchCommits,
   })
+  writeSummaryOfCommitHistoryGroups(commitHistoryGroups)
+  await core.summary.write()
   const body = formatCommitHistoryGroups(commitHistoryGroups)
   return {
     body,
@@ -114,4 +126,25 @@ const formatCommitHistoryGroups = (commitHistoryGroups: CommitHistoryGroups): st
     )
   }
   return body.join('\n')
+}
+
+const writeSummaryOfCommitHistoryGroups = (commitHistoryGroups: CommitHistoryGroups) => {
+  for (const [path, commits] of commitHistoryGroups) {
+    core.summary.addHeading(path, 3)
+    core.summary.addTable([
+      [
+        { data: 'Commit', header: true },
+        { data: 'Pull Request', header: true },
+      ],
+      ...commits.map((commit) => {
+        if (commit.pull) {
+          return [
+            `<code>${commit.commitId}</code>`,
+            `#${commit.pull.number} ${commit.pull.title} @${commit.pull.author}`,
+          ]
+        }
+        return [`<code>${commit.commitId}</code>`, '-']
+      }),
+    ])
+  }
 }

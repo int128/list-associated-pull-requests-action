@@ -30,10 +30,6 @@ const main = async (): Promise<void> => {
   core.startGroup('outputs.json')
   core.info(JSON.stringify(outputs.json, null, 2))
   core.endGroup()
-
-  core.summary.addRaw(outputs.bodyGroups, true)
-  core.summary.addRaw(outputs.bodyOthers, true)
-  await core.summary.write()
 }
 
 main().catch((e: Error) => {

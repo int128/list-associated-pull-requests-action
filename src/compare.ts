@@ -15,7 +15,6 @@ type Outputs = {
 }
 
 export const compareCommits = async (octokit: Octokit, inputs: Inputs): Promise<Outputs> => {
-  core.info(`Comparing base ${inputs.base} and head ${inputs.head}`)
   const compareIterator = octokit.paginate.iterator(octokit.rest.repos.compareCommitsWithBasehead, {
     owner: inputs.owner,
     repo: inputs.repo,
@@ -40,8 +39,10 @@ export const compareCommits = async (octokit: Octokit, inputs: Inputs): Promise<
       }
     }
     core.info(
-      `Received ${commitIds.size} / ${compare.data.total_commits} commits (ratelimit-remaining: ${compare.headers['x-ratelimit-remaining']})`,
+      `Compare: received ${commitIds.size} / ${compare.data.total_commits} commits ` +
+        `(ratelimit-remaining: ${compare.headers['x-ratelimit-remaining']})`,
     )
   }
+  core.info(`Compare: total ${commitIds.size} commits`)
   return { commitIds, earliestCommitId, earliestCommitDate }
 }
