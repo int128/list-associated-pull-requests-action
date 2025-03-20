@@ -95,16 +95,19 @@ export const paginate = async (
 
   const receivedCount = query.repository.object.history.nodes.length
   core.info(
-    `Received ${receivedCount} / ${query.repository.object.history.totalCount} commits ` +
-      `(path: ${v.path}) ` +
+    `GetCommitHistoryQuery(path: ${v.path}): received ${receivedCount} / ${query.repository.object.history.totalCount} commits ` +
       `(ratelimit-remaining: ${query.rateLimit?.remaining})`,
   )
 
   if (!query.repository.object.history.pageInfo.hasNextPage) {
+    core.info(`GetCommitHistoryQuery(path: ${v.path}): total ${receivedCount} commits`)
     return query
   }
   if (o.maxFetchCommits !== undefined && receivedCount > o.maxFetchCommits) {
-    core.warning(`Gave up fetching commits due to maxFetchCommits=${o.maxFetchCommits}`)
+    core.warning(
+      `GetCommitHistoryQuery(path: ${v.path}): gave up fetching commits due to maxFetchCommits=${o.maxFetchCommits}`,
+    )
+    core.info(`GetCommitHistoryQuery(path: ${v.path}): total ${receivedCount} commits`)
     return query
   }
   const historyAfter = query.repository.object.history.pageInfo.endCursor
