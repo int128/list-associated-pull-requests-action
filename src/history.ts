@@ -3,8 +3,6 @@ import * as getCommitHistory from './queries/getCommitHistory.js'
 import { GetCommitHistoryQuery } from './generated/graphql.js'
 import { Octokit } from '@octokit/action'
 
-export type CommitHistoryByPath = Map<string, Commit[]>
-
 export type Commit = {
   commitId: string
   pull?: {
@@ -14,7 +12,44 @@ export type Commit = {
   }
 }
 
-type GetCommitHistoryByPathVariables = {
+export type CommitHistoryGroups = Map<string, Commit[]>
+
+type CommitHistoryGroupsWithOthers = {
+  groups: CommitHistoryGroups
+  others: Commit[]
+}
+
+export const getCommitHistoryGroupsWithOthers = async (
+  octokit: Octokit,
+  variables: GetCommitHistoryGroupsVariables,
+): Promise<CommitHistoryGroupsWithOthers> => {
+  const commitHistoryByPath = await getCommitHistoryGroups(octokit, {
+    ...variables,
+    groupByPaths: ['.', ...variables.groupByPaths],
+  })
+  return extractOthersFromCommitHistoryGroups(commitHistoryByPath)
+}
+
+export const extractOthersFromCommitHistoryGroups = (
+  commitHistoryGroups: CommitHistoryGroups,
+): CommitHistoryGroupsWithOthers => {
+  const groups = new Map(commitHistoryGroups)
+  groups.delete('.')
+
+  const commitIdsInGroups = new Set<string>()
+  for (const commits of groups.values()) {
+    for (const commit of commits) {
+      commitIdsInGroups.add(commit.commitId)
+    }
+  }
+
+  const root = commitHistoryGroups.get('.')
+  assert(root !== undefined)
+  const others = root.filter((commit) => !commitIdsInGroups.has(commit.commitId))
+  return { groups, others }
+}
+
+type GetCommitHistoryGroupsVariables = {
   owner: string
   name: string
   expression: string
@@ -25,10 +60,10 @@ type GetCommitHistoryByPathVariables = {
   maxFetchCommits: number | undefined
 }
 
-export const getCommitHistoryByPath = async (
+export const getCommitHistoryGroups = async (
   octokit: Octokit,
-  variables: GetCommitHistoryByPathVariables,
-): Promise<CommitHistoryByPath> => {
+  variables: GetCommitHistoryGroupsVariables,
+): Promise<CommitHistoryGroups> => {
   const results = await Promise.all(
     variables.groupByPaths.map(async (path) => {
       const query = await getCommitHistory.execute(
@@ -49,101 +84,14 @@ export const getCommitHistoryByPath = async (
     }),
   )
 
-  const commitHistoryByPath = new Map<string, Commit[]>()
+  const commitHistoryGroups: CommitHistoryGroups = new Map<string, Commit[]>()
   for (const result of results) {
     const commits = dedupeCommitsByPullRequest(
       parseGetCommitHistoryQuery(result.query, variables.sinceCommitId, variables.filterCommitIds),
     )
-    commitHistoryByPath.set(result.path, commits)
+    commitHistoryGroups.set(result.path, commits)
   }
-  return commitHistoryByPath
-}
-
-export const parseGetCommitHistoryQuery = (
-  q: GetCommitHistoryQuery,
-  sinceCommitId: string,
-  filterCommitIds: Set<string>,
-): Commit[] => {
-  assert(q.repository != null)
-  assert(q.repository.object != null)
-  assert.strictEqual(q.repository.object.__typename, 'Commit')
-
-  const nodes = filterNodes(q, sinceCommitId, filterCommitIds)
-  const commits: Commit[] = []
-  for (const node of nodes) {
-    if (!node.associatedPullRequests?.nodes?.length) {
-      commits.push({ commitId: node.oid })
-      continue
-    }
-    for (const pull of node.associatedPullRequests.nodes) {
-      if (pull?.number === undefined) {
-        continue
-      }
-      commits.push({
-        commitId: node.oid,
-        pull: {
-          number: pull.number,
-          title: pull.title,
-          author: pull.author?.login ?? '',
-        },
-      })
-    }
-  }
-  return commits
-}
-
-const filterNodes = (q: GetCommitHistoryQuery, sinceCommitId: string, filterCommitIds: Set<string>) => {
-  assert(q.repository != null)
-  assert(q.repository.object != null)
-  assert.strictEqual(q.repository.object.__typename, 'Commit')
-  assert(q.repository.object.history.nodes != null)
-
-  const nodes = []
-  for (const node of q.repository.object.history.nodes) {
-    assert(node != null)
-
-    if (!filterCommitIds.has(node.oid)) {
-      continue
-    }
-    nodes.push(node)
-    if (node.oid === sinceCommitId) {
-      break
-    }
-  }
-  return nodes
-}
-
-type CommitHistoryGroupsAndOthers = {
-  groups: CommitHistoryByPath
-  others: Commit[]
-}
-
-export const getCommitHistoryGroupsAndOthers = async (
-  octokit: Octokit,
-  variables: GetCommitHistoryByPathVariables,
-): Promise<CommitHistoryGroupsAndOthers> => {
-  const commitHistoryByPath = await getCommitHistoryByPath(octokit, {
-    ...variables,
-    groupByPaths: ['.', ...variables.groupByPaths],
-  })
-  return computeGroupsAndOthers(commitHistoryByPath)
-}
-
-export const computeGroupsAndOthers = (commitHistoryByPath: CommitHistoryByPath): CommitHistoryGroupsAndOthers => {
-  const groups = new Map(commitHistoryByPath)
-  groups.delete('.')
-
-  const commitIdsInGroups = new Set<string>()
-  for (const commits of groups.values()) {
-    for (const commit of commits) {
-      commitIdsInGroups.add(commit.commitId)
-    }
-  }
-
-  const root = commitHistoryByPath.get('.')
-  assert(root !== undefined)
-  const others = root.filter((commit) => !commitIdsInGroups.has(commit.commitId))
-  return { groups, others }
+  return commitHistoryGroups
 }
 
 export const dedupeCommitsByPullRequest = (commits: Commit[]): Commit[] => {
@@ -155,4 +103,51 @@ export const dedupeCommitsByPullRequest = (commits: Commit[]): Commit[] => {
     }
   }
   return [...deduped.values()]
+}
+
+export const parseGetCommitHistoryQuery = (
+  q: GetCommitHistoryQuery,
+  sinceCommitId: string,
+  filterCommitIds: Set<string>,
+): Commit[] => {
+  assert(q.repository != null)
+  assert(q.repository.object != null)
+  assert.strictEqual(q.repository.object.__typename, 'Commit')
+  assert(q.repository.object.history.nodes != null)
+
+  const commitNodes = []
+  for (const node of q.repository.object.history.nodes) {
+    assert(node != null)
+    if (!filterCommitIds.has(node.oid)) {
+      continue
+    }
+    commitNodes.push(node)
+    if (node.oid === sinceCommitId) {
+      break
+    }
+  }
+
+  const commits: Commit[] = []
+  for (const commitNode of commitNodes) {
+    if (!commitNode.associatedPullRequests?.nodes?.length) {
+      commits.push({
+        commitId: commitNode.oid,
+      })
+      continue
+    }
+    for (const pull of commitNode.associatedPullRequests.nodes) {
+      if (pull?.number === undefined) {
+        continue
+      }
+      commits.push({
+        commitId: commitNode.oid,
+        pull: {
+          number: pull.number,
+          title: pull.title,
+          author: pull.author?.login ?? '',
+        },
+      })
+    }
+  }
+  return commits
 }
