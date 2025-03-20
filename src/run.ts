@@ -37,7 +37,9 @@ export const run = async (inputs: Inputs, octokit: Octokit, context: Context): P
   core.endGroup()
 
   core.summary.addHeading('list-associated-pull-requests-action summary', 2)
-  core.summary.addRaw(`Parsed ${compare.commitIds.size} commits between base ${base} and head ${head}.`)
+  core.summary.addRaw(
+    `Parsed ${compare.commitIds.size} commits between base <code>${base}</code> and head <code>${head}</code>.`,
+  )
   core.info(`The earliest commit is ${compare.earliestCommitId} at ${compare.earliestCommitDate.toISOString()}`)
 
   if (inputs.showOthersGroup) {
@@ -136,9 +138,12 @@ const writeSummaryOfCommitHistoryGroups = (commitHistoryGroups: CommitHistoryGro
       ],
       ...commits.map((commit) => {
         if (commit.pull) {
-          return [commit.commitId, `#${commit.pull.number} ${commit.pull.title} @${commit.pull.author}`]
+          return [
+            `<code>${commit.commitId}</code>`,
+            `#${commit.pull.number} ${commit.pull.title} @${commit.pull.author}`,
+          ]
         }
-        return [commit.commitId, '-']
+        return [`<code>${commit.commitId}</code>`, '-']
       }),
     ])
   }
