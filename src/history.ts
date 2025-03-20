@@ -59,60 +59,6 @@ export const getCommitHistoryByPath = async (
   return commitHistoryByPath
 }
 
-export const parseGetCommitHistoryQuery = (
-  q: GetCommitHistoryQuery,
-  sinceCommitId: string,
-  filterCommitIds: Set<string>,
-): Commit[] => {
-  assert(q.repository != null)
-  assert(q.repository.object != null)
-  assert.strictEqual(q.repository.object.__typename, 'Commit')
-
-  const nodes = filterNodes(q, sinceCommitId, filterCommitIds)
-  const commits: Commit[] = []
-  for (const node of nodes) {
-    if (!node.associatedPullRequests?.nodes?.length) {
-      commits.push({ commitId: node.oid })
-      continue
-    }
-    for (const pull of node.associatedPullRequests.nodes) {
-      if (pull?.number === undefined) {
-        continue
-      }
-      commits.push({
-        commitId: node.oid,
-        pull: {
-          number: pull.number,
-          title: pull.title,
-          author: pull.author?.login ?? '',
-        },
-      })
-    }
-  }
-  return commits
-}
-
-const filterNodes = (q: GetCommitHistoryQuery, sinceCommitId: string, filterCommitIds: Set<string>) => {
-  assert(q.repository != null)
-  assert(q.repository.object != null)
-  assert.strictEqual(q.repository.object.__typename, 'Commit')
-  assert(q.repository.object.history.nodes != null)
-
-  const nodes = []
-  for (const node of q.repository.object.history.nodes) {
-    assert(node != null)
-
-    if (!filterCommitIds.has(node.oid)) {
-      continue
-    }
-    nodes.push(node)
-    if (node.oid === sinceCommitId) {
-      break
-    }
-  }
-  return nodes
-}
-
 type CommitHistoryGroupsAndOthers = {
   groups: CommitHistoryByPath
   others: Commit[]
@@ -155,4 +101,51 @@ export const dedupeCommitsByPullRequest = (commits: Commit[]): Commit[] => {
     }
   }
   return [...deduped.values()]
+}
+
+export const parseGetCommitHistoryQuery = (
+  q: GetCommitHistoryQuery,
+  sinceCommitId: string,
+  filterCommitIds: Set<string>,
+): Commit[] => {
+  assert(q.repository != null)
+  assert(q.repository.object != null)
+  assert.strictEqual(q.repository.object.__typename, 'Commit')
+  assert(q.repository.object.history.nodes != null)
+
+  const commitNodes = []
+  for (const node of q.repository.object.history.nodes) {
+    assert(node != null)
+    if (!filterCommitIds.has(node.oid)) {
+      continue
+    }
+    commitNodes.push(node)
+    if (node.oid === sinceCommitId) {
+      break
+    }
+  }
+
+  const commits: Commit[] = []
+  for (const commitNode of commitNodes) {
+    if (!commitNode.associatedPullRequests?.nodes?.length) {
+      commits.push({
+        commitId: commitNode.oid,
+      })
+      continue
+    }
+    for (const pull of commitNode.associatedPullRequests.nodes) {
+      if (pull?.number === undefined) {
+        continue
+      }
+      commits.push({
+        commitId: commitNode.oid,
+        pull: {
+          number: pull.number,
+          title: pull.title,
+          author: pull.author?.login ?? '',
+        },
+      })
+    }
+  }
+  return commits
 }

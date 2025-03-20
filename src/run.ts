@@ -23,27 +23,10 @@ type Outputs = {
   }
 }
 
-const parseInputs = async (inputs: Inputs, octokit: Octokit, context: Context) => {
-  if (inputs.pullRequest) {
-    const { data: pull } = await octokit.rest.pulls.get({
-      owner: context.repo.owner,
-      repo: context.repo.repo,
-      pull_number: inputs.pullRequest,
-    })
-    core.info(`Found #${pull.number}`)
-    return { base: pull.base.sha, head: pull.head.sha }
-  }
-  const { base, head } = inputs
-  if (!base || !head) {
-    throw new Error('you need to set either pull-request or base/head')
-  }
-  return { base, head }
-}
-
 export const run = async (inputs: Inputs, octokit: Octokit, context: Context): Promise<Outputs> => {
   const groupByPaths = sanitizePaths(inputs.groupByPaths)
+  const { base, head } = await determineBaseHeadFromInputs(inputs, octokit, context)
 
-  const { base, head } = await parseInputs(inputs, octokit, context)
   const compare = await compareCommits(octokit, {
     owner: context.repo.owner,
     repo: context.repo.repo,
@@ -70,7 +53,7 @@ export const run = async (inputs: Inputs, octokit: Octokit, context: Context): P
       bodyGroups,
       bodyOthers,
       json: {
-        groups: transformCommitHistoryToObject(commitHistoryGroupsAndOthers.groups),
+        groups: Object.fromEntries(commitHistoryGroupsAndOthers.groups),
         others: commitHistoryGroupsAndOthers.others,
       },
     }
@@ -92,13 +75,30 @@ export const run = async (inputs: Inputs, octokit: Octokit, context: Context): P
     bodyGroups: body,
     bodyOthers: '',
     json: {
-      groups: transformCommitHistoryToObject(commitHistoryByPath),
+      groups: Object.fromEntries(commitHistoryByPath),
       others: [],
     },
   }
 }
 
 const sanitizePaths = (groupByPaths: string[]) => groupByPaths.filter((p) => p.length > 0 && !p.startsWith('#'))
+
+const determineBaseHeadFromInputs = async (inputs: Inputs, octokit: Octokit, context: Context) => {
+  if (inputs.pullRequest) {
+    core.info(`Finding the pull request #${inputs.pullRequest}`)
+    const { data: pull } = await octokit.rest.pulls.get({
+      owner: context.repo.owner,
+      repo: context.repo.repo,
+      pull_number: inputs.pullRequest,
+    })
+    return { base: pull.base.sha, head: pull.head.sha }
+  }
+  const { base, head } = inputs
+  if (!base || !head) {
+    throw new Error('you need to set either pull-request or base/head')
+  }
+  return { base, head }
+}
 
 const formatCommitHistory = (commitHistoryByPath: CommitHistoryByPath): string => {
   const body = []
@@ -114,12 +114,4 @@ const formatCommitHistory = (commitHistoryByPath: CommitHistoryByPath): string =
     )
   }
   return body.join('\n')
-}
-
-const transformCommitHistoryToObject = (commitHistoryByPath: CommitHistoryByPath): Record<string, Commit[]> => {
-  const result: Record<string, Commit[]> = {}
-  for (const [path, commits] of commitHistoryByPath) {
-    result[path] = commits
-  }
-  return result
 }
