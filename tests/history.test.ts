@@ -2,7 +2,7 @@ import { fixtureResponse } from './queries/getCommitHistory.fixture.js'
 import { describe, expect, it, test } from 'vitest'
 import {
   Commit,
-  computeGroupsAndOthers,
+  extractOthersFromCommitHistoryGroups,
   dedupeCommitsByPullRequest,
   parseGetCommitHistoryQuery,
 } from '../src/history.js'
@@ -42,10 +42,10 @@ test('parseGetCommitHistoryQuery', () => {
   expect(commits).toMatchSnapshot()
 })
 
-describe('computeGroupsAndOthers', () => {
+describe('extractOthersFromCommitHistoryGroups', () => {
   it('should return as-is if empty is given', () => {
     const commitHistoryByPath = new Map<string, Commit[]>([['.', []]])
-    const actual = computeGroupsAndOthers(commitHistoryByPath)
+    const actual = extractOthersFromCommitHistoryGroups(commitHistoryByPath)
     expect(actual).toStrictEqual({
       groups: new Map<string, Commit[]>(),
       others: [],
@@ -54,7 +54,7 @@ describe('computeGroupsAndOthers', () => {
 
   it('should return as-is if only root is given', () => {
     const commitHistoryByPath = new Map<string, Commit[]>([['.', [{ commitId: 'commit-1' }]]])
-    const actual = computeGroupsAndOthers(commitHistoryByPath)
+    const actual = extractOthersFromCommitHistoryGroups(commitHistoryByPath)
     expect(actual).toStrictEqual({
       groups: new Map<string, Commit[]>(),
       others: [{ commitId: 'commit-1' }],
@@ -67,7 +67,7 @@ describe('computeGroupsAndOthers', () => {
       ['foo', [{ commitId: 'commit-2' }]],
       ['bar', [{ commitId: 'commit-3' }]],
     ])
-    const actual = computeGroupsAndOthers(commitHistoryByPath)
+    const actual = extractOthersFromCommitHistoryGroups(commitHistoryByPath)
     expect(actual).toStrictEqual({
       groups: new Map<string, Commit[]>([
         ['foo', [{ commitId: 'commit-2' }]],
@@ -83,7 +83,7 @@ describe('computeGroupsAndOthers', () => {
       ['foo', [{ commitId: 'commit-2' }]],
       ['bar', [{ commitId: 'commit-3' }]],
     ])
-    const actual = computeGroupsAndOthers(commitHistoryByPath)
+    const actual = extractOthersFromCommitHistoryGroups(commitHistoryByPath)
     expect(actual).toStrictEqual({
       groups: new Map<string, Commit[]>([
         ['foo', [{ commitId: 'commit-2' }]],
@@ -100,7 +100,7 @@ describe('computeGroupsAndOthers', () => {
       ['bar', [{ commitId: 'commit-3' }]],
       ['baz', [{ commitId: 'commit-2' }]],
     ])
-    const actual = computeGroupsAndOthers(commitHistoryByPath)
+    const actual = extractOthersFromCommitHistoryGroups(commitHistoryByPath)
     expect(actual).toStrictEqual({
       groups: new Map<string, Commit[]>([
         ['foo', [{ commitId: 'commit-2' }]],
