@@ -129,13 +129,17 @@ const formatCommitHistoryGroups = (commitHistoryGroups: CommitHistoryGroups): st
 const writeSummaryOfCommitHistoryGroups = (commitHistoryGroups: CommitHistoryGroups) => {
   for (const [path, commits] of commitHistoryGroups) {
     core.summary.addHeading(path, 3)
-    core.summary.addList(
-      commits.map((commit) => {
+    core.summary.addTable([
+      [
+        { data: 'Commit', header: true },
+        { data: 'Pull Request', header: true },
+      ],
+      ...commits.map((commit) => {
         if (commit.pull) {
-          return `#${commit.pull.number} ${commit.pull.title} @${commit.pull.author}`
+          return [commit.commitId, `#${commit.pull.number} ${commit.pull.title} @${commit.pull.author}`]
         }
-        return commit.commitId
+        return [commit.commitId, '-']
       }),
-    )
+    ])
   }
 }
