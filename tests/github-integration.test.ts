@@ -17,6 +17,7 @@ describe.runIf(process.env.INTEGRATION_TEST_GITHUB_TOKEN)('GitHub integration te
         groupByPaths: ['src', 'tests', '.github'],
         showOthersGroup: true,
         maxFetchCommits: undefined,
+        maxFetchDays: undefined,
       },
       new Octokit({ auth: process.env.INTEGRATION_TEST_GITHUB_TOKEN, authStrategy: null }),
       {
