@@ -179,11 +179,12 @@ jobs:
 | `head`              | <sup>\*1</sup> | Head branch                               |
 | `path`              | `.`            | Path to get the commit history of subtree |
 | `max-fetch-commits` | (unlimited)    | Maximum number of commits to fetch        |
+| `max-fetch-days`    | (unlimited)    | Maximum number of days to fetch history   |
 
 You need to set either `base` and `head`, or `pull-request`.
 
 If there is a very old commit in the repository, this action may fetch a lot of commits.
-You can set `max-fetch-commits` to avoid the job timeout or GitHub API rate-limit.
+You can set `max-fetch-commits` or `max-fetch-days` to avoid the job timeout or GitHub API rate-limit.
 
 ### Outputs
 

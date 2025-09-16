@@ -11,6 +11,7 @@ type Inputs = {
   groupByPaths: string[]
   showOthersGroup: boolean
   maxFetchCommits: number | undefined
+  maxFetchDays: number | undefined
 }
 
 type Outputs = {
@@ -42,13 +43,15 @@ export const run = async (inputs: Inputs, octokit: Octokit, context: Context): P
   )
   core.info(`The earliest commit is ${compare.earliestCommitId} at ${compare.earliestCommitDate.toISOString()}`)
 
+  const sinceCommitDate = determineSinceCommitDate(compare.earliestCommitDate, inputs.maxFetchDays)
+
   if (inputs.showOthersGroup) {
     const commitHistoryGroupsWithOthers = await getCommitHistoryGroupsWithOthers(octokit, {
       owner: context.repo.owner,
       name: context.repo.repo,
       expression: head,
       groupByPaths,
-      sinceCommitDate: compare.earliestCommitDate,
+      sinceCommitDate,
       sinceCommitId: compare.earliestCommitId,
       filterCommitIds: compare.commitIds,
       maxFetchCommits: inputs.maxFetchCommits,
@@ -74,7 +77,7 @@ export const run = async (inputs: Inputs, octokit: Octokit, context: Context): P
     name: context.repo.repo,
     expression: head,
     groupByPaths,
-    sinceCommitDate: compare.earliestCommitDate,
+    sinceCommitDate,
     sinceCommitId: compare.earliestCommitId,
     filterCommitIds: compare.commitIds,
     maxFetchCommits: inputs.maxFetchCommits,
@@ -91,6 +94,25 @@ export const run = async (inputs: Inputs, octokit: Octokit, context: Context): P
       others: [],
     },
   }
+}
+
+export const determineSinceCommitDate = (
+  earliestCommitDate: Date,
+  maxFetchDays: number | undefined,
+  now = new Date(),
+): Date => {
+  if (!maxFetchDays) {
+    return earliestCommitDate
+  }
+  const maxFetchDate = new Date(now)
+  maxFetchDate.setDate(maxFetchDate.getDate() - maxFetchDays)
+  if (maxFetchDate > earliestCommitDate) {
+    core.warning(
+      `It will fetch the history since ${maxFetchDate.toISOString()} because the earliest commit is too old.`,
+    )
+    return maxFetchDate
+  }
+  return earliestCommitDate
 }
 
 const sanitizePaths = (groupByPaths: string[]) => groupByPaths.filter((p) => p.length > 0 && !p.startsWith('#'))
