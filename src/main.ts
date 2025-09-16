@@ -11,6 +11,7 @@ const main = async (): Promise<void> => {
       groupByPaths: core.getMultilineInput('group-by-paths'),
       showOthersGroup: core.getBooleanInput('show-others-group', { required: true }),
       maxFetchCommits: Number.parseInt(core.getInput('max-fetch-commits')) || undefined,
+      maxFetchDays: Number.parseInt(core.getInput('max-fetch-days')) || undefined,
     },
     getOctokit(),
     getContext(),

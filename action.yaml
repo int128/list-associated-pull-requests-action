@@ -25,6 +25,9 @@ inputs:
   max-fetch-commits:
     description: Maximum number of commits to fetch. Default is unlimited
     required: false
+  max-fetch-days:
+    description: Maximum number of days to fetch history. Default is unlimited
+    required: false
 
 outputs:
   body:
