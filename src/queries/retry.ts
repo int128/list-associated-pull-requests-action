@@ -1,5 +1,4 @@
 import * as core from '@actions/core'
-import { RequestError } from '@octokit/request-error'
 
 const DO_NOT_RETRY_CODES = [400, 401, 404, 422, 451]
 
@@ -7,8 +6,6 @@ export type RetrySpec<V> = {
   variables: V
   retryVariables: (current: V) => V
   remainingCount: number
-  afterMs: number
-  maxJitterMs: number
 }
 
 // Retry the query when it received a GraphQL error.
@@ -23,10 +20,11 @@ export type RetrySpec<V> = {
 //    }]
 //  }
 export const retryHttpError = async <T, V>(query: (v: V) => Promise<T>, spec: RetrySpec<V>): Promise<T> => {
+  let response: T
   try {
-    return await query(spec.variables)
+    response = await query(spec.variables)
   } catch (error) {
-    if (!(error instanceof RequestError)) {
+    if (!isRequestError(error)) {
       throw error
     }
     if (DO_NOT_RETRY_CODES.includes(error.status)) {
@@ -39,8 +37,8 @@ export const retryHttpError = async <T, V>(query: (v: V) => Promise<T>, spec: Re
     // For the secondary rate limits, respect retry-after header.
     // https://docs.github.com/en/rest/overview/resources-in-the-rest-api#secondary-rate-limits
     if (error.status === 403) {
-      const retryAfterMs = getRetryAfterHeaderMs(error, 30000)
-      const afterMs = retryAfterMs + newJitter(spec.maxJitterMs)
+      const retryAfterMs = getRetryAfterHeaderMs(error)
+      const afterMs = retryAfterMs + newJitter(retryAfterMs)
       logger(error, afterMs, spec.variables)
       await sleep(afterMs)
       return await retryHttpError(query, {
@@ -50,26 +48,47 @@ export const retryHttpError = async <T, V>(query: (v: V) => Promise<T>, spec: Re
       })
     }
 
-    // For a temporary error, try the new variables.
-    const afterMs = spec.afterMs + newJitter(spec.maxJitterMs)
+    // For 502 error, retry with the new variables.
+    if (error.status === 502) {
+      logger(error, 0, spec.variables)
+      return await retryHttpError(query, {
+        ...spec,
+        variables: spec.retryVariables(spec.variables),
+        remainingCount: spec.remainingCount - 1,
+      })
+    }
+
+    // For a temporary error, retry later.
+    const afterMs = newJitter(10000)
     logger(error, afterMs, spec.variables)
     await sleep(afterMs)
     return await retryHttpError(query, {
       ...spec,
-      variables: spec.retryVariables(spec.variables),
       remainingCount: spec.remainingCount - 1,
-      afterMs: spec.afterMs * 2,
     })
   }
+
+  // Octokit.graphql sometimes returns undefined. Retry it.
+  if (response === undefined) {
+    const afterMs = newJitter(10000)
+    core.warning(`Retry after ${Math.round(afterMs / 1000)}s: Octokit.graphql() returned undefined`)
+    return await retryHttpError(query, {
+      ...spec,
+      remainingCount: spec.remainingCount - 1,
+    })
+  }
+  return response
 }
 
-const getRetryAfterHeaderMs = (error: RequestError, defaultValue: number): number => {
+const RETRY_AFTER_DEFAULT_MS = 30000
+
+const getRetryAfterHeaderMs = (error: RequestError): number => {
   // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Retry-After
   const sec = Number(error.response?.headers['retry-after'])
   if (Number.isSafeInteger(sec)) {
     return sec * 1000
   }
-  return defaultValue
+  return RETRY_AFTER_DEFAULT_MS
 }
 
 const newJitter = (maxMs: number) => Math.ceil(maxMs * Math.random())
@@ -86,3 +105,24 @@ const logger = <V>(error: RequestError, afterMs: number, v: V) => {
   }
   core.endGroup()
 }
+
+type RequestError = Error & {
+  status: number
+  response?: {
+    headers: Record<string, string>
+  }
+}
+
+const isRequestError = (error: unknown): error is RequestError =>
+  error instanceof Error &&
+  'status' in error &&
+  typeof error.status === 'number' &&
+  // error.response is optional
+  (!('response' in error) || error.response === undefined || isRequestErrorResponse(error.response))
+
+const isRequestErrorResponse = (response: unknown): response is RequestError['response'] =>
+  typeof response === 'object' &&
+  response !== null &&
+  'headers' in response &&
+  typeof response.headers === 'object' &&
+  response.headers !== null

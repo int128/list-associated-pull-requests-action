@@ -1,10 +1,8 @@
 import assert from 'assert'
 import * as core from '@actions/core'
-import { GitHub } from '@actions/github/lib/utils'
-import { GetCommitHistoryQuery, GetCommitHistoryQueryVariables } from '../generated/graphql'
-import { retryHttpError } from './retry'
-
-type Octokit = InstanceType<typeof GitHub>
+import { Octokit } from '@octokit/action'
+import { retryHttpError } from './retry.js'
+import { GetCommitHistoryQuery, GetCommitHistoryQueryVariables } from '../generated/graphql.js'
 
 const query = /* GraphQL */ `
   query getCommitHistory(
@@ -35,6 +33,7 @@ const query = /* GraphQL */ `
               associatedPullRequests(first: 1, orderBy: { field: CREATED_AT, direction: ASC }) {
                 nodes {
                   number
+                  title
                   author {
                     login
                   }
@@ -48,8 +47,15 @@ const query = /* GraphQL */ `
   }
 `
 
-export const execute = async (octokit: Octokit, v: GetCommitHistoryQueryVariables): Promise<GetCommitHistoryQuery> =>
-  await paginate(withRetry(withOctokit(octokit)), v)
+type Options = {
+  maxFetchCommits: number | undefined
+}
+
+export const execute = async (
+  octokit: Octokit,
+  v: GetCommitHistoryQueryVariables,
+  o: Options,
+): Promise<GetCommitHistoryQuery> => await paginate(withRetry(withOctokit(octokit)), v, o)
 
 type QueryFunction = (v: GetCommitHistoryQueryVariables) => Promise<GetCommitHistoryQuery>
 
@@ -65,13 +71,12 @@ const withRetry = (fn: QueryFunction) => async (v: GetCommitHistoryQueryVariable
       historySize: Math.floor(current.historySize * 0.8),
     }),
     remainingCount: 10,
-    afterMs: 3000,
-    maxJitterMs: 15000,
   })
 
 export const paginate = async (
   fn: QueryFunction,
   v: GetCommitHistoryQueryVariables,
+  o: Options,
   previous?: GetCommitHistoryQuery,
 ): Promise<GetCommitHistoryQuery> => {
   const query = await fn(v)
@@ -88,15 +93,23 @@ export const paginate = async (
     query.repository.object.history.nodes.unshift(...previous.repository.object.history.nodes)
   }
 
+  const receivedCount = query.repository.object.history.nodes.length
   core.info(
-    `Received ${query.repository.object.history.nodes.length} / ${query.repository.object.history.totalCount} commits ` +
-      `(path: ${v.path}) ` +
+    `GetCommitHistoryQuery(path: ${v.path}): received ${receivedCount} / ${query.repository.object.history.totalCount} commits ` +
       `(ratelimit-remaining: ${query.rateLimit?.remaining})`,
   )
 
   if (!query.repository.object.history.pageInfo.hasNextPage) {
+    core.info(`GetCommitHistoryQuery(path: ${v.path}): total ${receivedCount} commits`)
+    return query
+  }
+  if (o.maxFetchCommits !== undefined && receivedCount > o.maxFetchCommits) {
+    core.warning(
+      `GetCommitHistoryQuery(path: ${v.path}): gave up fetching commits due to maxFetchCommits=${o.maxFetchCommits}`,
+    )
+    core.info(`GetCommitHistoryQuery(path: ${v.path}): total ${receivedCount} commits`)
     return query
   }
   const historyAfter = query.repository.object.history.pageInfo.endCursor
-  return await paginate(fn, { ...v, historyAfter }, query)
+  return await paginate(fn, { ...v, historyAfter }, o, query)
 }

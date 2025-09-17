@@ -17,12 +17,11 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-      - uses: actions/setup-node@5e21ff4d9bc1a8cf6de233a3057d20ec6b3fb69d # v3.8.1
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: 16
-          cache: yarn
-      - run: yarn
-      - run: yarn build
-      - run: yarn package
-      - uses: int128/release-typescript-action@a64165f6c50e883d7bafd5c4c66acc7edfd6a4fb # v1.23.0
+          node-version: 20.19.4
+      - run: npm install -g pnpm@latest-10
+      - run: pnpm i
+      - run: pnpm build
+      - uses: int128/release-typescript-action@4b93cf2f4b55fbce962db4c9acb89760c4a699d9 # v1.36.0

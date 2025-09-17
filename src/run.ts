@@ -1,36 +1,130 @@
 import * as core from '@actions/core'
-import * as github from '@actions/github'
-import { Commit, CommitHistoryByPath, getCommitHistoryByPath, getCommitHistoryGroupsAndOthers } from './history'
-import { GitHub } from '@actions/github/lib/utils'
-import { compareCommits } from './compare'
-
-type Octokit = InstanceType<typeof GitHub>
+import { Context } from './github.js'
+import { Octokit } from '@octokit/action'
+import { compareCommits } from './compare.js'
+import { Commit, CommitHistoryGroups, getCommitHistoryGroups, getCommitHistoryGroupsWithOthers } from './history.js'
 
 type Inputs = {
-  owner: string
-  repo: string
-  token: string
   pullRequest?: number
   base?: string
   head?: string
   groupByPaths: string[]
   showOthersGroup: boolean
+  maxFetchCommits: number | undefined
+  maxFetchDays: number | undefined
 }
 
 type Outputs = {
   body: string
   bodyGroups: string
   bodyOthers: string
+  json: {
+    groups: Record<string, Commit[]>
+    others: Commit[]
+  }
 }
 
-const parseInputs = async (octokit: Octokit, inputs: Inputs) => {
+export const run = async (inputs: Inputs, octokit: Octokit, context: Context): Promise<Outputs> => {
+  const groupByPaths = sanitizePaths(inputs.groupByPaths)
+  const { base, head } = await determineBaseHeadFromInputs(inputs, octokit, context)
+
+  core.startGroup(`Compare base ${base} and head ${head}`)
+  const compare = await compareCommits(octokit, {
+    owner: context.repo.owner,
+    repo: context.repo.repo,
+    base,
+    head,
+  })
+  core.endGroup()
+
+  core.summary.addHeading('list-associated-pull-requests-action summary', 2)
+  core.summary.addRaw(
+    `Parsed ${compare.commitIds.size} commits between base <code>${base}</code> and head <code>${head}</code>.`,
+  )
+  core.info(`The earliest commit is ${compare.earliestCommitId} at ${compare.earliestCommitDate.toISOString()}`)
+
+  const sinceCommitDate = determineSinceCommitDate(compare.earliestCommitDate, inputs.maxFetchDays)
+
+  if (inputs.showOthersGroup) {
+    const commitHistoryGroupsWithOthers = await getCommitHistoryGroupsWithOthers(octokit, {
+      owner: context.repo.owner,
+      name: context.repo.repo,
+      expression: head,
+      groupByPaths,
+      sinceCommitDate,
+      sinceCommitId: compare.earliestCommitId,
+      filterCommitIds: compare.commitIds,
+      maxFetchCommits: inputs.maxFetchCommits,
+    })
+    writeSummaryOfCommitHistoryGroups(commitHistoryGroupsWithOthers.groups)
+    writeSummaryOfCommitHistoryGroups(new Map([['Others', commitHistoryGroupsWithOthers.others]]))
+    await core.summary.write()
+    const bodyGroups = formatCommitHistoryGroups(commitHistoryGroupsWithOthers.groups)
+    const bodyOthers = formatCommitHistoryGroups(new Map([['Others', commitHistoryGroupsWithOthers.others]]))
+    return {
+      body: [bodyGroups, bodyOthers].join('\n').trim(),
+      bodyGroups,
+      bodyOthers,
+      json: {
+        groups: Object.fromEntries(commitHistoryGroupsWithOthers.groups),
+        others: commitHistoryGroupsWithOthers.others,
+      },
+    }
+  }
+
+  const commitHistoryGroups = await getCommitHistoryGroups(octokit, {
+    owner: context.repo.owner,
+    name: context.repo.repo,
+    expression: head,
+    groupByPaths,
+    sinceCommitDate,
+    sinceCommitId: compare.earliestCommitId,
+    filterCommitIds: compare.commitIds,
+    maxFetchCommits: inputs.maxFetchCommits,
+  })
+  writeSummaryOfCommitHistoryGroups(commitHistoryGroups)
+  await core.summary.write()
+  const body = formatCommitHistoryGroups(commitHistoryGroups)
+  return {
+    body,
+    bodyGroups: body,
+    bodyOthers: '',
+    json: {
+      groups: Object.fromEntries(commitHistoryGroups),
+      others: [],
+    },
+  }
+}
+
+export const determineSinceCommitDate = (
+  earliestCommitDate: Date,
+  maxFetchDays: number | undefined,
+  now = new Date(),
+): Date => {
+  if (!maxFetchDays) {
+    return earliestCommitDate
+  }
+  const maxFetchDate = new Date(now)
+  maxFetchDate.setDate(maxFetchDate.getDate() - maxFetchDays)
+  if (maxFetchDate > earliestCommitDate) {
+    core.warning(
+      `It will fetch the history since ${maxFetchDate.toISOString()} because the earliest commit is too old.`,
+    )
+    return maxFetchDate
+  }
+  return earliestCommitDate
+}
+
+const sanitizePaths = (groupByPaths: string[]) => groupByPaths.filter((p) => p.length > 0 && !p.startsWith('#'))
+
+const determineBaseHeadFromInputs = async (inputs: Inputs, octokit: Octokit, context: Context) => {
   if (inputs.pullRequest) {
+    core.info(`Finding the pull request #${inputs.pullRequest}`)
     const { data: pull } = await octokit.rest.pulls.get({
-      owner: inputs.owner,
-      repo: inputs.repo,
+      owner: context.repo.owner,
+      repo: context.repo.repo,
       pull_number: inputs.pullRequest,
     })
-    core.info(`Found #${pull.number}`)
     return { base: pull.base.sha, head: pull.head.sha }
   }
   const { base, head } = inputs
@@ -40,69 +134,39 @@ const parseInputs = async (octokit: Octokit, inputs: Inputs) => {
   return { base, head }
 }
 
-export const run = async (inputs: Inputs): Promise<Outputs> => {
-  const octokit = github.getOctokit(inputs.token)
-  const groupByPaths = sanitizePaths(inputs.groupByPaths)
-
-  const { base, head } = await parseInputs(octokit, inputs)
-  const compare = await compareCommits(octokit, {
-    owner: inputs.owner,
-    repo: inputs.repo,
-    base,
-    head,
-  })
-  core.info(`The earliest commit is ${compare.earliestCommitId} at ${compare.earliestCommitDate.toISOString()}`)
-
-  if (inputs.showOthersGroup) {
-    const commitHistoryGroupsAndOthers = await getCommitHistoryGroupsAndOthers(octokit, {
-      owner: inputs.owner,
-      name: inputs.repo,
-      expression: head,
-      groupByPaths,
-      sinceCommitDate: compare.earliestCommitDate,
-      sinceCommitId: compare.earliestCommitId,
-      filterCommitIds: compare.commitIds,
-    })
-    const bodyGroups = formatCommitHistory(commitHistoryGroupsAndOthers.groups)
-    const bodyOthers = formatCommitHistory(new Map([['Others', commitHistoryGroupsAndOthers.others]]))
-    return {
-      body: [bodyGroups, bodyOthers].join('\n').trim(),
-      bodyGroups,
-      bodyOthers,
-    }
-  }
-
-  const commitHistoryByPath = await getCommitHistoryByPath(octokit, {
-    owner: inputs.owner,
-    name: inputs.repo,
-    expression: head,
-    groupByPaths,
-    sinceCommitDate: compare.earliestCommitDate,
-    sinceCommitId: compare.earliestCommitId,
-    filterCommitIds: compare.commitIds,
-  })
-  const body = formatCommitHistory(commitHistoryByPath)
-  return { body, bodyGroups: body, bodyOthers: '' }
-}
-
-const sanitizePaths = (groupByPaths: string[]) => groupByPaths.filter((p) => p.length > 0 && !p.startsWith('#'))
-
-const formatCommitHistory = (commitHistoryByPath: CommitHistoryByPath): string => {
+const formatCommitHistoryGroups = (commitHistoryGroups: CommitHistoryGroups): string => {
   const body = []
-  for (const [path, commits] of commitHistoryByPath) {
+  for (const [path, commits] of commitHistoryGroups) {
     body.push(`### ${path}`)
-    body.push(...formatCommits(commits))
+    body.push(
+      ...commits.map((commit) => {
+        if (commit.pull) {
+          return `- #${commit.pull.number} @${commit.pull.author}`
+        }
+        return `- ${commit.commitId}`
+      }),
+    )
   }
   return body.join('\n')
 }
 
-const formatCommits = (commits: Commit[]): string[] => [
-  ...new Set(
-    commits.map((commit) => {
-      if (commit.pull) {
-        return `- #${commit.pull.number} @${commit.pull.author}`
-      }
-      return `- ${commit.commitId}`
-    }),
-  ),
-]
+const writeSummaryOfCommitHistoryGroups = (commitHistoryGroups: CommitHistoryGroups) => {
+  for (const [path, commits] of commitHistoryGroups) {
+    core.summary.addHeading(path, 3)
+    core.summary.addTable([
+      [
+        { data: 'Commit', header: true },
+        { data: 'Pull Request', header: true },
+      ],
+      ...commits.map((commit) => {
+        if (commit.pull) {
+          return [
+            `<code>${commit.commitId}</code>`,
+            `#${commit.pull.number} ${commit.pull.title} @${commit.pull.author}`,
+          ]
+        }
+        return [`<code>${commit.commitId}</code>`, '-']
+      }),
+    ])
+  }
+}

@@ -1,5 +1,6 @@
-import { GetCommitHistoryQuery, GetCommitHistoryQueryVariables } from '../../src/generated/graphql'
-import { paginate } from '../../src/queries/getCommitHistory'
+import { describe, expect, test, vi } from 'vitest'
+import { GetCommitHistoryQuery, GetCommitHistoryQueryVariables } from '../../src/generated/graphql.js'
+import { paginate } from '../../src/queries/getCommitHistory.js'
 
 describe('paginate', () => {
   const variables: GetCommitHistoryQueryVariables = {
@@ -12,7 +13,7 @@ describe('paginate', () => {
   }
 
   test('empty', async () => {
-    const mockFn = jest.fn<Promise<GetCommitHistoryQuery>, [GetCommitHistoryQueryVariables]>()
+    const mockFn = vi.fn<(v: GetCommitHistoryQueryVariables) => Promise<GetCommitHistoryQuery>>()
     mockFn.mockResolvedValueOnce({
       repository: {
         object: {
@@ -27,7 +28,7 @@ describe('paginate', () => {
         },
       },
     })
-    const query = await paginate(mockFn, variables)
+    const query = await paginate(mockFn, variables, { maxFetchCommits: undefined })
     expect(mockFn).toHaveBeenCalledTimes(1)
     expect(query).toStrictEqual({
       repository: {
@@ -46,7 +47,7 @@ describe('paginate', () => {
   })
 
   test('single page', async () => {
-    const mockFn = jest.fn<Promise<GetCommitHistoryQuery>, [GetCommitHistoryQueryVariables]>()
+    const mockFn = vi.fn<(v: GetCommitHistoryQueryVariables) => Promise<GetCommitHistoryQuery>>()
     mockFn.mockResolvedValueOnce({
       repository: {
         object: {
@@ -61,7 +62,7 @@ describe('paginate', () => {
         },
       },
     })
-    const query = await paginate(mockFn, variables)
+    const query = await paginate(mockFn, variables, { maxFetchCommits: undefined })
     expect(mockFn).toHaveBeenCalledTimes(1)
     expect(query).toStrictEqual({
       repository: {
@@ -80,7 +81,7 @@ describe('paginate', () => {
   })
 
   test('multiple pages', async () => {
-    const mockFn = jest.fn<Promise<GetCommitHistoryQuery>, [GetCommitHistoryQueryVariables]>()
+    const mockFn = vi.fn<(v: GetCommitHistoryQueryVariables) => Promise<GetCommitHistoryQuery>>()
     mockFn.mockResolvedValueOnce({
       repository: {
         object: {
@@ -125,7 +126,7 @@ describe('paginate', () => {
         },
       },
     })
-    const query = await paginate(mockFn, variables)
+    const query = await paginate(mockFn, variables, { maxFetchCommits: undefined })
     expect(mockFn).toHaveBeenCalledTimes(3)
     expect(query).toStrictEqual({
       repository: {

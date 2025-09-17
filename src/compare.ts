@@ -1,7 +1,5 @@
 import * as core from '@actions/core'
-import { GitHub } from '@actions/github/lib/utils'
-
-type Octokit = InstanceType<typeof GitHub>
+import { Octokit } from '@octokit/action'
 
 type Inputs = {
   owner: string
@@ -17,7 +15,6 @@ type Outputs = {
 }
 
 export const compareCommits = async (octokit: Octokit, inputs: Inputs): Promise<Outputs> => {
-  core.info(`Comparing base ${inputs.base} and head ${inputs.head}`)
   const compareIterator = octokit.paginate.iterator(octokit.rest.repos.compareCommitsWithBasehead, {
     owner: inputs.owner,
     repo: inputs.repo,
@@ -28,7 +25,9 @@ export const compareCommits = async (octokit: Octokit, inputs: Inputs): Promise<
   const commitIds = new Set<string>()
   let earliestCommitDate = new Date()
   let earliestCommitId = ''
-  for await (const compare of compareIterator) {
+  for await (const _compare of compareIterator) {
+    // workaround for https://github.com/octokit/plugin-paginate-rest.js/issues/647#issuecomment-2720580932
+    const compare = _compare as Awaited<ReturnType<typeof octokit.rest.repos.compareCommitsWithBasehead>>
     for (const commit of compare.data.commits) {
       commitIds.add(commit.sha)
       if (commit.commit.committer?.date) {
@@ -40,8 +39,10 @@ export const compareCommits = async (octokit: Octokit, inputs: Inputs): Promise<
       }
     }
     core.info(
-      `Received ${commitIds.size} / ${compare.data.total_commits} commits (ratelimit-remaining: ${compare.headers['x-ratelimit-remaining']})`,
+      `Compare: received ${commitIds.size} / ${compare.data.total_commits} commits ` +
+        `(ratelimit-remaining: ${compare.headers['x-ratelimit-remaining']})`,
     )
   }
+  core.info(`Compare: total ${commitIds.size} commits`)
   return { commitIds, earliestCommitId, earliestCommitDate }
 }

@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`parseGetCommitHistoryQuery 1`] = `
 [
@@ -7,6 +7,7 @@ exports[`parseGetCommitHistoryQuery 1`] = `
     "pull": {
       "author": "renovate",
       "number": 97,
+      "title": "chore(deps): update dependency eslint-plugin-jest to v26.4.2",
     },
   },
   {
@@ -14,6 +15,7 @@ exports[`parseGetCommitHistoryQuery 1`] = `
     "pull": {
       "author": "renovate",
       "number": 90,
+      "title": "chore(deps): update dependency eslint-plugin-jest to v26.3.0",
     },
   },
   {
@@ -21,6 +23,7 @@ exports[`parseGetCommitHistoryQuery 1`] = `
     "pull": {
       "author": "int128",
       "number": 96,
+      "title": "Use test fixture pull request",
     },
   },
   {
@@ -28,6 +31,7 @@ exports[`parseGetCommitHistoryQuery 1`] = `
     "pull": {
       "author": "int128",
       "number": 91,
+      "title": "Rename to list-associated-pull-requests-action",
     },
   },
   {
@@ -35,6 +39,7 @@ exports[`parseGetCommitHistoryQuery 1`] = `
     "pull": {
       "author": "int128",
       "number": 89,
+      "title": "refactor: split basehead.ts",
     },
   },
   {
@@ -42,6 +47,7 @@ exports[`parseGetCommitHistoryQuery 1`] = `
     "pull": {
       "author": "int128",
       "number": 88,
+      "title": "Remove deprecated outputs",
     },
   },
   {
@@ -49,6 +55,7 @@ exports[`parseGetCommitHistoryQuery 1`] = `
     "pull": {
       "author": "int128",
       "number": 87,
+      "title": "Add pull-request parameter",
     },
   },
   {
@@ -56,6 +63,7 @@ exports[`parseGetCommitHistoryQuery 1`] = `
     "pull": {
       "author": "renovate",
       "number": 86,
+      "title": "Update dependency @vercel/ncc to v0.34.0",
     },
   },
   {
@@ -63,6 +71,7 @@ exports[`parseGetCommitHistoryQuery 1`] = `
     "pull": {
       "author": "renovate",
       "number": 85,
+      "title": "Update dependency typescript to v4.7.2",
     },
   },
   {
@@ -70,6 +79,7 @@ exports[`parseGetCommitHistoryQuery 1`] = `
     "pull": {
       "author": "renovate",
       "number": 84,
+      "title": "Update dependency ts-jest to v28.0.3",
     },
   },
   {
@@ -77,6 +87,7 @@ exports[`parseGetCommitHistoryQuery 1`] = `
     "pull": {
       "author": "renovate",
       "number": 83,
+      "title": "Update eslint to v5.26.0",
     },
   },
   {
@@ -84,6 +95,7 @@ exports[`parseGetCommitHistoryQuery 1`] = `
     "pull": {
       "author": "renovate",
       "number": 82,
+      "title": "Update dependency eslint to v8.16.0",
     },
   },
   {
@@ -91,6 +103,7 @@ exports[`parseGetCommitHistoryQuery 1`] = `
     "pull": {
       "author": "renovate",
       "number": 81,
+      "title": "Update eslint to v5.25.0",
     },
   },
   {
@@ -98,6 +111,7 @@ exports[`parseGetCommitHistoryQuery 1`] = `
     "pull": {
       "author": "renovate",
       "number": 80,
+      "title": "Update dependency @types/node to v16.11.36",
     },
   },
   {
@@ -105,6 +119,7 @@ exports[`parseGetCommitHistoryQuery 1`] = `
     "pull": {
       "author": "renovate",
       "number": 79,
+      "title": "Update eslint to v5.24.0",
     },
   },
   {
@@ -112,6 +127,7 @@ exports[`parseGetCommitHistoryQuery 1`] = `
     "pull": {
       "author": "int128",
       "number": 78,
+      "title": "Sanitize group-by-sub-paths",
     },
   },
   {
@@ -119,6 +135,7 @@ exports[`parseGetCommitHistoryQuery 1`] = `
     "pull": {
       "author": "int128",
       "number": 77,
+      "title": "Refactor doc",
     },
   },
   {
@@ -126,6 +143,7 @@ exports[`parseGetCommitHistoryQuery 1`] = `
     "pull": {
       "author": "int128",
       "number": 76,
+      "title": "Show section only if pull exists in group",
     },
   },
   {
@@ -133,6 +151,7 @@ exports[`parseGetCommitHistoryQuery 1`] = `
     "pull": {
       "author": "int128",
       "number": 75,
+      "title": "refactor: rename to ChangeSet",
     },
   },
   {
@@ -140,6 +159,7 @@ exports[`parseGetCommitHistoryQuery 1`] = `
     "pull": {
       "author": "renovate",
       "number": 74,
+      "title": "Update dependency eslint-plugin-jest to v26.2.2",
     },
   },
   {
@@ -147,6 +167,7 @@ exports[`parseGetCommitHistoryQuery 1`] = `
     "pull": {
       "author": "int128",
       "number": 73,
+      "title": "Update README.md",
     },
   },
   {
@@ -154,6 +175,7 @@ exports[`parseGetCommitHistoryQuery 1`] = `
     "pull": {
       "author": "int128",
       "number": 70,
+      "title": "Group pull requests by sub paths",
     },
   },
   {
@@ -161,6 +183,7 @@ exports[`parseGetCommitHistoryQuery 1`] = `
     "pull": {
       "author": "renovate",
       "number": 71,
+      "title": "Update dependency eslint-plugin-jest to v26.2.1",
     },
   },
   {
@@ -168,6 +191,7 @@ exports[`parseGetCommitHistoryQuery 1`] = `
     "pull": {
       "author": "int128",
       "number": 69,
+      "title": "refactor: return pulls in findAssociation()",
     },
   },
   {
@@ -175,6 +199,7 @@ exports[`parseGetCommitHistoryQuery 1`] = `
     "pull": {
       "author": "int128",
       "number": 68,
+      "title": "refactor: extract getPullRequestHistoryOfSubTree()",
     },
   },
   {
@@ -182,6 +207,7 @@ exports[`parseGetCommitHistoryQuery 1`] = `
     "pull": {
       "author": "renovate",
       "number": 67,
+      "title": "Update dependency eslint-plugin-jest to v26.2.0",
     },
   },
 ]

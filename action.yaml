@@ -22,6 +22,12 @@ inputs:
     description: Show others group
     required: true
     default: 'true'
+  max-fetch-commits:
+    description: Maximum number of commits to fetch. Default is unlimited
+    required: false
+  max-fetch-days:
+    description: Maximum number of days to fetch history. Default is unlimited
+    required: false
 
 outputs:
   body:
@@ -30,9 +36,11 @@ outputs:
     description: Grouped lists of associated pull requests (Markdown)
   body-others:
     description: Others list of associated pull requests (Markdown)
+  json:
+    description: List of associated pull requests (JSON)
 
 runs:
-  using: 'node16'
+  using: 'node20'
   main: 'dist/index.js'
 
 branding:
