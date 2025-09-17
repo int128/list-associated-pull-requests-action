@@ -1,25 +1,21 @@
 type Task<T> = () => Promise<T>
 
-export const execute = async <T>(concurrency: number, tasks: Task<T>[]): Promise<T[]> => {
+export const executeWithConcurrency = async <T>(concurrency: number, tasks: readonly Task<T>[]): Promise<T[]> => {
+  const queue = [...tasks]
   const workers = []
   for (let i = 0; i < concurrency; i++) {
-    workers.push(worker(tasks))
+    workers.push(worker(queue))
   }
-  const results: T[] = []
-  for (const chunk of await Promise.all(workers)) {
-    results.push(...chunk)
-  }
-  return results
+  return (await Promise.all(workers)).flat(1)
 }
 
-const worker = async <T>(tasks: Task<T>[]): Promise<T[]> => {
-  const results: T[] = []
+const worker = async <T>(queue: Task<T>[]): Promise<T[]> => {
+  const chunk: T[] = []
   for (;;) {
-    const task = tasks.shift()
+    const task = queue.shift()
     if (task === undefined) {
-      break
+      return chunk
     }
-    results.push(await task())
+    chunk.push(await task())
   }
-  return results
 }
