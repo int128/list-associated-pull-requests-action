@@ -4,7 +4,7 @@ import * as getCommitHistory from './queries/getCommitHistory.js'
 import { GetCommitHistoryQuery } from './generated/graphql.js'
 import { Octokit } from '@octokit/action'
 
-const GRAPHQL_QUERY_CONCURRENCY = 6
+const GRAPHQL_QUERY_CONCURRENCY = 2
 
 export type Commit = {
   commitId: string
