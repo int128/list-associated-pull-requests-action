@@ -2,6 +2,9 @@ import assert from 'assert'
 import * as getCommitHistory from './queries/getCommitHistory.js'
 import { GetCommitHistoryQuery } from './generated/graphql.js'
 import { Octokit } from '@octokit/action'
+import { executeWithConcurrency } from './queue.js'
+
+const GRAPHQL_QUERY_CONCURRENCY = 2
 
 export type Commit = {
   commitId: string
@@ -64,8 +67,9 @@ export const getCommitHistoryGroups = async (
   octokit: Octokit,
   variables: GetCommitHistoryGroupsVariables,
 ): Promise<CommitHistoryGroups> => {
-  const results = await Promise.all(
-    variables.groupByPaths.map(async (path) => {
+  const results = await executeWithConcurrency(
+    GRAPHQL_QUERY_CONCURRENCY,
+    variables.groupByPaths.map((path) => async () => {
       const query = await getCommitHistory.execute(
         octokit,
         {
