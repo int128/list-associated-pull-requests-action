@@ -1,4 +1,4 @@
-import { GetCommitHistoryQuery } from '../../src/generated/graphql.js'
+import type { GetCommitHistoryQuery } from '../../src/generated/graphql.js'
 
 /*
 Commits of pull request #98.
