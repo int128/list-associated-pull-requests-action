@@ -1,11 +1,11 @@
-import { fixtureResponse } from './queries/getCommitHistory.fixture.js'
 import { describe, expect, it, test } from 'vitest'
 import {
-  Commit,
-  extractOthersFromCommitHistoryGroups,
+  type Commit,
   dedupeCommitsByPullRequest,
+  extractOthersFromCommitHistoryGroups,
   parseGetCommitHistoryQuery,
 } from '../src/history.js'
+import { fixtureResponse } from './queries/getCommitHistory.fixture.js'
 
 test('parseGetCommitHistoryQuery', () => {
   const filterCommitIds = new Set<string>([

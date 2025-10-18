@@ -1,8 +1,8 @@
-import assert from 'assert'
+import assert from 'node:assert'
 import * as core from '@actions/core'
-import { Octokit } from '@octokit/action'
+import type { Octokit } from '@octokit/action'
+import type { GetCommitHistoryQuery, GetCommitHistoryQueryVariables } from '../generated/graphql.js'
 import { retryHttpError } from './retry.js'
-import { GetCommitHistoryQuery, GetCommitHistoryQueryVariables } from '../generated/graphql.js'
 
 const query = /* GraphQL */ `
   query getCommitHistory(

@@ -1,7 +1,7 @@
-import assert from 'assert'
-import { run } from '../src/run.js'
-import { describe, expect, it } from 'vitest'
+import assert from 'node:assert'
 import { Octokit } from '@octokit/action'
+import { describe, expect, it } from 'vitest'
+import { run } from '../src/run.js'
 
 // GitHub token is required.
 // To run locally:

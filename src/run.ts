@@ -1,8 +1,13 @@
 import * as core from '@actions/core'
-import { Context } from './github.js'
-import { Octokit } from '@octokit/action'
+import type { Octokit } from '@octokit/action'
 import { compareCommits } from './compare.js'
-import { Commit, CommitHistoryGroups, getCommitHistoryGroups, getCommitHistoryGroupsWithOthers } from './history.js'
+import type { Context } from './github.js'
+import {
+  type Commit,
+  type CommitHistoryGroups,
+  getCommitHistoryGroups,
+  getCommitHistoryGroupsWithOthers,
+} from './history.js'
 
 type Inputs = {
   pullRequest?: number

@@ -1,7 +1,7 @@
-import assert from 'assert'
+import assert from 'node:assert'
+import type { Octokit } from '@octokit/action'
+import type { GetCommitHistoryQuery } from './generated/graphql.js'
 import * as getCommitHistory from './queries/getCommitHistory.js'
-import { GetCommitHistoryQuery } from './generated/graphql.js'
-import { Octokit } from '@octokit/action'
 import { executeWithConcurrency } from './queue.js'
 
 const GRAPHQL_QUERY_CONCURRENCY = 2

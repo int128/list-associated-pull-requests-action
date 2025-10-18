@@ -1,17 +1,17 @@
 import * as core from '@actions/core'
-import { run } from './run.js'
 import { getContext, getOctokit } from './github.js'
+import { run } from './run.js'
 
 const main = async (): Promise<void> => {
   const outputs = await run(
     {
-      pullRequest: parseInt(core.getInput('pull-request')) || undefined,
+      pullRequest: parseInt(core.getInput('pull-request'), 10) || undefined,
       base: core.getInput('base') || undefined,
       head: core.getInput('head') || undefined,
       groupByPaths: core.getMultilineInput('group-by-paths'),
       showOthersGroup: core.getBooleanInput('show-others-group', { required: true }),
-      maxFetchCommits: Number.parseInt(core.getInput('max-fetch-commits')) || undefined,
-      maxFetchDays: Number.parseInt(core.getInput('max-fetch-days')) || undefined,
+      maxFetchCommits: Number.parseInt(core.getInput('max-fetch-commits'), 10) || undefined,
+      maxFetchDays: Number.parseInt(core.getInput('max-fetch-days'), 10) || undefined,
     },
     getOctokit(),
     getContext(),

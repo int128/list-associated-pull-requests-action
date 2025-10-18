@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
-import { GetCommitHistoryQuery, GetCommitHistoryQueryVariables } from '../../src/generated/graphql.js'
+import type { GetCommitHistoryQuery, GetCommitHistoryQueryVariables } from '../../src/generated/graphql.js'
 import { paginate } from '../../src/queries/getCommitHistory.js'
 
 describe('paginate', () => {
