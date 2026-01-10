@@ -30,5 +30,5 @@ describe.runIf(process.env.INTEGRATION_TEST_GITHUB_TOKEN)('GitHub integration te
     expect({
       body: outputs.body,
     }).toMatchSnapshot()
-  }, 45000)
+  }, 60000)
 })
