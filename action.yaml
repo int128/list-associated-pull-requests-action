@@ -40,7 +40,7 @@ outputs:
     description: List of associated pull requests (JSON)
 
 runs:
-  using: 'node20'
+  using: 'node24'
   main: 'dist/index.js'
 
 branding:
