@@ -1,3 +1,9 @@
+### .github
+- #96 @int128
+- #91 @int128
+- #87 @int128
+- #78 @int128
+- #70 @int128
 ### src
 - #89 @int128
 - #88 @int128
@@ -8,12 +14,6 @@
 - #70 @int128
 - #69 @int128
 - #68 @int128
-### .github
-- #96 @int128
-- #91 @int128
-- #87 @int128
-- #78 @int128
-- #70 @int128
 ### Others
 - #97 @renovate
 - #90 @renovate
