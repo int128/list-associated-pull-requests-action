@@ -9,31 +9,28 @@ type Inputs = {
   repo: string
   base: string
   head: string
+  paths: string[]
 }
 
-type Outputs = {
-  commitIds: Set<string>
-  earliestCommitId: string
-  earliestCommitDate: Date
-}
-
-export const compareCommits = async (context: Context, inputs: Inputs): Promise<Outputs> => {
+export const compareCommits = async (context: Context, inputs: Inputs): Promise<Map<string, Set<string>>> => {
   const workspace = await mkdtemp(path.join(context.runnerTemp, `${inputs.owner}-${inputs.repo}-`))
   await git.init(workspace)
   await fetchCommitsBetweenBaseHead(context, workspace, inputs.base, inputs.head)
 
-  const commits = await git.getCommits({ cwd: workspace, base: inputs.base, head: inputs.head })
-  core.info(`Total ${commits.length} commits between base and head`)
-  if (commits.length === 0) {
-    throw new Error(`no commit between base and head`)
+  const pathCommitIdsMap = new Map<string, Set<string>>()
+  for (const path of inputs.paths) {
+    const commitIds = new Set<string>(
+      await git.getCommits({
+        cwd: workspace,
+        base: inputs.base,
+        head: inputs.head,
+        path,
+      }),
+    )
+    core.info(`${path}: ${commitIds.size} commits`)
+    pathCommitIdsMap.set(path, commitIds)
   }
-
-  const earliestCommitId = commits[commits.length - 1]
-  return {
-    commitIds: new Set<string>(commits),
-    earliestCommitId,
-    earliestCommitDate: await git.getCommitDate(workspace, earliestCommitId),
-  }
+  return pathCommitIdsMap
 }
 
 const fetchCommitsBetweenBaseHead = async (context: Context, cwd: string, base: string, head: string) => {
