@@ -169,6 +169,9 @@ importers:
       '@actions/core':
         specifier: 3.0.1
         version: 3.0.1
+      '@actions/exec':
+        specifier: 3.0.0
+        version: 3.0.0
       '@octokit/action':
         specifier: 8.0.4
         version: 8.0.4

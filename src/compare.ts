@@ -1,5 +1,8 @@
+import { mkdtemp } from 'node:fs/promises'
+import path from 'node:path'
 import * as core from '@actions/core'
-import type { Octokit } from '@octokit/action'
+import * as git from './git.js'
+import type { Context } from './github.js'
 
 type Inputs = {
   owner: string
@@ -14,35 +17,23 @@ type Outputs = {
   earliestCommitDate: Date
 }
 
-export const compareCommits = async (octokit: Octokit, inputs: Inputs): Promise<Outputs> => {
-  const compareIterator = octokit.paginate.iterator(octokit.rest.repos.compareCommitsWithBasehead, {
-    owner: inputs.owner,
-    repo: inputs.repo,
-    basehead: `${inputs.base}...${inputs.head}`,
-    per_page: 100,
-  })
+export const compareCommits = async (context: Context, inputs: Inputs): Promise<Outputs> => {
+  const workspace = await mkdtemp(path.join(context.runnerTemp, `${inputs.owner}-${inputs.repo}-`))
 
-  const commitIds = new Set<string>()
-  let earliestCommitDate = new Date()
-  let earliestCommitId = ''
-  for await (const _compare of compareIterator) {
-    // workaround for https://github.com/octokit/plugin-paginate-rest.js/issues/647#issuecomment-2720580932
-    const compare = _compare as Awaited<ReturnType<typeof octokit.rest.repos.compareCommitsWithBasehead>>
-    for (const commit of compare.data.commits) {
-      commitIds.add(commit.sha)
-      if (commit.commit.committer?.date) {
-        const d = new Date(commit.commit.committer.date)
-        if (d < earliestCommitDate) {
-          earliestCommitDate = d
-          earliestCommitId = commit.sha
-        }
-      }
+  for (let depth = 1000; depth < 10000; depth += 1000) {
+    if (await git.canMerge({ cwd: workspace, base: inputs.base, head: inputs.head })) {
+      core.info(`Fetched commits required to merge base and head`)
+      break
     }
-    core.info(
-      `Compare: received ${commitIds.size} / ${compare.data.total_commits} commits ` +
-        `(ratelimit-remaining: ${compare.headers['x-ratelimit-remaining']})`,
-    )
+    await git.fetch({ cwd: workspace, refs: [inputs.base, inputs.head], depth }, context)
   }
+
+  const commits = await git.getCommits({ cwd: workspace, base: inputs.base, head: inputs.head })
+  const commitIds = new Set<string>(commits)
   core.info(`Compare: total ${commitIds.size} commits`)
+
+  const earliestCommitId = commits[commits.length - 1]
+  const earliestCommitDate = await git.getCommitDate(workspace, earliestCommitId)
+
   return { commitIds, earliestCommitId, earliestCommitDate }
 }

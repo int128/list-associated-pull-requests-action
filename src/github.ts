@@ -9,12 +9,16 @@ export type Context = {
     owner: string
     repo: string
   }
+  serverUrl: string
+  runnerTemp: string
 }
 
 export const getContext = (): Context => {
   // https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/store-information-in-variables#default-environment-variables
   return {
     repo: getRepo(),
+    serverUrl: getEnv('GITHUB_SERVER_URL'),
+    runnerTemp: getEnv('RUNNER_TEMP'),
   }
 }
 
