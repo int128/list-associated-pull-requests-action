@@ -1,3 +1,4 @@
+import * as stream from 'node:stream'
 import * as core from '@actions/core'
 import * as exec from '@actions/exec'
 import { type Context, getToken } from './github.js'
@@ -15,6 +16,8 @@ type GetCommitsInput = {
 export const getCommits = async (input: GetCommitsInput): Promise<string[]> => {
   const output = await exec.getExecOutput('git', ['log', '--pretty=%H', `${input.base}..${input.head}`], {
     cwd: input.cwd,
+    // Suppress output to avoid large logs
+    outStream: new stream.PassThrough(),
   })
   return output.stdout.split('\n').filter((id) => id)
 }

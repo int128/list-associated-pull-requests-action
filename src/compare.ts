@@ -23,7 +23,7 @@ export const compareCommits = async (context: Context, inputs: Inputs): Promise<
   await fetchCommitsBetweenBaseHead(context, workspace, inputs.base, inputs.head)
 
   const commits = await git.getCommits({ cwd: workspace, base: inputs.base, head: inputs.head })
-  core.info(`Compare: total ${commits.length} commits`)
+  core.info(`Total ${commits.length} commits between base and head`)
   if (commits.length === 0) {
     throw new Error(`no commit between base and head`)
   }
