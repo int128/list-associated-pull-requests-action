@@ -13,7 +13,7 @@ type GetCommitsInput = {
 }
 
 export const getCommits = async (input: GetCommitsInput): Promise<string[]> => {
-  const output = await exec.getExecOutput('git', ['log', '--pretty=format:%H', input.base, input.head], {
+  const output = await exec.getExecOutput('git', ['log', '--pretty=format:%H', `${input.base}...${input.head}`], {
     cwd: input.cwd,
   })
   return output.stdout.trim().split('\n')
