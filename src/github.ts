@@ -1,8 +1,11 @@
 import assert from 'node:assert'
+import * as core from '@actions/core'
 import { Octokit } from '@octokit/action'
 import { retry } from '@octokit/plugin-retry'
 
 export const getOctokit = () => new (Octokit.plugin(retry))()
+
+export const getToken = () => core.getInput('token')
 
 export type Context = {
   repo: {

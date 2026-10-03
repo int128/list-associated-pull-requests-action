@@ -1,6 +1,6 @@
 import * as core from '@actions/core'
 import * as exec from '@actions/exec'
-import type { Context } from './github.js'
+import { type Context, getToken } from './github.js'
 
 export const init = async (cwd: string) => {
   await exec.exec('git', ['init', '--quiet', '.'], { cwd })
@@ -71,7 +71,7 @@ export const gitTokenConfigFlags = (context: Context) => {
 }
 
 const authorizationHeader = () => {
-  const credentials = Buffer.from(`x-access-token:${core.getInput('token')}`).toString('base64')
+  const credentials = Buffer.from(`x-access-token:${getToken()}`).toString('base64')
   core.setSecret(credentials)
   return `AUTHORIZATION: basic ${credentials}`
 }
