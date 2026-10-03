@@ -14,7 +14,7 @@ export type Context = {
 }
 
 export const getContext = (): Context => {
-  // https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/store-information-in-variables#default-environment-variables
+  // https://docs.github.com/en/actions/reference/workflows-and-actions/variables#default-environment-variables
   return {
     repo: getRepo(),
     serverUrl: getEnv('GITHUB_SERVER_URL'),

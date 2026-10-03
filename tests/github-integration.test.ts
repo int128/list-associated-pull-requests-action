@@ -25,6 +25,8 @@ describe.runIf(process.env.INTEGRATION_TEST_GITHUB_TOKEN)('GitHub integration te
           owner: 'int128',
           repo: 'list-associated-pull-requests-action',
         },
+        serverUrl: 'https://github.com',
+        runnerTemp: '/tmp',
       },
     )
     expect({
