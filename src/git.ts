@@ -2,7 +2,9 @@ import * as core from '@actions/core'
 import * as exec from '@actions/exec'
 import type { Context } from './github.js'
 
-export const init = async (cwd: string) => await exec.exec('git', ['init', '--quiet', '.'], { cwd })
+export const init = async (cwd: string) => {
+  await exec.exec('git', ['init', '--quiet', '.'], { cwd })
+}
 
 type GetCommitsInput = {
   cwd: string
@@ -40,7 +42,14 @@ type FetchInput = {
 export const fetch = async (input: FetchInput, context: Context) =>
   await exec.exec(
     'git',
-    [...gitTokenConfigFlags(context), 'fetch', 'origin', '--quiet', `--depth=${input.depth}`, ...input.refs],
+    [
+      ...gitTokenConfigFlags(context),
+      'fetch',
+      `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}.git`,
+      '--quiet',
+      `--depth=${input.depth}`,
+      ...input.refs,
+    ],
     {
       cwd: input.cwd,
       env: {

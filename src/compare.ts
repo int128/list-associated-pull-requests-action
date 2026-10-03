@@ -22,11 +22,11 @@ export const compareCommits = async (context: Context, inputs: Inputs): Promise<
   await git.init(workspace)
 
   for (let depth = 1000; depth < 10000; depth += 1000) {
+    await git.fetch({ cwd: workspace, refs: [inputs.base, inputs.head], depth }, context)
     if (await git.canMerge({ cwd: workspace, base: inputs.base, head: inputs.head })) {
       core.info(`Fetched commits required to merge base and head`)
       break
     }
-    await git.fetch({ cwd: workspace, refs: [inputs.base, inputs.head], depth }, context)
   }
 
   const commits = await git.getCommits({ cwd: workspace, base: inputs.base, head: inputs.head })
