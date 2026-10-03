@@ -23,13 +23,17 @@ export const compareCommits = async (context: Context, inputs: Inputs): Promise<
   await fetchCommitsBetweenBaseHead(context, workspace, inputs.base, inputs.head)
 
   const commits = await git.getCommits({ cwd: workspace, base: inputs.base, head: inputs.head })
-  const commitIds = new Set<string>(commits)
-  core.info(`Compare: total ${commitIds.size} commits`)
+  core.info(`Compare: total ${commits.length} commits`)
+  if (commits.length === 0) {
+    throw new Error(`no commit between base and head`)
+  }
 
   const earliestCommitId = commits[commits.length - 1]
-  const earliestCommitDate = await git.getCommitDate(workspace, earliestCommitId)
-
-  return { commitIds, earliestCommitId, earliestCommitDate }
+  return {
+    commitIds: new Set<string>(commits),
+    earliestCommitId,
+    earliestCommitDate: await git.getCommitDate(workspace, earliestCommitId),
+  }
 }
 
 const fetchCommitsBetweenBaseHead = async (context: Context, cwd: string, base: string, head: string) => {
