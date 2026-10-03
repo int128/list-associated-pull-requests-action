@@ -1,5 +1,5 @@
 import assert from 'node:assert'
-import { CommitPullMap } from './queries/getCommitPulls.js'
+import type { CommitPullMap } from './queries/getCommitPulls.js'
 
 export type Commit = {
   commitId: string

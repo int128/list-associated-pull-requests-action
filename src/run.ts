@@ -5,8 +5,8 @@ import type { Context } from './github.js'
 import {
   buildCommitHistoryGroups,
   type Commit,
-  type PathCommitMap,
   extractOthersFromCommitHistoryGroups,
+  type PathCommitMap,
 } from './history.js'
 import { getCommitPulls } from './queries/getCommitPulls.js'
 
