@@ -2,6 +2,8 @@ import * as core from '@actions/core'
 import * as exec from '@actions/exec'
 import type { Context } from './github.js'
 
+export const init = async (cwd: string) => await exec.exec('git', ['init', '--quiet', '.'], { cwd })
+
 type GetCommitsInput = {
   cwd: string
   base: string

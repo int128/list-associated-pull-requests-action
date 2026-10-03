@@ -19,6 +19,7 @@ type Outputs = {
 
 export const compareCommits = async (context: Context, inputs: Inputs): Promise<Outputs> => {
   const workspace = await mkdtemp(path.join(context.runnerTemp, `${inputs.owner}-${inputs.repo}-`))
+  await git.init(workspace)
 
   for (let depth = 1000; depth < 10000; depth += 1000) {
     if (await git.canMerge({ cwd: workspace, base: inputs.base, head: inputs.head })) {
