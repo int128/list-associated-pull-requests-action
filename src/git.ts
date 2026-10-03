@@ -11,14 +11,19 @@ type GetCommits = {
   cwd: string
   base: string
   head: string
+  path: string
 }
 
 export const getCommits = async (input: GetCommits): Promise<string[]> => {
-  const output = await exec.getExecOutput('git', ['log', '--pretty=%H', `${input.base}..${input.head}`], {
-    cwd: input.cwd,
-    // Suppress output to avoid large logs
-    outStream: new stream.PassThrough(),
-  })
+  const output = await exec.getExecOutput(
+    'git',
+    ['log', '--pretty=%H', `${input.base}..${input.head}`, '--', input.path],
+    {
+      cwd: input.cwd,
+      // Suppress output to avoid large logs
+      outStream: new stream.PassThrough(),
+    },
+  )
   return output.stdout.split('\n').filter((id) => id)
 }
 
@@ -50,8 +55,9 @@ export const fetch = async (input: Fetch, context: Context) =>
       'fetch',
       `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}.git`,
       '--quiet',
-      // Do not fetch tree and blob
-      '--filter=tree:0',
+      // Do not fetch blobs. Trees are required for path-limited git log.
+      // Keep trees locally because path-limited `git log` needs them.
+      '--filter=blob:none',
       `--depth=${input.depth}`,
       ...input.refs,
     ],
