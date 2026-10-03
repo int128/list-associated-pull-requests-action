@@ -1,20 +1,27 @@
 import assert from 'node:assert'
+import * as core from '@actions/core'
 import { Octokit } from '@octokit/action'
 import { retry } from '@octokit/plugin-retry'
 
 export const getOctokit = () => new (Octokit.plugin(retry))()
+
+export const getToken = () => core.getInput('token')
 
 export type Context = {
   repo: {
     owner: string
     repo: string
   }
+  serverUrl: string
+  runnerTemp: string
 }
 
 export const getContext = (): Context => {
-  // https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/store-information-in-variables#default-environment-variables
+  // https://docs.github.com/en/actions/reference/workflows-and-actions/variables#default-environment-variables
   return {
     repo: getRepo(),
+    serverUrl: getEnv('GITHUB_SERVER_URL'),
+    runnerTemp: getEnv('RUNNER_TEMP'),
   }
 }
 

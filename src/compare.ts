@@ -1,5 +1,8 @@
+import { mkdtemp } from 'node:fs/promises'
+import path from 'node:path'
 import * as core from '@actions/core'
-import type { Octokit } from '@octokit/action'
+import * as git from './git.js'
+import type { Context } from './github.js'
 
 type Inputs = {
   owner: string
@@ -14,35 +17,33 @@ type Outputs = {
   earliestCommitDate: Date
 }
 
-export const compareCommits = async (octokit: Octokit, inputs: Inputs): Promise<Outputs> => {
-  const compareIterator = octokit.paginate.iterator(octokit.rest.repos.compareCommitsWithBasehead, {
-    owner: inputs.owner,
-    repo: inputs.repo,
-    basehead: `${inputs.base}...${inputs.head}`,
-    per_page: 100,
-  })
+export const compareCommits = async (context: Context, inputs: Inputs): Promise<Outputs> => {
+  const workspace = await mkdtemp(path.join(context.runnerTemp, `${inputs.owner}-${inputs.repo}-`))
+  await git.init(workspace)
+  await fetchCommitsBetweenBaseHead(context, workspace, inputs.base, inputs.head)
 
-  const commitIds = new Set<string>()
-  let earliestCommitDate = new Date()
-  let earliestCommitId = ''
-  for await (const _compare of compareIterator) {
-    // workaround for https://github.com/octokit/plugin-paginate-rest.js/issues/647#issuecomment-2720580932
-    const compare = _compare as Awaited<ReturnType<typeof octokit.rest.repos.compareCommitsWithBasehead>>
-    for (const commit of compare.data.commits) {
-      commitIds.add(commit.sha)
-      if (commit.commit.committer?.date) {
-        const d = new Date(commit.commit.committer.date)
-        if (d < earliestCommitDate) {
-          earliestCommitDate = d
-          earliestCommitId = commit.sha
-        }
-      }
-    }
-    core.info(
-      `Compare: received ${commitIds.size} / ${compare.data.total_commits} commits ` +
-        `(ratelimit-remaining: ${compare.headers['x-ratelimit-remaining']})`,
-    )
+  const commits = await git.getCommits({ cwd: workspace, base: inputs.base, head: inputs.head })
+  core.info(`Total ${commits.length} commits between base and head`)
+  if (commits.length === 0) {
+    throw new Error(`no commit between base and head`)
   }
-  core.info(`Compare: total ${commitIds.size} commits`)
-  return { commitIds, earliestCommitId, earliestCommitDate }
+
+  const earliestCommitId = commits[commits.length - 1]
+  return {
+    commitIds: new Set<string>(commits),
+    earliestCommitId,
+    earliestCommitDate: await git.getCommitDate(workspace, earliestCommitId),
+  }
+}
+
+const fetchCommitsBetweenBaseHead = async (context: Context, cwd: string, base: string, head: string) => {
+  const FETCH_HARD_LIMIT = 50000
+  for (let depth = 1000; depth < FETCH_HARD_LIMIT; depth += 1000) {
+    await git.fetch({ cwd, refs: [base, head], depth }, context)
+    if (await git.hasMergeBase({ cwd, base, head })) {
+      core.info(`Fetched commits between base and head`)
+      return
+    }
+  }
+  throw new Error(`too many commits between base and head`)
 }

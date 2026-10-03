@@ -34,7 +34,7 @@ export const run = async (inputs: Inputs, octokit: Octokit, context: Context): P
   const { base, head } = await determineBaseHeadFromInputs(inputs, octokit, context)
 
   core.startGroup(`Compare base ${base} and head ${head}`)
-  const compare = await compareCommits(octokit, {
+  const compare = await compareCommits(context, {
     owner: context.repo.owner,
     repo: context.repo.repo,
     base,
