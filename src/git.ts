@@ -20,7 +20,7 @@ export const getCommits = async (input: GetCommitsInput): Promise<string[]> => {
 }
 
 export const getCommitDate = async (cwd: string, id: string): Promise<Date> => {
-  const output = await exec.getExecOutput('git', ['log', '--pretty=format:%cI', id], { cwd })
+  const output = await exec.getExecOutput('git', ['log', '-1', '--pretty=format:%cI', id], { cwd })
   return new Date(output.stdout.trim())
 }
 
