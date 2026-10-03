@@ -20,14 +20,7 @@ type Outputs = {
 export const compareCommits = async (context: Context, inputs: Inputs): Promise<Outputs> => {
   const workspace = await mkdtemp(path.join(context.runnerTemp, `${inputs.owner}-${inputs.repo}-`))
   await git.init(workspace)
-
-  for (let depth = 1000; depth < 10000; depth += 1000) {
-    await git.fetch({ cwd: workspace, refs: [inputs.base, inputs.head], depth }, context)
-    if (await git.canMerge({ cwd: workspace, base: inputs.base, head: inputs.head })) {
-      core.info(`Fetched commits required to merge base and head`)
-      break
-    }
-  }
+  await fetchCommitsBetweenBaseHead(context, workspace, inputs.base, inputs.head)
 
   const commits = await git.getCommits({ cwd: workspace, base: inputs.base, head: inputs.head })
   const commitIds = new Set<string>(commits)
@@ -37,4 +30,16 @@ export const compareCommits = async (context: Context, inputs: Inputs): Promise<
   const earliestCommitDate = await git.getCommitDate(workspace, earliestCommitId)
 
   return { commitIds, earliestCommitId, earliestCommitDate }
+}
+
+const fetchCommitsBetweenBaseHead = async (context: Context, cwd: string, base: string, head: string) => {
+  const FETCH_HARD_LIMIT = 100000
+  for (let depth = 1000; depth < FETCH_HARD_LIMIT; depth += 1000) {
+    await git.fetch({ cwd, refs: [base, head], depth }, context)
+    if (await git.canMerge({ cwd, base, head })) {
+      core.info(`Fetched commits between base and head`)
+      return
+    }
+  }
+  throw new Error(`too many commits between base and head`)
 }
