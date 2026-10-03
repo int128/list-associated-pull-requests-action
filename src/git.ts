@@ -50,6 +50,8 @@ export const fetch = async (input: FetchInput, context: Context) =>
       'fetch',
       `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}.git`,
       '--quiet',
+      // Do not fetch tree and blob
+      '--filter=tree:0',
       `--depth=${input.depth}`,
       ...input.refs,
     ],
