@@ -40,7 +40,7 @@ const fetchCommitsBetweenBaseHead = async (context: Context, cwd: string, base: 
   const FETCH_HARD_LIMIT = 100000
   for (let depth = 1000; depth < FETCH_HARD_LIMIT; depth += 1000) {
     await git.fetch({ cwd, refs: [base, head], depth }, context)
-    if (await git.canMerge({ cwd, base, head })) {
+    if (await git.hasMergeBase({ cwd, base, head })) {
       core.info(`Fetched commits between base and head`)
       return
     }

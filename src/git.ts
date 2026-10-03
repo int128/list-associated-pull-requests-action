@@ -7,13 +7,13 @@ export const init = async (cwd: string) => {
   await exec.exec('git', ['init', '--quiet', '.'], { cwd })
 }
 
-type GetCommitsInput = {
+type GetCommits = {
   cwd: string
   base: string
   head: string
 }
 
-export const getCommits = async (input: GetCommitsInput): Promise<string[]> => {
+export const getCommits = async (input: GetCommits): Promise<string[]> => {
   const output = await exec.getExecOutput('git', ['log', '--pretty=%H', `${input.base}..${input.head}`], {
     cwd: input.cwd,
     // Suppress output to avoid large logs
@@ -27,22 +27,22 @@ export const getCommitDate = async (cwd: string, id: string): Promise<Date> => {
   return new Date(output.stdout.trim())
 }
 
-type CanMergeInput = {
+type HasMergeBase = {
   cwd: string
   base: string
   head: string
 }
 
-export const canMerge = async (input: CanMergeInput): Promise<boolean> =>
+export const hasMergeBase = async (input: HasMergeBase): Promise<boolean> =>
   (await exec.exec('git', ['merge-base', input.base, input.head], { cwd: input.cwd, ignoreReturnCode: true })) === 0
 
-type FetchInput = {
+type Fetch = {
   cwd: string
   refs: string[]
   depth: number
 }
 
-export const fetch = async (input: FetchInput, context: Context) =>
+export const fetch = async (input: Fetch, context: Context) =>
   await exec.exec(
     'git',
     [
@@ -64,7 +64,7 @@ export const fetch = async (input: FetchInput, context: Context) =>
     },
   )
 
-export const gitTokenConfigFlags = (context: Context) => {
+const gitTokenConfigFlags = (context: Context) => {
   const origin = new URL(context.serverUrl).origin
   return [
     // Reset http.extraheader config set by actions/checkout
