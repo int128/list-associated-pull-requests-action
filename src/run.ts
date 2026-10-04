@@ -2,13 +2,7 @@ import * as core from '@actions/core'
 import type { Octokit } from '@octokit/action'
 import { compareCommits } from './compare.js'
 import type { Context } from './github.js'
-import {
-  buildCommitHistoryGroups,
-  type Commit,
-  extractOthersFromCommitHistoryGroups,
-  type PathCommitMap,
-} from './history.js'
-import { getCommitPulls } from './queries/getCommitPulls.js'
+import { buildOthers, buildPathPullMap, fetchCommitPullMap, type PathPullMap, type PullMap } from './history.js'
 
 type Inputs = {
   pullRequest?: number
@@ -19,6 +13,16 @@ type Inputs = {
   maxFetchCommits: number | undefined
   maxFetchDays: number | undefined
 }
+
+type Commit =
+  | { commitId: string }
+  | {
+      pull: {
+        number: number
+        title: string
+        author: string
+      }
+    }
 
 type Outputs = {
   body: string
@@ -31,53 +35,55 @@ type Outputs = {
 }
 
 export const run = async (inputs: Inputs, octokit: Octokit, context: Context): Promise<Outputs> => {
+  core.summary.addHeading('list-associated-pull-requests-action summary', 2)
+
   const groupByPaths = sanitizePaths(inputs.groupByPaths)
   const { base, head } = await determineBaseHeadFromInputs(inputs, octokit, context)
 
   core.startGroup(`Compare base ${base} and head ${head}`)
-  const pathCommitIdsMap = await compareCommits(context, {
+  const pathCommitIdSetMap = await compareCommits(context, {
     owner: context.repo.owner,
     repo: context.repo.repo,
     base,
     head,
-    paths: [...groupByPaths, ...(inputs.showOthersGroup ? ['.'] : [])],
+    paths: groupByPaths,
+    includeRoot: inputs.showOthersGroup,
   })
   core.endGroup()
 
-  core.summary.addHeading('list-associated-pull-requests-action summary', 2)
-
-  const commitIdSet = new Set(pathCommitIdsMap.values().flatMap((set) => [...set]))
-  const pullsByCommitId = await getCommitPulls(octokit, context.repo.owner, context.repo.repo, commitIdSet)
-  const allGroups = buildCommitHistoryGroups(pathCommitIdsMap, pullsByCommitId)
+  const commitIdSet = new Set(pathCommitIdSetMap.values().flatMap((x) => x.values()))
+  const commitPullMap = await fetchCommitPullMap(commitIdSet, octokit, context)
+  const pathPullMap = buildPathPullMap(pathCommitIdSetMap, commitPullMap)
 
   if (inputs.showOthersGroup) {
-    const commitHistoryGroupsWithOthers = extractOthersFromCommitHistoryGroups(allGroups)
-    writeSummaryOfCommitHistoryGroups(commitHistoryGroupsWithOthers.groups)
-    writeSummaryOfCommitHistoryGroups(new Map([['Others', commitHistoryGroupsWithOthers.others]]))
-    await core.summary.write()
-    const bodyGroups = formatCommitHistoryGroups(commitHistoryGroupsWithOthers.groups)
-    const bodyOthers = formatCommitHistoryGroups(new Map([['Others', commitHistoryGroupsWithOthers.others]]))
+    const others = buildOthers(pathCommitIdSetMap, commitPullMap)
+    const nonRootPathPullMap = new Map(pathPullMap)
+    nonRootPathPullMap.delete('.')
+    writeSummaryOfPathCommitMap(nonRootPathPullMap)
+    writeSummaryOfPathCommitMap(new Map([['Others', others]]))
+    const bodyGroups = formatCommitHistoryGroups(nonRootPathPullMap)
+    const bodyOthers = formatCommitHistoryGroups(new Map([['Others', others]]))
     return {
       body: [bodyGroups, bodyOthers].join('\n').trim(),
       bodyGroups,
       bodyOthers,
       json: {
-        groups: Object.fromEntries(commitHistoryGroupsWithOthers.groups),
-        others: commitHistoryGroupsWithOthers.others,
+        groups: Object.fromEntries(nonRootPathPullMap.entries().map(([path, pullMap]) => [path, renderPulls(pullMap)])),
+        others: renderPulls(others),
       },
     }
   }
 
-  const commitHistoryGroups: PathCommitMap = new Map(groupByPaths.map((path) => [path, allGroups.get(path) ?? []]))
-  writeSummaryOfCommitHistoryGroups(commitHistoryGroups)
-  await core.summary.write()
-  const body = formatCommitHistoryGroups(commitHistoryGroups)
+  writeSummaryOfPathCommitMap(pathPullMap)
+  const body = formatCommitHistoryGroups(pathPullMap)
   return {
     body,
     bodyGroups: body,
     bodyOthers: '',
     json: {
-      groups: Object.fromEntries(commitHistoryGroups),
+      groups: Object.fromEntries(
+        pathPullMap.entries().map(([path, commitPullMap]) => [path, renderPulls(commitPullMap)]),
+      ),
       others: [],
     },
   }
@@ -102,38 +108,43 @@ const determineBaseHeadFromInputs = async (inputs: Inputs, octokit: Octokit, con
   return { base, head }
 }
 
-const formatCommitHistoryGroups = (commitHistoryGroups: PathCommitMap): string => {
+const renderPulls = (pullMap: PullMap): Commit[] =>
+  pullMap
+    .values()
+    .map((pullOrCommitId) =>
+      typeof pullOrCommitId === 'object' ? { pull: pullOrCommitId } : { commitId: pullOrCommitId },
+    )
+    .toArray()
+
+const formatCommitHistoryGroups = (pathPullMap: PathPullMap): string => {
   const body = []
-  for (const [path, commits] of commitHistoryGroups) {
+  for (const [path, pullMap] of pathPullMap) {
     body.push(`### ${path}`)
     body.push(
-      ...commits.map((commit) => {
-        if (commit.pull) {
-          return `- #${commit.pull.number} @${commit.pull.author}`
+      ...pullMap.values().map((pullOrCommitId) => {
+        if (typeof pullOrCommitId === 'object') {
+          return `- #${pullOrCommitId.number} @${pullOrCommitId.author}`
         }
-        return `- ${commit.commitId}`
+        return `- ${pullOrCommitId}`
       }),
     )
   }
   return body.join('\n')
 }
 
-const writeSummaryOfCommitHistoryGroups = (commitHistoryGroups: PathCommitMap) => {
-  for (const [path, commits] of commitHistoryGroups) {
+const writeSummaryOfPathCommitMap = (pathPullMap: PathPullMap) => {
+  for (const [path, pullMap] of pathPullMap) {
     core.summary.addHeading(path, 3)
     core.summary.addTable([
       [
         { data: 'Commit', header: true },
         { data: 'Pull Request', header: true },
       ],
-      ...commits.map((commit) => {
-        if (commit.pull) {
-          return [
-            `<code>${commit.commitId}</code>`,
-            `#${commit.pull.number} ${commit.pull.title} @${commit.pull.author}`,
-          ]
+      ...pullMap.values().map((pullOrCommitId) => {
+        if (typeof pullOrCommitId === 'object') {
+          return [`#${pullOrCommitId.number}`, `${pullOrCommitId.title} @${pullOrCommitId.author}`]
         }
-        return [`<code>${commit.commitId}</code>`, '-']
+        return [`<code>${pullOrCommitId}</code>`, '-']
       }),
     ])
   }

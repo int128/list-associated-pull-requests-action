@@ -10,16 +10,23 @@ type Inputs = {
   base: string
   head: string
   paths: string[]
+  includeRoot: boolean
 }
 
-export const compareCommits = async (context: Context, inputs: Inputs): Promise<Map<string, Set<string>>> => {
+export type PathCommitIdSetMap = ReadonlyMap<string, Set<string>>
+
+export const compareCommits = async (context: Context, inputs: Inputs): Promise<PathCommitIdSetMap> => {
   const workspace = await mkdtemp(path.join(context.runnerTemp, `${inputs.owner}-${inputs.repo}-`))
   await git.init(workspace)
   await fetchCommitsBetweenBaseHead(context, workspace, inputs.base, inputs.head)
 
-  const pathCommitIdsMap = new Map<string, Set<string>>()
-  for (const path of inputs.paths) {
-    const commitIds = new Set<string>(
+  const paths = [...inputs.paths]
+  if (inputs.includeRoot) {
+    paths.push('.')
+  }
+  const pathCommitIdSetMap = new Map<string, Set<string>>()
+  for (const path of paths) {
+    const commitIdSet = new Set<string>(
       await git.getCommits({
         cwd: workspace,
         base: inputs.base,
@@ -27,10 +34,10 @@ export const compareCommits = async (context: Context, inputs: Inputs): Promise<
         path,
       }),
     )
-    core.info(`${path}: ${commitIds.size} commits`)
-    pathCommitIdsMap.set(path, commitIds)
+    core.info(`${path}: ${commitIdSet.size} commits`)
+    pathCommitIdSetMap.set(path, commitIdSet)
   }
-  return pathCommitIdsMap
+  return pathCommitIdSetMap
 }
 
 const fetchCommitsBetweenBaseHead = async (context: Context, cwd: string, base: string, head: string) => {

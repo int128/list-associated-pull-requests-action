@@ -1,4 +1,5 @@
 import assert from 'node:assert'
+import { tmpdir } from 'node:os'
 import { Octokit } from '@octokit/action'
 import { describe, expect, it, vi } from 'vitest'
 import * as github from '../src/github.js'
@@ -29,7 +30,7 @@ describe.runIf(process.env.INTEGRATION_TEST_GITHUB_TOKEN)('GitHub integration te
           repo: 'list-associated-pull-requests-action',
         },
         serverUrl: 'https://github.com',
-        runnerTemp: '/tmp',
+        runnerTemp: tmpdir(),
       },
     )
     expect({

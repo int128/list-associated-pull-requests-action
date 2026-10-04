@@ -17,6 +17,8 @@ const main = async (): Promise<void> => {
     getContext(),
   )
 
+  await core.summary.write()
+
   core.setOutput('body', outputs.body)
   core.setOutput('body-groups', outputs.bodyGroups)
   core.setOutput('body-others', outputs.bodyOthers)

@@ -2,9 +2,7 @@ import * as core from '@actions/core'
 
 const DO_NOT_RETRY_CODES = [400, 401, 404, 422, 451]
 
-export type RetrySpec<V> = {
-  variables: V
-  retryVariables: (current: V) => V
+export type RetrySpec = {
   remainingCount: number
 }
 
@@ -19,10 +17,10 @@ export type RetrySpec<V> = {
 //      "message":"Something went wrong while executing your query. This may be the result of a timeout, or it could be a GitHub bug. Please include `0000:0000:000000:000000:00000000` when reporting this issue."
 //    }]
 //  }
-export const retryHttpError = async <T, V>(query: (v: V) => Promise<T>, spec: RetrySpec<V>): Promise<T> => {
+export const retryHttpError = async <T>(query: () => Promise<T>, spec: RetrySpec): Promise<T> => {
   let response: T
   try {
-    response = await query(spec.variables)
+    response = await query()
   } catch (error) {
     if (!isRequestError(error)) {
       throw error
@@ -39,7 +37,7 @@ export const retryHttpError = async <T, V>(query: (v: V) => Promise<T>, spec: Re
     if (error.status === 403) {
       const retryAfterMs = getRetryAfterHeaderMs(error)
       const afterMs = retryAfterMs + newJitter(retryAfterMs)
-      logger(error, afterMs, spec.variables)
+      logger(error, afterMs)
       await sleep(afterMs)
       return await retryHttpError(query, {
         ...spec,
@@ -50,17 +48,13 @@ export const retryHttpError = async <T, V>(query: (v: V) => Promise<T>, spec: Re
 
     // For 502 error, retry with the new variables.
     if (error.status === 502) {
-      logger(error, 0, spec.variables)
-      return await retryHttpError(query, {
-        ...spec,
-        variables: spec.retryVariables(spec.variables),
-        remainingCount: spec.remainingCount - 1,
-      })
+      logger(error, 0)
+      return await retryHttpError(query, { remainingCount: spec.remainingCount - 1 })
     }
 
     // For a temporary error, retry later.
     const afterMs = newJitter(10000)
-    logger(error, afterMs, spec.variables)
+    logger(error, afterMs)
     await sleep(afterMs)
     return await retryHttpError(query, {
       ...spec,
@@ -95,10 +89,9 @@ const newJitter = (maxMs: number) => Math.ceil(maxMs * Math.random())
 
 const sleep = (waitMs: number) => new Promise((resolve) => setTimeout(resolve, waitMs))
 
-const logger = <V>(error: RequestError, afterMs: number, v: V) => {
+const logger = (error: RequestError, afterMs: number) => {
   core.warning(`Retry after ${Math.round(afterMs / 1000)}s: HTTP ${error.status}: ${error.message}`)
   core.startGroup(`HTTP ${error.status}`)
-  core.info(JSON.stringify(v, undefined, 2))
   if (error.response) {
     core.info(`retry-after: ${error.response.headers['retry-after']}`)
     core.info(`x-github-request-id: ${error.response.headers['x-github-request-id']}`)
