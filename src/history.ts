@@ -21,7 +21,7 @@ export const fetchCommitPullMap = async (
   return mergedCommitPullMap
 }
 
-const splitArrayToChunks = <T>(a: readonly T[], batchSize: number): T[][] => {
+export const splitArrayToChunks = <T>(a: readonly T[], batchSize: number): T[][] => {
   const chunks: T[][] = []
   for (let offset = 0; offset < a.length; offset += batchSize) {
     chunks.push(a.slice(offset, offset + batchSize))
