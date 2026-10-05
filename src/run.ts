@@ -10,8 +10,6 @@ type Inputs = {
   head?: string
   groupByPaths: string[]
   showOthersGroup: boolean
-  maxFetchCommits: number | undefined
-  maxFetchDays: number | undefined
 }
 
 type Commit =
