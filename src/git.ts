@@ -27,27 +27,7 @@ export const getCommits = async (input: GetCommits): Promise<string[]> => {
   return output.stdout.split('\n').filter((id) => id)
 }
 
-export const getCommitDate = async (cwd: string, id: string): Promise<Date> => {
-  const output = await exec.getExecOutput('git', ['log', '-1', '--pretty=format:%cI', id], { cwd })
-  return new Date(output.stdout.trim())
-}
-
-type HasMergeBase = {
-  cwd: string
-  base: string
-  head: string
-}
-
-export const hasMergeBase = async (input: HasMergeBase): Promise<boolean> =>
-  (await exec.exec('git', ['merge-base', input.base, input.head], { cwd: input.cwd, ignoreReturnCode: true })) === 0
-
-type Fetch = {
-  cwd: string
-  refs: string[]
-  depth: number
-}
-
-export const fetch = async (input: Fetch, context: Context) =>
+export const fetch = async (cwd: string, context: Context, args: string[]) =>
   await exec.exec(
     'git',
     [
@@ -55,14 +35,10 @@ export const fetch = async (input: Fetch, context: Context) =>
       'fetch',
       `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}.git`,
       '--quiet',
-      // Do not fetch blobs. Trees are required for path-limited git log.
-      // Keep trees locally because path-limited `git log` needs them.
-      '--filter=blob:none',
-      `--depth=${input.depth}`,
-      ...input.refs,
+      ...args,
     ],
     {
-      cwd: input.cwd,
+      cwd,
       env: {
         ...process.env,
         CONFIG_VALUE_AUTHORIZATION_HEADER: authorizationHeader(),

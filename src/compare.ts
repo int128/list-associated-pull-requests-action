@@ -41,14 +41,10 @@ export const compareCommits = async (context: Context, inputs: Inputs): Promise<
 }
 
 const fetchCommitsBetweenBaseHead = async (context: Context, cwd: string, base: string, head: string) => {
-  const FETCH_BATCH_SIZE = 500
-  const FETCH_HARD_LIMIT = 50000
-  for (let depth = FETCH_BATCH_SIZE; depth < FETCH_HARD_LIMIT; depth += FETCH_BATCH_SIZE) {
-    await git.fetch({ cwd, refs: [base, head], depth }, context)
-    if (await git.hasMergeBase({ cwd, base, head })) {
-      core.info(`Fetched commits between base and head`)
-      return
-    }
-  }
-  throw new Error(`too many commits between base and head`)
+  await git.fetch(cwd, context, [
+    // Do not fetch blobs. Trees are required for path-limited git log.
+    '--filter=blob:none',
+    base,
+    head,
+  ])
 }
