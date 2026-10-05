@@ -134,14 +134,15 @@ const writeSummaryOfPathPullSet = (pathPullSet: PathPullSet) => {
     core.summary.addHeading(path, 3)
     core.summary.addTable([
       [
-        { data: 'Commit', header: true },
-        { data: 'Pull Request', header: true },
+        { data: 'PR', header: true },
+        { data: 'Title', header: true },
+        { data: 'Author', header: true },
       ],
       ...pullSet.values().map((pullOrCommitId) => {
         if (typeof pullOrCommitId === 'object') {
-          return [`#${pullOrCommitId.number}`, `${pullOrCommitId.title} @${pullOrCommitId.author}`]
+          return [`#${pullOrCommitId.number}`, `${pullOrCommitId.title}`, `@${pullOrCommitId.author}`]
         }
-        return [`<code>${pullOrCommitId}</code>`, '-']
+        return [`<code>${pullOrCommitId}</code>`, '-', '-']
       }),
     ])
   }
