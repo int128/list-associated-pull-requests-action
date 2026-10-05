@@ -1,4 +1,5 @@
 import assert from 'node:assert'
+import * as core from '@actions/core'
 import type { Octokit } from '@octokit/action'
 import type { PathCommitIdSetMap } from './compare.js'
 import type { Context } from './github.js'
@@ -9,10 +10,11 @@ export const fetchCommitPullMap = async (
   octokit: Octokit,
   context: Context,
 ): Promise<CommitPullMap> => {
-  const chunks = splitArrayToChunks([...commitIdSet], 300)
+  const chunks = splitSet(commitIdSet.values(), 300)
   const mergedCommitPullMap = new Map<CommitId, Pull | null>()
   for (const chunk of chunks) {
-    const commitPullQuery = await executeCommitPullQuery(octokit, context.repo.owner, context.repo.repo, new Set(chunk))
+    core.info(`Fetching associated pull requests for ${chunk.size} commits`)
+    const commitPullQuery = await executeCommitPullQuery(octokit, context.repo.owner, context.repo.repo, chunk)
     const commitPullMap = buildCommitPullMap(commitPullQuery)
     for (const [commitId, pull] of commitPullMap) {
       mergedCommitPullMap.set(commitId, pull)
@@ -21,12 +23,14 @@ export const fetchCommitPullMap = async (
   return mergedCommitPullMap
 }
 
-export const splitArrayToChunks = <T>(a: readonly T[], batchSize: number): T[][] => {
-  const chunks: T[][] = []
-  for (let offset = 0; offset < a.length; offset += batchSize) {
-    chunks.push(a.slice(offset, offset + batchSize))
+export const splitSet = <T>(it: SetIterator<T>, batchSize: number): ReadonlySet<T>[] => {
+  for (const chunks = []; ; ) {
+    const chunk = new Set(it.take(batchSize))
+    if (chunk.size === 0) {
+      return chunks
+    }
+    chunks.push(chunk)
   }
-  return chunks
 }
 
 type CommitId = string
@@ -73,8 +77,7 @@ export const buildPathPullMap = (pathCommitIdSetMap: PathCommitIdSetMap, commitP
   )
 
 export const buildOthers = (pathCommitIdSetMap: PathCommitIdSetMap, commitPullMap: CommitPullMap): PullMap => {
-  const nonRoot = new Map(pathCommitIdSetMap)
-  nonRoot.delete('.')
+  const nonRoot = new Map(pathCommitIdSetMap.entries().filter(([path]) => path !== '.'))
   const nonRootCommitIdSet = new Set(nonRoot.values().flatMap((x) => x.values()))
 
   const root = pathCommitIdSetMap.get('.')

@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { buildOthers, buildPathPullMap, type CommitPullMap, splitArrayToChunks } from '../src/history.js'
+import { buildOthers, buildPathPullMap, type CommitPullMap, splitSet } from '../src/pull.js'
 
-describe('splitArrayToChunks', () => {
-  it('splits an array into chunks of the requested size', () => {
-    expect(splitArrayToChunks([1, 2, 3, 4, 5], 2)).toEqual([[1, 2], [3, 4], [5]])
+describe('splitSet', () => {
+  it('splits a set into chunks of the requested size', () => {
+    expect(splitSet(new Set([1, 2, 3, 4, 5]).values(), 2)).toEqual([new Set([1, 2]), new Set([3, 4]), new Set([5])])
   })
 
-  it('returns no chunks for an empty array', () => {
-    expect(splitArrayToChunks([], 2)).toEqual([])
+  it('returns no chunks for an empty set', () => {
+    expect(splitSet(new Set().values(), 2)).toEqual([])
   })
 })
 

@@ -39,17 +39,13 @@ export const executeCommitPullQuery = async (
 ): Promise<CommitPullQuery> => {
   const commitVarMap = new Map(commitIdSet.values().map((commitId, index) => [`v${index}`, commitId]))
   const query = createQuery(commitVarMap.keys().toArray())
-  return await core.group(
-    `query CommitPull(${owner}, ${name}, ${commitIdSet.size})`,
+  return await retryHttpError(
     async () =>
-      await retryHttpError(
-        async () =>
-          await octokit.graphql<CommitPullQuery>(query, {
-            owner,
-            name,
-            ...Object.fromEntries(commitVarMap),
-          }),
-        { remainingCount: 10 },
-      ),
+      await octokit.graphql<CommitPullQuery>(query, {
+        owner,
+        name,
+        ...Object.fromEntries(commitVarMap),
+      }),
+    { remainingCount: 10 },
   )
 }

@@ -2,7 +2,7 @@ import * as core from '@actions/core'
 import type { Octokit } from '@octokit/action'
 import { compareCommits } from './compare.js'
 import type { Context } from './github.js'
-import { buildOthers, buildPathPullMap, fetchCommitPullMap, type PathPullMap, type PullMap } from './history.js'
+import { buildOthers, buildPathPullMap, fetchCommitPullMap, type PathPullMap, type PullMap } from './pull.js'
 
 type Inputs = {
   pullRequest?: number
@@ -57,8 +57,7 @@ export const run = async (inputs: Inputs, octokit: Octokit, context: Context): P
 
   if (inputs.showOthersGroup) {
     const others = buildOthers(pathCommitIdSetMap, commitPullMap)
-    const nonRootPathPullMap = new Map(pathPullMap)
-    nonRootPathPullMap.delete('.')
+    const nonRootPathPullMap = new Map(pathPullMap.entries().filter(([path]) => path !== '.'))
     writeSummaryOfPathCommitMap(nonRootPathPullMap)
     writeSummaryOfPathCommitMap(new Map([['Others', others]]))
     const bodyGroups = formatCommitHistoryGroups(nonRootPathPullMap)
