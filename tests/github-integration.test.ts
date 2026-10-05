@@ -36,4 +36,31 @@ describe.runIf(process.env.INTEGRATION_TEST_GITHUB_TOKEN)('GitHub integration te
       body: outputs.body,
     }).toMatchSnapshot()
   }, 60000)
+
+  it('generates outputs of pr-491 without others', async () => {
+    assert(process.env.INTEGRATION_TEST_GITHUB_TOKEN)
+
+    // https://github.com/int128/list-associated-pull-requests-action/pull/491
+    const outputs = await run(
+      {
+        pullRequest: 491,
+        groupByPaths: ['src', 'tests'],
+        showOthersGroup: false,
+        maxFetchCommits: undefined,
+        maxFetchDays: undefined,
+      },
+      new Octokit({ auth: process.env.INTEGRATION_TEST_GITHUB_TOKEN, authStrategy: null }),
+      {
+        repo: {
+          owner: 'int128',
+          repo: 'list-associated-pull-requests-action',
+        },
+        serverUrl: 'https://github.com',
+        runnerTemp: '/tmp',
+      },
+    )
+    expect({
+      body: outputs.body,
+    }).toMatchSnapshot()
+  }, 60000)
 })

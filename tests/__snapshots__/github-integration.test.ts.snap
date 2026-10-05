@@ -494,3 +494,82 @@ exports[`GitHub integration test > generates outputs of pr-491 1`] = `
 - #5 @renovate",
 }
 `;
+
+exports[`GitHub integration test > generates outputs of pr-491 without others 1`] = `
+{
+  "body": "### src
+- #484 @int128
+- #479 @renovate
+- #477 @renovate
+- #476 @renovate
+- #474 @renovate
+- #470 @renovate
+- #466 @renovate
+- #453 @renovate
+- #463 @renovate
+- #462 @renovate
+- #461 @renovate
+- #458 @renovate
+- #456 @renovate
+- #454 @renovate
+- #450 @renovate
+- #448 @int128
+- #447 @int128
+- #446 @int128
+- #406 @renovate
+- #444 @int128
+- #437 @renovate
+- #435 @renovate
+- #434 @renovate
+- #428 @renovate
+- #427 @renovate
+- #424 @renovate
+- #422 @renovate
+- #417 @renovate
+- #413 @renovate
+- #412 @renovate
+- #410 @renovate
+- #401 @renovate
+- #382 @renovate
+- #343 @renovate
+- #339 @renovate
+- #338 @int128
+- #330 @renovate
+- #206 @renovate
+- #134 @renovate
+- #306 @int128
+- #305 @int128
+- #304 @ttokutake
+- #303 @int128
+- #302 @int128
+- #286 @int128
+- #278 @int128
+- #164 @int128
+- #156 @int128
+- #149 @renovate
+- #148 @int128
+- #143 @int128
+- #121 @int128
+- #103 @int128
+- #102 @int128
+- #94 @int128
+- #89 @int128
+- #88 @int128
+- #87 @int128
+- #78 @int128
+- #76 @int128
+- #75 @int128
+- #70 @int128
+- #69 @int128
+- #68 @int128
+- #6 @int128
+### tests
+- #440 @int128
+- #207 @renovate
+- #286 @int128
+- #156 @int128
+- #143 @int128
+- #121 @int128
+- #94 @int128",
+}
+`;
