@@ -1,4 +1,3 @@
-import * as core from '@actions/core'
 import type { Octokit } from '@octokit/action'
 import type { CommitPullFragment } from '../generated/graphql.js'
 import { retryHttpError } from './retry.js'

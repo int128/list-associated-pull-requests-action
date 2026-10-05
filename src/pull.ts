@@ -10,15 +10,16 @@ export const fetchCommitPullMap = async (
   octokit: Octokit,
   context: Context,
 ): Promise<CommitPullMap> => {
-  const chunks = splitSet(commitIdSet.values(), 300)
+  const FETCH_BATCH_SIZE = 100
   const mergedCommitPullMap = new Map<CommitId, Pull | null>()
-  for (const chunk of chunks) {
-    core.info(`Fetching associated pull requests for ${chunk.size} commits`)
+  core.info(`Fetching the associated pull requests for ${commitIdSet.size} commits`)
+  for (const chunk of splitSet(commitIdSet.values(), FETCH_BATCH_SIZE)) {
     const commitPullQuery = await executeCommitPullQuery(octokit, context.repo.owner, context.repo.repo, chunk)
     const commitPullMap = buildCommitPullMap(commitPullQuery)
     for (const [commitId, pull] of commitPullMap) {
       mergedCommitPullMap.set(commitId, pull)
     }
+    core.info(`Fetched ${mergedCommitPullMap.size} commits`)
   }
   return mergedCommitPullMap
 }
