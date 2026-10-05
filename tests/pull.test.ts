@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildOthers, buildPathPullMap, type CommitPullMap, splitSet } from '../src/pull.js'
+import { buildOthers, buildPathPullSet, type CommitPullMap, splitSet } from '../src/pull.js'
 
 describe('splitSet', () => {
   it('splits a set into chunks of the requested size', () => {
@@ -11,22 +11,22 @@ describe('splitSet', () => {
   })
 })
 
-describe('buildPathPullMap', () => {
+describe('buildPathPullSet', () => {
   it('maps commits to associated pulls and keeps commits without a pull request', () => {
     const commitPullMap: CommitPullMap = new Map([
       ['commit-with-pull', { number: 42, title: 'Add feature', author: 'octocat' }],
       ['commit-without-pull', null],
     ])
 
-    const result = buildPathPullMap(
+    const result = buildPathPullSet(
       new Map([['src', new Set(['commit-with-pull', 'commit-without-pull', 'missing-from-pull-map'])]]),
       commitPullMap,
     )
 
-    expect([...(result.get('src')?.entries() ?? [])]).toEqual([
-      ['commit-with-pull', { number: 42, title: 'Add feature', author: 'octocat' }],
-      ['commit-without-pull', 'commit-without-pull'],
-      ['missing-from-pull-map', 'missing-from-pull-map'],
+    expect([...(result.get('src') ?? [])]).toEqual([
+      { number: 42, title: 'Add feature', author: 'octocat' },
+      'commit-without-pull',
+      'missing-from-pull-map',
     ])
   })
 })
@@ -48,9 +48,7 @@ describe('buildOthers', () => {
       commitPullMap,
     )
 
-    expect([...result.entries()]).toEqual([
-      ['only-root-commit', { number: 12, title: 'Other change', author: 'octocat' }],
-    ])
+    expect([...result]).toEqual([{ number: 12, title: 'Other change', author: 'octocat' }])
   })
 
   it('keeps root commits without an associated pull request', () => {
@@ -62,6 +60,6 @@ describe('buildOthers', () => {
       new Map([['grouped-commit', { number: 1, title: 'Grouped', author: 'octocat' }]]),
     )
 
-    expect([...result.entries()]).toEqual([['unassociated-commit', 'unassociated-commit']])
+    expect([...result]).toEqual(['unassociated-commit'])
   })
 })

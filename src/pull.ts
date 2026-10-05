@@ -59,25 +59,27 @@ const buildCommitPullMap = (commitPullQuery: CommitPullQuery): CommitPullMap =>
     }),
   )
 
-type PullNumberOrCommitId = number | CommitId
-
 type PullOrCommitId = Pull | CommitId
 
-export type PullMap = ReadonlyMap<PullNumberOrCommitId, PullOrCommitId>
+export type PullSet = ReadonlySet<PullOrCommitId>
 
-export type PathPullMap = ReadonlyMap<string, PullMap>
-
-export const buildPathPullMap = (pathCommitIdSetMap: PathCommitIdSetMap, commitPullMap: CommitPullMap): PathPullMap =>
-  new Map(
-    pathCommitIdSetMap
-      .entries()
-      .map(([path, commitIdSet]) => [
-        path,
-        new Map(commitIdSet.values().map((commitId) => [commitId, commitPullMap.get(commitId) ?? commitId])),
-      ]),
+const buildPullSet = (commitIdSet: Set<CommitId>, commitPullMap: CommitPullMap): PullSet =>
+  new Set(
+    new Map(
+      commitIdSet.values().map((commitId) => {
+        const pull = commitPullMap.get(commitId)
+        // Dudupe by pull number or commitId
+        return [pull?.number ?? commitId, pull ?? commitId]
+      }),
+    ).values(),
   )
 
-export const buildOthers = (pathCommitIdSetMap: PathCommitIdSetMap, commitPullMap: CommitPullMap): PullMap => {
+export type PathPullSet = ReadonlyMap<string, PullSet>
+
+export const buildPathPullSet = (pathCommitIdSetMap: PathCommitIdSetMap, commitPullMap: CommitPullMap): PathPullSet =>
+  new Map(pathCommitIdSetMap.entries().map(([path, commitIdSet]) => [path, buildPullSet(commitIdSet, commitPullMap)]))
+
+export const buildOthers = (pathCommitIdSetMap: PathCommitIdSetMap, commitPullMap: CommitPullMap): PullSet => {
   const nonRoot = new Map(pathCommitIdSetMap.entries().filter(([path]) => path !== '.'))
   const nonRootCommitIdSet = new Set(nonRoot.values().flatMap((x) => x.values()))
 
@@ -86,5 +88,5 @@ export const buildOthers = (pathCommitIdSetMap: PathCommitIdSetMap, commitPullMa
   const rootCommitIdSet = new Set(root.values())
 
   const othersCommitIdSet = rootCommitIdSet.difference(nonRootCommitIdSet)
-  return new Map(othersCommitIdSet.values().map((commitId) => [commitId, commitPullMap.get(commitId) ?? commitId]))
+  return buildPullSet(othersCommitIdSet, commitPullMap)
 }
