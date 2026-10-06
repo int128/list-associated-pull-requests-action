@@ -10,6 +10,7 @@ const main = async (): Promise<void> => {
       head: core.getInput('head') || undefined,
       groupByPaths: core.getMultilineInput('group-by-paths'),
       showOthersGroup: core.getBooleanInput('show-others-group', { required: true }),
+      commitPullQueryBatchSize: Number.parseInt(core.getInput('commit-pull-query-batch-size', { required: true }), 10),
     },
     getOctokit(),
     getContext(),

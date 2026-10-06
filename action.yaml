@@ -22,6 +22,10 @@ inputs:
     description: Show others group
     required: true
     default: 'true'
+  commit-pull-query-batch-size:
+    description: (Experimental) batch size for CommitPull query
+    required: true
+    default: 100
 
 outputs:
   body:

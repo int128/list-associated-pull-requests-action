@@ -10,6 +10,7 @@ type Inputs = {
   head?: string
   groupByPaths: string[]
   showOthersGroup: boolean
+  commitPullQueryBatchSize: number
 }
 
 type Commit =
@@ -50,7 +51,7 @@ export const run = async (inputs: Inputs, octokit: Octokit, context: Context): P
   core.endGroup()
 
   const commitIdSet = new Set(pathCommitIdSetMap.values().flatMap((x) => x.values()))
-  const commitPullMap = await fetchCommitPullMap(commitIdSet, octokit, context)
+  const commitPullMap = await fetchCommitPullMap(commitIdSet, inputs.commitPullQueryBatchSize, octokit, context)
   const pathPullSet = buildPathPullSet(pathCommitIdSetMap, commitPullMap)
 
   if (inputs.showOthersGroup) {

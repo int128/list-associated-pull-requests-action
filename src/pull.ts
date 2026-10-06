@@ -7,13 +7,13 @@ import { type CommitPullQuery, executeCommitPullQuery } from './queries/commitPu
 
 export const fetchCommitPullMap = async (
   commitIdSet: ReadonlySet<CommitId>,
+  batchSize: number,
   octokit: Octokit,
   context: Context,
 ): Promise<CommitPullMap> => {
-  const FETCH_BATCH_SIZE = 100
   const mergedCommitPullMap = new Map<CommitId, Pull | null>()
   core.info(`Fetching the associated pull requests for ${commitIdSet.size} commits`)
-  for (const chunk of splitSet(commitIdSet.values(), FETCH_BATCH_SIZE)) {
+  for (const chunk of splitSet(commitIdSet.values(), batchSize)) {
     const commitPullQuery = await executeCommitPullQuery(octokit, context.repo.owner, context.repo.repo, chunk)
     const commitPullMap = buildCommitPullMap(commitPullQuery)
     for (const [commitId, pull] of commitPullMap) {
