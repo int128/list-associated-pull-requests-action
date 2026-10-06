@@ -20,6 +20,7 @@ describe.runIf(process.env.INTEGRATION_TEST_GITHUB_TOKEN)('GitHub integration te
         pullRequest: 491,
         groupByPaths: ['src', 'tests', '.github'],
         showOthersGroup: true,
+        commitPullQueryBatchSize: 200,
       },
       new Octokit({ auth: process.env.INTEGRATION_TEST_GITHUB_TOKEN, authStrategy: null }),
       {
@@ -45,6 +46,7 @@ describe.runIf(process.env.INTEGRATION_TEST_GITHUB_TOKEN)('GitHub integration te
         pullRequest: 491,
         groupByPaths: ['src', 'tests'],
         showOthersGroup: false,
+        commitPullQueryBatchSize: 200,
       },
       new Octokit({ auth: process.env.INTEGRATION_TEST_GITHUB_TOKEN, authStrategy: null }),
       {
