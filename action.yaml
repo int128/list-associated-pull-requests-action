@@ -22,12 +22,10 @@ inputs:
     description: Show others group
     required: true
     default: 'true'
-  max-fetch-commits:
-    description: Maximum number of commits to fetch. Default is unlimited
-    required: false
-  max-fetch-days:
-    description: Maximum number of days to fetch history. Default is unlimited
-    required: false
+  commit-pull-query-batch-size:
+    description: (Experimental) batch size for CommitPull query
+    required: true
+    default: 100
 
 outputs:
   body:

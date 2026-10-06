@@ -2,12 +2,7 @@ import * as core from '@actions/core'
 import type { Octokit } from '@octokit/action'
 import { compareCommits } from './compare.js'
 import type { Context } from './github.js'
-import {
-  type Commit,
-  type CommitHistoryGroups,
-  getCommitHistoryGroups,
-  getCommitHistoryGroupsWithOthers,
-} from './history.js'
+import { buildOthers, buildPathPullSet, fetchCommitPullMap, type PathPullSet, type PullSet } from './pull.js'
 
 type Inputs = {
   pullRequest?: number
@@ -15,9 +10,18 @@ type Inputs = {
   head?: string
   groupByPaths: string[]
   showOthersGroup: boolean
-  maxFetchCommits: number | undefined
-  maxFetchDays: number | undefined
+  commitPullQueryBatchSize: number
 }
+
+type Commit =
+  | { commitId: string }
+  | {
+      pull: {
+        number: number
+        title: string
+        author: string
+      }
+    }
 
 type Outputs = {
   body: string
@@ -30,94 +34,57 @@ type Outputs = {
 }
 
 export const run = async (inputs: Inputs, octokit: Octokit, context: Context): Promise<Outputs> => {
+  core.summary.addHeading('list-associated-pull-requests-action summary', 2)
+
   const groupByPaths = sanitizePaths(inputs.groupByPaths)
   const { base, head } = await determineBaseHeadFromInputs(inputs, octokit, context)
 
   core.startGroup(`Compare base ${base} and head ${head}`)
-  const compare = await compareCommits(context, {
+  const pathCommitIdSetMap = await compareCommits(context, {
     owner: context.repo.owner,
     repo: context.repo.repo,
     base,
     head,
+    paths: groupByPaths,
+    includeRoot: inputs.showOthersGroup,
   })
   core.endGroup()
 
-  core.summary.addHeading('list-associated-pull-requests-action summary', 2)
-  core.summary.addRaw(
-    `Parsed ${compare.commitIds.size} commits between base <code>${base}</code> and head <code>${head}</code>.`,
-  )
-  core.info(`The earliest commit is ${compare.earliestCommitId} at ${compare.earliestCommitDate.toISOString()}`)
-
-  const sinceCommitDate = determineSinceCommitDate(compare.earliestCommitDate, inputs.maxFetchDays)
+  const commitIdSet = new Set(pathCommitIdSetMap.values().flatMap((x) => x.values()))
+  const commitPullMap = await fetchCommitPullMap(commitIdSet, inputs.commitPullQueryBatchSize, octokit, context)
+  const pathPullSet = buildPathPullSet(pathCommitIdSetMap, commitPullMap)
 
   if (inputs.showOthersGroup) {
-    const commitHistoryGroupsWithOthers = await getCommitHistoryGroupsWithOthers(octokit, {
-      owner: context.repo.owner,
-      name: context.repo.repo,
-      expression: head,
-      groupByPaths,
-      sinceCommitDate,
-      sinceCommitId: compare.earliestCommitId,
-      filterCommitIds: compare.commitIds,
-      maxFetchCommits: inputs.maxFetchCommits,
-    })
-    writeSummaryOfCommitHistoryGroups(commitHistoryGroupsWithOthers.groups)
-    writeSummaryOfCommitHistoryGroups(new Map([['Others', commitHistoryGroupsWithOthers.others]]))
-    await core.summary.write()
-    const bodyGroups = formatCommitHistoryGroups(commitHistoryGroupsWithOthers.groups)
-    const bodyOthers = formatCommitHistoryGroups(new Map([['Others', commitHistoryGroupsWithOthers.others]]))
+    const others = buildOthers(pathCommitIdSetMap, commitPullMap)
+    const nonRootPathPullSet = new Map(pathPullSet.entries().filter(([path]) => path !== '.'))
+    writeSummaryOfPathPullSet(nonRootPathPullSet)
+    writeSummaryOfPathPullSet(new Map([['Others', others]]))
+    const bodyGroups = formatPathPullSet(nonRootPathPullSet)
+    const bodyOthers = formatPathPullSet(new Map([['Others', others]]))
     return {
       body: [bodyGroups, bodyOthers].join('\n').trim(),
       bodyGroups,
       bodyOthers,
       json: {
-        groups: Object.fromEntries(commitHistoryGroupsWithOthers.groups),
-        others: commitHistoryGroupsWithOthers.others,
+        groups: Object.fromEntries(nonRootPathPullSet.entries().map(([path, pullMap]) => [path, renderPulls(pullMap)])),
+        others: renderPulls(others),
       },
     }
   }
 
-  const commitHistoryGroups = await getCommitHistoryGroups(octokit, {
-    owner: context.repo.owner,
-    name: context.repo.repo,
-    expression: head,
-    groupByPaths,
-    sinceCommitDate,
-    sinceCommitId: compare.earliestCommitId,
-    filterCommitIds: compare.commitIds,
-    maxFetchCommits: inputs.maxFetchCommits,
-  })
-  writeSummaryOfCommitHistoryGroups(commitHistoryGroups)
-  await core.summary.write()
-  const body = formatCommitHistoryGroups(commitHistoryGroups)
+  writeSummaryOfPathPullSet(pathPullSet)
+  const body = formatPathPullSet(pathPullSet)
   return {
     body,
     bodyGroups: body,
     bodyOthers: '',
     json: {
-      groups: Object.fromEntries(commitHistoryGroups),
+      groups: Object.fromEntries(
+        pathPullSet.entries().map(([path, commitPullMap]) => [path, renderPulls(commitPullMap)]),
+      ),
       others: [],
     },
   }
-}
-
-export const determineSinceCommitDate = (
-  earliestCommitDate: Date,
-  maxFetchDays: number | undefined,
-  now = new Date(),
-): Date => {
-  if (!maxFetchDays) {
-    return earliestCommitDate
-  }
-  const maxFetchDate = new Date(now)
-  maxFetchDate.setDate(maxFetchDate.getDate() - maxFetchDays)
-  if (maxFetchDate > earliestCommitDate) {
-    core.warning(
-      `It will fetch the history since ${maxFetchDate.toISOString()} because the earliest commit is too old.`,
-    )
-    return maxFetchDate
-  }
-  return earliestCommitDate
 }
 
 const sanitizePaths = (groupByPaths: string[]) => groupByPaths.filter((p) => p.length > 0 && !p.startsWith('#'))
@@ -139,38 +106,44 @@ const determineBaseHeadFromInputs = async (inputs: Inputs, octokit: Octokit, con
   return { base, head }
 }
 
-const formatCommitHistoryGroups = (commitHistoryGroups: CommitHistoryGroups): string => {
+const renderPulls = (pullMap: PullSet): Commit[] =>
+  pullMap
+    .values()
+    .map((pullOrCommitId) =>
+      typeof pullOrCommitId === 'object' ? { pull: pullOrCommitId } : { commitId: pullOrCommitId },
+    )
+    .toArray()
+
+const formatPathPullSet = (pathPullSet: PathPullSet): string => {
   const body = []
-  for (const [path, commits] of commitHistoryGroups) {
+  for (const [path, pullSet] of pathPullSet) {
     body.push(`### ${path}`)
     body.push(
-      ...commits.map((commit) => {
-        if (commit.pull) {
-          return `- #${commit.pull.number} @${commit.pull.author}`
+      ...pullSet.values().map((pullOrCommitId) => {
+        if (typeof pullOrCommitId === 'object') {
+          return `- #${pullOrCommitId.number} @${pullOrCommitId.author}`
         }
-        return `- ${commit.commitId}`
+        return `- ${pullOrCommitId}`
       }),
     )
   }
   return body.join('\n')
 }
 
-const writeSummaryOfCommitHistoryGroups = (commitHistoryGroups: CommitHistoryGroups) => {
-  for (const [path, commits] of commitHistoryGroups) {
+const writeSummaryOfPathPullSet = (pathPullSet: PathPullSet) => {
+  for (const [path, pullSet] of pathPullSet) {
     core.summary.addHeading(path, 3)
     core.summary.addTable([
       [
-        { data: 'Commit', header: true },
-        { data: 'Pull Request', header: true },
+        { data: 'PR', header: true },
+        { data: 'Title', header: true },
+        { data: 'Author', header: true },
       ],
-      ...commits.map((commit) => {
-        if (commit.pull) {
-          return [
-            `<code>${commit.commitId}</code>`,
-            `#${commit.pull.number} ${commit.pull.title} @${commit.pull.author}`,
-          ]
+      ...pullSet.values().map((pullOrCommitId) => {
+        if (typeof pullOrCommitId === 'object') {
+          return [`#${pullOrCommitId.number}`, `${pullOrCommitId.title}`, `@${pullOrCommitId.author}`]
         }
-        return [`<code>${commit.commitId}</code>`, '-']
+        return [`<code>${pullOrCommitId}</code>`, '-', '-']
       }),
     ])
   }

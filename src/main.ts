@@ -10,12 +10,13 @@ const main = async (): Promise<void> => {
       head: core.getInput('head') || undefined,
       groupByPaths: core.getMultilineInput('group-by-paths'),
       showOthersGroup: core.getBooleanInput('show-others-group', { required: true }),
-      maxFetchCommits: Number.parseInt(core.getInput('max-fetch-commits'), 10) || undefined,
-      maxFetchDays: Number.parseInt(core.getInput('max-fetch-days'), 10) || undefined,
+      commitPullQueryBatchSize: Number.parseInt(core.getInput('commit-pull-query-batch-size', { required: true }), 10),
     },
     getOctokit(),
     getContext(),
   )
+
+  await core.summary.write()
 
   core.setOutput('body', outputs.body)
   core.setOutput('body-groups', outputs.bodyGroups)

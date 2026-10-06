@@ -7,42 +7,58 @@ export const init = async (cwd: string) => {
   await exec.exec('git', ['init', '--quiet', '.'], { cwd })
 }
 
-type GetCommits = {
+type GetCommitsBetweenBaseHead = {
   cwd: string
   base: string
   head: string
 }
 
-export const getCommits = async (input: GetCommits): Promise<string[]> => {
-  const output = await exec.getExecOutput('git', ['log', '--pretty=%H', `${input.base}..${input.head}`], {
+export const getCommitIdSetBetweenBaseHead = async (input: GetCommitsBetweenBaseHead): Promise<Set<string>> => {
+  const commitIdSet = new Set<string>()
+  await exec.exec('git', ['log', '--pretty=%H', `${input.base}..${input.head}`], {
     cwd: input.cwd,
-    // Suppress output to avoid large logs
-    outStream: new stream.PassThrough(),
+    outStream: new stream.PassThrough(), // Suppress output to avoid large logs
+    listeners: {
+      stdline: (line) => commitIdSet.add(line.trim()),
+    },
   })
-  return output.stdout.split('\n').filter((id) => id)
+  return commitIdSet
 }
 
-export const getCommitDate = async (cwd: string, id: string): Promise<Date> => {
-  const output = await exec.getExecOutput('git', ['log', '-1', '--pretty=format:%cI', id], { cwd })
-  return new Date(output.stdout.trim())
+export const getOldestCommitTimestampBetweenBaseHead = async (input: GetCommitsBetweenBaseHead): Promise<number> => {
+  let oldest = Number.POSITIVE_INFINITY
+  await exec.exec('git', ['log', '--pretty=%ct', `${input.base}..${input.head}`], {
+    cwd: input.cwd,
+    outStream: new stream.PassThrough(), // Suppress output to avoid large logs
+    listeners: {
+      stdline: (line) => {
+        oldest = Math.min(oldest, Number(line.trim()))
+      },
+    },
+  })
+  return oldest
 }
 
-type HasMergeBase = {
+type GetCommitIdSetForPath = {
   cwd: string
-  base: string
   head: string
+  since: number
+  path: string
 }
 
-export const hasMergeBase = async (input: HasMergeBase): Promise<boolean> =>
-  (await exec.exec('git', ['merge-base', input.base, input.head], { cwd: input.cwd, ignoreReturnCode: true })) === 0
-
-type Fetch = {
-  cwd: string
-  refs: string[]
-  depth: number
+export const getCommitIdSetForPath = async (input: GetCommitIdSetForPath): Promise<Set<string>> => {
+  const commitIdSet = new Set<string>()
+  await exec.exec('git', ['log', '--pretty=%H', `--since=${input.since}`, input.head, '--', input.path], {
+    cwd: input.cwd,
+    outStream: new stream.PassThrough(), // Suppress output to avoid large logs
+    listeners: {
+      stdline: (line) => commitIdSet.add(line.trim()),
+    },
+  })
+  return commitIdSet
 }
 
-export const fetch = async (input: Fetch, context: Context) =>
+export const fetch = async (cwd: string, context: Context, args: string[]) =>
   await exec.exec(
     'git',
     [
@@ -50,13 +66,10 @@ export const fetch = async (input: Fetch, context: Context) =>
       'fetch',
       `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}.git`,
       '--quiet',
-      // Do not fetch tree and blob
-      '--filter=tree:0',
-      `--depth=${input.depth}`,
-      ...input.refs,
+      ...args,
     ],
     {
-      cwd: input.cwd,
+      cwd,
       env: {
         ...process.env,
         CONFIG_VALUE_AUTHORIZATION_HEADER: authorizationHeader(),
