@@ -1,9 +1,11 @@
+/** Internal type. DO NOT USE DIRECTLY. */
+export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
 import * as Types from './graphql-types.js';
 
-export type CommitPullFragment = { __typename?: 'Commit', oid: string, associatedPullRequests?: { __typename?: 'PullRequestConnection', nodes?: Array<{ __typename?: 'PullRequest', number: number, title: string, author?:
-        | { __typename?: 'Bot', login: string }
-        | { __typename?: 'EnterpriseUserAccount', login: string }
-        | { __typename?: 'Mannequin', login: string }
-        | { __typename?: 'Organization', login: string }
-        | { __typename?: 'User', login: string }
+export type CommitPullFragment = { oid: string, associatedPullRequests: { nodes: Array<{ number: number, title: string, author:
+        | { login: string }
+        | { login: string }
+        | { login: string }
+        | { login: string }
+        | { login: string }
        | null } | null> | null } | null };
