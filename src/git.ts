@@ -7,24 +7,55 @@ export const init = async (cwd: string) => {
   await exec.exec('git', ['init', '--quiet', '.'], { cwd })
 }
 
-type GetCommits = {
+type GetCommitsBetweenBaseHead = {
   cwd: string
   base: string
   head: string
+}
+
+export const getCommitIdSetBetweenBaseHead = async (input: GetCommitsBetweenBaseHead): Promise<Set<string>> => {
+  const commitIdSet = new Set<string>()
+  await exec.exec('git', ['log', '--pretty=%H', `${input.base}..${input.head}`], {
+    cwd: input.cwd,
+    outStream: new stream.PassThrough(), // Suppress output to avoid large logs
+    listeners: {
+      stdline: (line) => commitIdSet.add(line.trim()),
+    },
+  })
+  return commitIdSet
+}
+
+export const getOldestCommitTimestampBetweenBaseHead = async (input: GetCommitsBetweenBaseHead): Promise<number> => {
+  let oldest = Number.POSITIVE_INFINITY
+  await exec.exec('git', ['log', '--pretty=%ct', `${input.base}..${input.head}`], {
+    cwd: input.cwd,
+    outStream: new stream.PassThrough(), // Suppress output to avoid large logs
+    listeners: {
+      stdline: (line) => {
+        oldest = Math.min(oldest, Number(line.trim()))
+      },
+    },
+  })
+  return oldest
+}
+
+type GetCommitIdSetForPath = {
+  cwd: string
+  head: string
+  since: number
   path: string
 }
 
-export const getCommits = async (input: GetCommits): Promise<string[]> => {
-  const output = await exec.getExecOutput(
-    'git',
-    ['log', '--pretty=%H', `${input.base}..${input.head}`, '--', input.path],
-    {
-      cwd: input.cwd,
-      // Suppress output to avoid large logs
-      outStream: new stream.PassThrough(),
+export const getCommitIdSetForPath = async (input: GetCommitIdSetForPath): Promise<Set<string>> => {
+  const commitIdSet = new Set<string>()
+  await exec.exec('git', ['log', '--pretty=%H', `--since=${input.since}`, input.head, '--', input.path], {
+    cwd: input.cwd,
+    outStream: new stream.PassThrough(), // Suppress output to avoid large logs
+    listeners: {
+      stdline: (line) => commitIdSet.add(line.trim()),
     },
-  )
-  return output.stdout.split('\n').filter((id) => id)
+  })
+  return commitIdSet
 }
 
 export const fetch = async (cwd: string, context: Context, args: string[]) =>
