@@ -29,7 +29,6 @@ export const compareCommits = async (context: Context, inputs: Inputs): Promise<
     context,
   )
   const baseCommitId = await git.revParse(['FETCH_HEAD'], workspace)
-  core.info(`Resolved base commit: ${baseCommitId}`)
 
   await git.fetch(
     [
@@ -41,7 +40,6 @@ export const compareCommits = async (context: Context, inputs: Inputs): Promise<
     context,
   )
   const headCommitId = await git.revParse(['FETCH_HEAD'], workspace)
-  core.info(`Resolved head commit: ${headCommitId}`)
 
   const baseHeadCommitIdSet = await git.getCommitIdSetBetweenBaseHead({
     cwd: workspace,
