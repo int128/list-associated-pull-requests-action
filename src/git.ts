@@ -1,4 +1,5 @@
-import * as stream from 'node:stream'
+import * as fs from 'node:fs/promises'
+import * as path from 'node:path'
 import * as core from '@actions/core'
 import * as exec from '@actions/exec'
 import { type Context, getToken } from './github.js'
@@ -14,29 +15,13 @@ type GetCommitsBetweenBaseHead = {
 }
 
 export const getCommitIdSetBetweenBaseHead = async (input: GetCommitsBetweenBaseHead): Promise<Set<string>> => {
-  const commitIdSet = new Set<string>()
-  await exec.exec('git', ['log', '--pretty=%H', `${input.base}..${input.head}`], {
-    cwd: input.cwd,
-    outStream: new stream.PassThrough(), // Suppress output to avoid large logs
-    listeners: {
-      stdline: (line) => commitIdSet.add(line.trim()),
-    },
-  })
-  return commitIdSet
+  const commitIds = await execGitLog(['--pretty=%H', `${input.base}..${input.head}`], input.cwd)
+  return new Set(commitIds)
 }
 
 export const getOldestCommitTimestampBetweenBaseHead = async (input: GetCommitsBetweenBaseHead): Promise<number> => {
-  let oldest = Number.POSITIVE_INFINITY
-  await exec.exec('git', ['log', '--pretty=%ct', `${input.base}..${input.head}`], {
-    cwd: input.cwd,
-    outStream: new stream.PassThrough(), // Suppress output to avoid large logs
-    listeners: {
-      stdline: (line) => {
-        oldest = Math.min(oldest, Number(line.trim()))
-      },
-    },
-  })
-  return oldest
+  const commitTimestamps = await execGitLog(['--pretty=%ct', `${input.base}..${input.head}`], input.cwd)
+  return commitTimestamps.reduce((oldest, line) => Math.min(oldest, Number(line)), Number.MAX_VALUE)
 }
 
 type GetCommitIdSetForPath = {
@@ -47,15 +32,18 @@ type GetCommitIdSetForPath = {
 }
 
 export const getCommitIdSetForPath = async (input: GetCommitIdSetForPath): Promise<Set<string>> => {
-  const commitIdSet = new Set<string>()
-  await exec.exec('git', ['log', '--pretty=%H', `--since=${input.since}`, input.head, '--', input.path], {
-    cwd: input.cwd,
-    outStream: new stream.PassThrough(), // Suppress output to avoid large logs
-    listeners: {
-      stdline: (line) => commitIdSet.add(line.trim()),
-    },
-  })
-  return commitIdSet
+  const commitIds = await execGitLog(['--pretty=%H', `--since=${input.since}`, input.head, '--', input.path], input.cwd)
+  return new Set(commitIds)
+}
+
+const execGitLog = async (args: string[], cwd: string): Promise<string[]> => {
+  try {
+    await exec.exec('git', ['log', `--output=commits`, ...args], { cwd })
+    const commits = await fs.readFile(path.join(cwd, 'commits'), 'utf-8')
+    return commits.split('\n').filter((line) => line)
+  } finally {
+    await fs.rm(path.join(cwd, 'commits'), { force: true })
+  }
 }
 
 export const fetch = async (cwd: string, context: Context, args: string[]) =>
@@ -65,7 +53,6 @@ export const fetch = async (cwd: string, context: Context, args: string[]) =>
       ...gitTokenConfigFlags(context),
       'fetch',
       `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}.git`,
-      '--quiet',
       ...args,
     ],
     {
