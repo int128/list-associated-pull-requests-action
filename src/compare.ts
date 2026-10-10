@@ -20,10 +20,10 @@ export const compareCommits = async (context: Context, inputs: Inputs): Promise<
   const workspace = await git.init(context)
 
   await git.fetch(['--depth=1', inputs.base], workspace, context)
-  const baseCommitId = await git.revParseVerify(['FETCH_HEAD'])
+  const baseCommitId = await git.revParse(['FETCH_HEAD'])
   core.info(`Resolved base commit: ${baseCommitId}`)
   await git.fetch(['--depth=1', inputs.head], workspace, context)
-  const headCommitId = await git.revParseVerify(['FETCH_HEAD'])
+  const headCommitId = await git.revParse(['FETCH_HEAD'])
   core.info(`Resolved head commit: ${headCommitId}`)
 
   await git.fetch(
