@@ -19,23 +19,29 @@ export const compareCommits = async (context: Context, inputs: Inputs): Promise<
 
   const workspace = await git.init(context)
 
-  await git.fetch(['--depth=1', inputs.base], workspace, context)
-  const baseCommitId = await git.revParse(['FETCH_HEAD'])
+  await git.fetch(
+    [
+      // Fetch only trees which are required for path-limited git log.
+      '--filter=blob:none',
+      inputs.base,
+    ],
+    workspace,
+    context,
+  )
+  const baseCommitId = await git.revParse(['FETCH_HEAD'], workspace)
   core.info(`Resolved base commit: ${baseCommitId}`)
-  await git.fetch(['--depth=1', inputs.head], workspace, context)
-  const headCommitId = await git.revParse(['FETCH_HEAD'])
-  core.info(`Resolved head commit: ${headCommitId}`)
 
   await git.fetch(
     [
       // Fetch only trees which are required for path-limited git log.
       '--filter=blob:none',
-      baseCommitId,
-      headCommitId,
+      inputs.head,
     ],
     workspace,
     context,
   )
+  const headCommitId = await git.revParse(['FETCH_HEAD'], workspace)
+  core.info(`Resolved head commit: ${headCommitId}`)
 
   const baseHeadCommitIdSet = await git.getCommitIdSetBetweenBaseHead({
     cwd: workspace,
