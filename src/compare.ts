@@ -1,12 +1,8 @@
-import { mkdtemp } from 'node:fs/promises'
-import path from 'node:path'
 import * as core from '@actions/core'
 import * as git from './git.js'
 import type { Context } from './github.js'
 
 type Inputs = {
-  owner: string
-  repo: string
   base: string
   head: string
   paths: string[]
@@ -21,9 +17,17 @@ export const compareCommits = async (context: Context, inputs: Inputs): Promise<
     paths.push('.')
   }
 
-  const workspace = await mkdtemp(path.join(context.runnerTemp, `${inputs.owner}-${inputs.repo}-`))
-  await git.init(workspace)
-  await fetchCommitsBetweenBaseHead(context, workspace, inputs.base, inputs.head)
+  const workspace = await git.init(context)
+  await git.fetch(
+    [
+      // Fetch only trees which are required for path-limited git log.
+      '--filter=blob:none',
+      inputs.base,
+      inputs.head,
+    ],
+    workspace,
+    context,
+  )
 
   const baseHeadCommitIdSet = await git.getCommitIdSetBetweenBaseHead({
     cwd: workspace,
@@ -56,15 +60,6 @@ export const compareCommits = async (context: Context, inputs: Inputs): Promise<
     pathCommitIdSetMap.set(path, baseHeadCommitIdSetForPath)
   }
   return pathCommitIdSetMap
-}
-
-const fetchCommitsBetweenBaseHead = async (context: Context, cwd: string, base: string, head: string) => {
-  await git.fetch(cwd, context, [
-    // Do not fetch blobs. Trees are required for path-limited git log.
-    '--filter=blob:none',
-    base,
-    head,
-  ])
 }
 
 const formatTimestamp = (ts: number) => new Date(ts * 1000).toISOString()

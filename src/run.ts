@@ -41,8 +41,6 @@ export const run = async (inputs: Inputs, octokit: Octokit, context: Context): P
 
   core.startGroup(`Compare base ${base} and head ${head}`)
   const pathCommitIdSetMap = await compareCommits(context, {
-    owner: context.repo.owner,
-    repo: context.repo.repo,
     base,
     head,
     paths: groupByPaths,
