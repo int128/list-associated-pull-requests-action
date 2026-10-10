@@ -10,22 +10,22 @@ For a mono repository (monorepo) and Git/GitLab Flow, we create a pull request t
 
 ```mermaid
 gitGraph
-  commit id: "Initial"
+  commit id: "main"
   branch production
+  commit id: "production"
   checkout main
-  commit id: "A"
-  commit id: "B"
-  commit id: "C"
+  commit id: "PR #1"
+  commit id: "PR #2"
+  commit id: "PR #3"
   checkout production
-  merge main
+  merge main id: "Release 1"
   checkout main
-  commit id: "D"
-  commit id: "E"
-  commit id: "F"
+  commit id: "PR #4"
+  commit id: "PR #5"
   checkout production
-  merge main
+  merge main id: "Release 2"
   checkout main
-  commit id: "G"
+  commit id: "PR #7"
 ```
 
 A pull request often becomes too large to review, for example,
