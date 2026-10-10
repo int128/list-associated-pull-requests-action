@@ -18,12 +18,20 @@ export const compareCommits = async (context: Context, inputs: Inputs): Promise<
   }
 
   const workspace = await git.init(context)
+
+  await git.fetch(['--depth=1', inputs.base], workspace, context)
+  const baseCommitId = await git.revParseVerify(['FETCH_HEAD'])
+  core.info(`Resolved base commit: ${baseCommitId}`)
+  await git.fetch(['--depth=1', inputs.head], workspace, context)
+  const headCommitId = await git.revParseVerify(['FETCH_HEAD'])
+  core.info(`Resolved head commit: ${headCommitId}`)
+
   await git.fetch(
     [
       // Fetch only trees which are required for path-limited git log.
       '--filter=blob:none',
-      inputs.base,
-      inputs.head,
+      baseCommitId,
+      headCommitId,
     ],
     workspace,
     context,
@@ -31,8 +39,8 @@ export const compareCommits = async (context: Context, inputs: Inputs): Promise<
 
   const baseHeadCommitIdSet = await git.getCommitIdSetBetweenBaseHead({
     cwd: workspace,
-    base: inputs.base,
-    head: inputs.head,
+    base: baseCommitId,
+    head: headCommitId,
   })
   core.info(`Total ${baseHeadCommitIdSet.size} commits between base and head`)
   if (baseHeadCommitIdSet.size === 0) {
@@ -41,8 +49,8 @@ export const compareCommits = async (context: Context, inputs: Inputs): Promise<
 
   const oldestCommitTimestamp = await git.getOldestCommitTimestampBetweenBaseHead({
     cwd: workspace,
-    base: inputs.base,
-    head: inputs.head,
+    base: baseCommitId,
+    head: headCommitId,
   })
   core.info(`The oldest commit is at ${formatTimestamp(oldestCommitTimestamp)}`)
 
@@ -51,7 +59,7 @@ export const compareCommits = async (context: Context, inputs: Inputs): Promise<
     // Do not use `git log base..head -- path`, because it returns unrelated commits.
     const headCommitIdSetForPath = await git.getCommitIdSetForPath({
       cwd: workspace,
-      head: inputs.head,
+      head: headCommitId,
       since: oldestCommitTimestamp,
       path,
     })
