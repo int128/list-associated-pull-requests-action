@@ -4,8 +4,15 @@ import * as core from '@actions/core'
 import * as exec from '@actions/exec'
 import { type Context, getToken } from './github.js'
 
-export const init = async (cwd: string) => {
+export const init = async (context: Context) => {
+  const cwd = await fs.mkdtemp(path.join(context.runnerTemp, `${context.repo.owner}-${context.repo.repo}-`))
   await exec.exec('git', ['init', '--quiet', '.'], { cwd })
+  return cwd
+}
+
+export const resolveCommitId = async (ref: string, cwd: string) => {
+  const output = await exec.getExecOutput('git', ['rev-parse', '--verify', ref], { cwd })
+  return output.stdout.trim()
 }
 
 type GetCommitsBetweenBaseHead = {
@@ -46,7 +53,7 @@ const execGitLog = async (args: string[], cwd: string): Promise<string[]> => {
   }
 }
 
-export const fetch = async (cwd: string, context: Context, args: string[]) =>
+export const fetch = async (args: string[], cwd: string, context: Context) =>
   await exec.exec(
     'git',
     [

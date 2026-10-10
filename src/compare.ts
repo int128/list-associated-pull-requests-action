@@ -1,12 +1,8 @@
-import { mkdtemp } from 'node:fs/promises'
-import path from 'node:path'
 import * as core from '@actions/core'
 import * as git from './git.js'
 import type { Context } from './github.js'
 
 type Inputs = {
-  owner: string
-  repo: string
   base: string
   head: string
   paths: string[]
@@ -21,14 +17,19 @@ export const compareCommits = async (context: Context, inputs: Inputs): Promise<
     paths.push('.')
   }
 
-  const workspace = await mkdtemp(path.join(context.runnerTemp, `${inputs.owner}-${inputs.repo}-`))
-  await git.init(workspace)
-  await fetchCommitsBetweenBaseHead(context, workspace, inputs.base, inputs.head)
+  const workspace = await git.init(context)
+
+  // Fetch only trees which are required for path-limited git log.
+  await git.fetch(['--filter=blob:none', inputs.base], workspace, context)
+  const baseCommitId = await git.resolveCommitId('FETCH_HEAD', workspace)
+
+  await git.fetch(['--filter=blob:none', inputs.head], workspace, context)
+  const headCommitId = await git.resolveCommitId('FETCH_HEAD', workspace)
 
   const baseHeadCommitIdSet = await git.getCommitIdSetBetweenBaseHead({
     cwd: workspace,
-    base: inputs.base,
-    head: inputs.head,
+    base: baseCommitId,
+    head: headCommitId,
   })
   core.info(`Total ${baseHeadCommitIdSet.size} commits between base and head`)
   if (baseHeadCommitIdSet.size === 0) {
@@ -37,8 +38,8 @@ export const compareCommits = async (context: Context, inputs: Inputs): Promise<
 
   const oldestCommitTimestamp = await git.getOldestCommitTimestampBetweenBaseHead({
     cwd: workspace,
-    base: inputs.base,
-    head: inputs.head,
+    base: baseCommitId,
+    head: headCommitId,
   })
   core.info(`The oldest commit is at ${formatTimestamp(oldestCommitTimestamp)}`)
 
@@ -47,7 +48,7 @@ export const compareCommits = async (context: Context, inputs: Inputs): Promise<
     // Do not use `git log base..head -- path`, because it returns unrelated commits.
     const headCommitIdSetForPath = await git.getCommitIdSetForPath({
       cwd: workspace,
-      head: inputs.head,
+      head: headCommitId,
       since: oldestCommitTimestamp,
       path,
     })
@@ -56,15 +57,6 @@ export const compareCommits = async (context: Context, inputs: Inputs): Promise<
     pathCommitIdSetMap.set(path, baseHeadCommitIdSetForPath)
   }
   return pathCommitIdSetMap
-}
-
-const fetchCommitsBetweenBaseHead = async (context: Context, cwd: string, base: string, head: string) => {
-  await git.fetch(cwd, context, [
-    // Do not fetch blobs. Trees are required for path-limited git log.
-    '--filter=blob:none',
-    base,
-    head,
-  ])
 }
 
 const formatTimestamp = (ts: number) => new Date(ts * 1000).toISOString()
