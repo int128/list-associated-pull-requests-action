@@ -11,7 +11,7 @@ export const init = async (context: Context) => {
 }
 
 export const revParse = async (args: string[], cwd: string) => {
-  const output = await exec.getExecOutput('git', ['rev-parse', ...args], { cwd })
+  const output = await exec.getExecOutput('git', ['rev-parse', '--verify', ...args], { cwd })
   return output.stdout.trim()
 }
 
