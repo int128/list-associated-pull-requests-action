@@ -21,7 +21,7 @@ inputs:
   show-others-group:
     description: Show others group
     required: true
-    default: 'true'
+    default: "true"
   commit-pull-query-batch-size:
     description: (Experimental) batch size for CommitPull query
     required: true
@@ -38,8 +38,8 @@ outputs:
     description: List of associated pull requests (JSON)
 
 runs:
-  using: 'node24'
-  main: 'dist/index.js'
+  using: "node24"
+  main: "dist/index.js"
 
 branding:
   icon: git-pull-request
