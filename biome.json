@@ -19,6 +19,6 @@
     }
   },
   "files": {
-    "includes": ["**", "!src/generated", "!.github/workflows"]
+    "includes": ["**", "!src/generated", "!tests/**/*.md", "!.github/workflows"]
   }
 }
